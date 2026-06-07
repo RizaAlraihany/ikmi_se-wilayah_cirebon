@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary: #001769;
+  --secondary: #044585;
+  --accent: #0072c6;
+  --background: #f8f9fa;
+  --background-warm: #ede9e6;
+  --surface: #ffffff;
+  --success: #dcfce7;
+  --warning: #fef3c7;
+  --danger: #fee2e2;
+  --foreground: var(--primary);
+  --muted: color-mix(in srgb, var(--primary) 55%, white);
+  --line: color-mix(in srgb, var(--primary) 10%, white);
+  --elevated: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 @theme inline {
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
   --color-background: var(--background);
+  --color-background-warm: var(--background-warm);
+  --color-surface: var(--surface);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --font-sans: var(--font-poppins);
+  --font-heading: var(--font-montserrat);
+  --shadow-elevated: var(--elevated);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ─── Base ──────────────────────────────────────────────────────────────── */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins), Arial, sans-serif;
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-montserrat), Arial, sans-serif;
+  letter-spacing: 0;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline-color: var(--accent);
+}
+
+/* ─── Scroll snap (Pilar & Slider) ─────────────────────────────────────── */
+
+.snap-x {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.snap-x::-webkit-scrollbar {
+  display: none;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+/* ─── Smooth scroll ─────────────────────────────────────────────────────── */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ─── Utility: primary/8 opacity background ────────────────────────────── */
+
+.bg-primary\/8 {
+  background-color: color-mix(in srgb, var(--primary) 8%, transparent);
 }
