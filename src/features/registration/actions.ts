@@ -36,7 +36,8 @@ export async function reviewRegistrationAction(id: string, status: 'APPROVED' | 
     if (!session?.user?.id || !(await can('registration.review', { 
       id: session.user.id, 
       roleId: (session.user as { roleId: string }).roleId, 
-      departmentId: session.user.departmentId! 
+      departmentId: session.user.departmentId!,
+    positionId: null 
     }))) {
       return { error: 'Anda tidak memiliki akses untuk melakukan aksi ini' }
     }

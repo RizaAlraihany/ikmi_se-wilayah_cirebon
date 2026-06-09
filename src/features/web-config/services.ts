@@ -1,18 +1,18 @@
-import { can } from '@/core/authorization/rbac'
-import { ForbiddenError, NotFoundError } from '@/core/errors/custom-errors'
+import { ValidationError } from '@/core/errors/custom-errors'
 import { webConfigSchema, WebConfigInput } from './schemas'
 import { prisma } from '@/core/database/prisma'
 import { webConfigQueries } from './queries'
+import { requireCmsUpdate } from '@/features/cms/access'
 
 export const webConfigService = {
   async upsertWebConfig(input: WebConfigInput, userId: string) {
     const validated = webConfigSchema.parse(input)
-    
-    const userObj = await prisma.user.findUnique({ where: { id: userId }, include: { role: true } })
-    if (!userObj) throw new NotFoundError('User tidak ditemukan')
+    await requireCmsUpdate(userId)
 
-    if (!(await can('web.manage', userObj)) && userObj.role.name !== 'Super Admin') {
-      throw new ForbiddenError('Tidak memiliki izin untuk mengelola konfigurasi web')
+    try {
+      JSON.parse(validated.valueJson)
+    } catch {
+      throw new ValidationError('Value konfigurasi harus berupa JSON valid')
     }
 
     const existing = await webConfigQueries.getWebConfigByKey(validated.key)

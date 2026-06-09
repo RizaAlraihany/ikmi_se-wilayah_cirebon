@@ -9,12 +9,15 @@ declare module 'next-auth' {
       /** The user's role ID. */
       roleId: string
       /** The user's department ID. */
-      departmentId: string
+      departmentId: string | null
+      /** The user's position ID. */
+      positionId: string | null
     } & DefaultSession['user']
   }
 
   interface User {
     roleId: string
-    departmentId: string
+    departmentId: string | null
+    positionId: string | null
   }
 }

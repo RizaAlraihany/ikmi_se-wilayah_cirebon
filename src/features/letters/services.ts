@@ -1,10 +1,10 @@
-import { letterRepository } from './repositories'
+import { letterRepository } from './repository'
 import { letterQueries } from './queries'
 import { CreateLetterInput, UpdateLetterInput } from './schemas'
 import { prisma } from '@/core/database/prisma'
-import { eventBus } from '@/core/events/event-bus'
 import { can, SessionUser } from '@/core/authorization/rbac'
 import { ForbiddenError } from '@/core/errors/custom-errors'
+import { eventBus } from '@/core/events'
 
 export const letterService = {
   async generateLetterNumber(type: 'IN' | 'OUT', date: Date): Promise<string> {
@@ -34,10 +34,10 @@ export const letterService = {
   },
 
   async createLetter(data: CreateLetterInput, user: SessionUser) {
-    const isAuthorized = await can('letter.manage', user)
+    const isAuthorized = await can('letter.create', user)
     if (!isAuthorized) throw new ForbiddenError('Akses ditolak: tidak dapat membuat surat')
 
-    return prisma.$transaction(async () => {
+    const letter = await prisma.$transaction(async () => {
       const letterNumber = await this.generateLetterNumber(data.type, data.date)
       
       const letter = await letterRepository.create({
@@ -45,42 +45,71 @@ export const letterService = {
         letterNumber
       })
 
-      eventBus.emit('audit.log', {
-        action: 'CREATE',
-        entity: 'Letter',
-        entityId: letter.id,
-        newData: JSON.stringify(letter)
+      await prisma.auditLog.create({
+        data: {
+          action: 'CREATE',
+          entity: 'Letter',
+          entityId: letter.id,
+          newData: JSON.stringify(letter),
+          userId: user.id
+        }
       })
 
       return letter
     })
+
+    await eventBus.emit('letter.created', { id: letter.id, type: letter.type, createdBy: user.id })
+    return letter
   },
 
   async updateLetter(id: string, data: UpdateLetterInput, user: SessionUser) {
-    const isAuthorized = await can('letter.manage', user)
+    const isAuthorized = await can('letter.update', user)
     if (!isAuthorized) throw new ForbiddenError('Akses ditolak: tidak dapat mengubah surat')
 
-    const updated = await letterRepository.update(id, data)
-    eventBus.emit('audit.log', {
-      action: 'UPDATE',
-      entity: 'Letter',
-      entityId: id,
-      newData: JSON.stringify(updated)
+    const letter = await prisma.letter.findUnique({ where: { id } })
+    if (!letter) throw new Error('Surat tidak ditemukan')
+    
+    return prisma.$transaction(async (tx) => {
+      const updated = await tx.letter.update({ where: { id }, data })
+      await tx.auditLog.create({
+        data: {
+          action: 'UPDATE',
+          entity: 'Letter',
+          entityId: id,
+          oldData: JSON.stringify(letter),
+          newData: JSON.stringify(updated),
+          userId: user.id
+        }
+      })
+      return updated
     })
-    return updated
   },
 
   async deleteLetter(id: string, user: SessionUser) {
-    const isAuthorized = await can('letter.manage', user)
+    const isAuthorized = await can('letter.delete', user)
     if (!isAuthorized) throw new ForbiddenError('Akses ditolak: tidak dapat menghapus surat')
 
-    const deleted = await letterRepository.delete(id)
-    eventBus.emit('audit.log', {
-      action: 'DELETE',
-      entity: 'Letter',
-      entityId: id,
-      oldData: JSON.stringify(deleted)
+    const letter = await prisma.letter.findUnique({ where: { id } })
+    if (!letter) throw new Error('Surat tidak ditemukan')
+
+    return prisma.$transaction(async (tx) => {
+      const deleted = await tx.letter.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          updatedBy: user.id,
+        },
+      })
+      await tx.auditLog.create({
+        data: {
+          action: 'DELETE',
+          entity: 'Letter',
+          entityId: id,
+          oldData: JSON.stringify(letter),
+          userId: user.id
+        }
+      })
+      return deleted
     })
-    return deleted
   }
 }

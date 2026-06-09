@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'default' | 'destructive'
 type ButtonSize = 'sm' | 'md' | 'icon'
 
 const variants: Record<ButtonVariant, string> = {
@@ -9,6 +9,9 @@ const variants: Record<ButtonVariant, string> = {
   secondary: 'bg-surface text-primary shadow-elevated ring-1 ring-line hover:bg-background',
   ghost: 'bg-transparent text-primary hover:bg-primary/5',
   danger: 'bg-danger text-primary hover:bg-danger/80',
+  outline: 'bg-surface text-primary shadow-elevated ring-1 ring-line hover:bg-background',
+  default: 'bg-accent text-surface shadow-elevated hover:bg-secondary',
+  destructive: 'bg-danger text-primary hover:bg-danger/80',
 }
 
 const sizes: Record<ButtonSize, string> = {

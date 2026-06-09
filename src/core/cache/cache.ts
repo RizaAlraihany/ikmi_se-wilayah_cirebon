@@ -1,25 +1,22 @@
-/**
- * Cache Service
- * 
- * Untuk saat ini menggunakan In-Memory Cache (Map).
- * Jika Redis sudah terpasang (misal package `ioredis`), service ini bisa 
- * diganti / diekspansi untuk menggunakan Redis Client.
- */
-
 import { redis } from './redis'
+import { logger } from '../monitoring/logger'
 
 class CacheService {
   private store: Map<string, { value: unknown; expiry: number | null }> = new Map()
 
   async set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
     if (redis) {
-      const stringValue = JSON.stringify(value)
-      if (ttlSeconds) {
-        await redis.setex(key, ttlSeconds, stringValue)
-      } else {
-        await redis.set(key, stringValue)
+      try {
+        const stringValue = JSON.stringify(value)
+        if (ttlSeconds) {
+          await redis.setex(key, ttlSeconds, stringValue)
+        } else {
+          await redis.set(key, stringValue)
+        }
+        return
+      } catch (error) {
+        logger.warn('Redis cache set failed, falling back to memory cache', { key, error })
       }
-      return
     }
 
     const expiry = ttlSeconds ? Date.now() + ttlSeconds * 1000 : null
@@ -28,9 +25,13 @@ class CacheService {
 
   async get<T>(key: string): Promise<T | null> {
     if (redis) {
-      const data = await redis.get(key)
-      if (!data) return null
-      return typeof data === 'string' ? JSON.parse(data) : data as T
+      try {
+        const data = await redis.get(key)
+        if (!data) return null
+        return typeof data === 'string' ? JSON.parse(data) : data as T
+      } catch (error) {
+        logger.warn('Redis cache get failed, falling back to memory cache', { key, error })
+      }
     }
 
     const item = this.store.get(key)
@@ -46,16 +47,24 @@ class CacheService {
 
   async del(key: string): Promise<void> {
     if (redis) {
-      await redis.del(key)
-      return
+      try {
+        await redis.del(key)
+        return
+      } catch (error) {
+        logger.warn('Redis cache delete failed, falling back to memory cache', { key, error })
+      }
     }
     this.store.delete(key)
   }
 
   async clear(): Promise<void> {
     if (redis) {
-      await redis.flushdb()
-      return
+      try {
+        await redis.flushdb()
+        return
+      } catch (error) {
+        logger.warn('Redis cache clear failed, falling back to memory cache', { error })
+      }
     }
     this.store.clear()
   }
@@ -63,11 +72,15 @@ class CacheService {
   // Helper for Rate Limiting (Simple token bucket / counter)
   async increment(key: string, ttlSeconds: number): Promise<number> {
     if (redis) {
-      const p = redis.pipeline()
-      p.incr(key)
-      p.expire(key, ttlSeconds)
-      const results = await p.exec()
-      return results[0] as number
+      try {
+        const p = redis.pipeline()
+        p.incr(key)
+        p.expire(key, ttlSeconds)
+        const results = await p.exec()
+        return Number(results[0] ?? 0)
+      } catch (error) {
+        logger.warn('Redis cache increment failed, falling back to memory cache', { key, error })
+      }
     }
 
     const item = this.store.get(key)

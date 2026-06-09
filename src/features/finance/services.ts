@@ -1,7 +1,7 @@
 import { eventBus } from '@/core/events/event-bus'
 import { can } from '@/core/authorization/rbac'
 import { ForbiddenError, NotFoundError, ValidationError } from '@/core/errors/custom-errors'
-import { financeRepository } from './repositories'
+import { financeRepository } from './repository'
 import { financeQueries } from './queries'
 import { financeRequestCreateSchema, FinanceRequestCreateInput } from './schemas'
 import { FinanceStatus } from '@prisma/client'
@@ -37,7 +37,7 @@ export const financeService = {
     const userObj = await prisma.user.findUnique({ where: { id: userId } })
     if (!userObj) throw new NotFoundError('User not found')
 
-    if (!(await can('finance.approve.tier1', userObj))) {
+    if (!(await can('finance.approve_tier1', userObj))) {
       throw new ForbiddenError('Tidak memiliki izin untuk menyetujui Tier 1')
     }
 
@@ -77,7 +77,7 @@ export const financeService = {
     const userObj = await prisma.user.findUnique({ where: { id: userId } })
     if (!userObj) throw new NotFoundError('User not found')
 
-    if (!(await can('finance.approve.tier2', userObj))) {
+    if (!(await can('finance.approve_tier2', userObj))) {
       throw new ForbiddenError('Tidak memiliki izin untuk menyetujui Tier 2')
     }
 
@@ -113,8 +113,8 @@ export const financeService = {
     const userObj = await prisma.user.findUnique({ where: { id: userId } })
     if (!userObj) throw new NotFoundError('User not found')
 
-    const canTier1 = await can('finance.approve.tier1', userObj)
-    const canTier2 = await can('finance.approve.tier2', userObj)
+    const canTier1 = await can('finance.approve_tier1', userObj)
+    const canTier2 = await can('finance.approve_tier2', userObj)
     
     if (!canTier1 && !canTier2) {
       throw new ForbiddenError('Tidak memiliki izin untuk menolak request')

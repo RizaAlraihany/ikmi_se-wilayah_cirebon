@@ -1,4 +1,4 @@
-import { complaintRepository } from './repositories'
+import { complaintRepository } from './repository'
 import { SubmitComplaintInput, ProcessComplaintInput } from './schemas'
 import { eventBus } from '@/core/events/event-bus'
 import { complaintPolicies } from './policies'

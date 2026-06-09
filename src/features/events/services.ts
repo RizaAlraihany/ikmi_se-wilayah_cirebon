@@ -108,8 +108,12 @@ export const eventService = {
     }
 
     await prisma.$transaction([
-      prisma.event.delete({
-        where: { id }
+      prisma.event.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          updatedBy: userId,
+        },
       }),
       prisma.auditLog.create({
         data: {

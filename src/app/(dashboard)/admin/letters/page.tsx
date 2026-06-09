@@ -22,7 +22,8 @@ export default async function AdminLettersPage({
   const isAuthorized = await can('letter.view', {
     id: session.user.id,
     roleId: session.user.roleId,
-    departmentId: session.user.departmentId
+    departmentId: session.user.departmentId,
+    positionId: null
   })
 
   if (!isAuthorized) {

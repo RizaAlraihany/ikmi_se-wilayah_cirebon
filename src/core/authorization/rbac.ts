@@ -3,7 +3,8 @@ import { prisma } from '../database/prisma'
 export interface SessionUser {
   id: string
   roleId: string
-  departmentId: string
+  departmentId: string | null
+  positionId: string | null
 }
 
 import { permissionCache } from '../cache/permission-cache'
@@ -31,11 +32,11 @@ export async function can(permissionName: string, user: SessionUser | null | und
   }
 
   // Find if the role has the specific permission
-  const rolePermission = await prisma.rolePermission.findFirst({
+  const rolePermission = await prisma.rolePermission.findUnique({
     where: {
-      roleId: user.roleId,
-      permission: {
-        name: permissionName
+      roleId_permissionId: {
+        roleId: user.roleId,
+        permissionId: permissionName
       }
     }
   })

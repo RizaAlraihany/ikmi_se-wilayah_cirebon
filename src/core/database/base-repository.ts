@@ -4,40 +4,53 @@ import { PrismaClient } from '@prisma/client'
 // For now, we will create a global Prisma singleton (src/core/database/prisma.ts should exist)
 import { prisma } from '@/core/database/prisma'
 
-export class BaseRepository<T extends { deletedAt?: Date | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected model: any
+type RepositoryFindArgs = {
+  where?: Record<string, unknown>
+  [key: string]: unknown
+}
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(modelDelegate: any) {
+type SoftDeleteDelegate<T, FindManyArgs, UpdateArgs> = {
+  findMany(args: FindManyArgs): Promise<T[]>
+  update(args: UpdateArgs): Promise<T>
+}
+
+export class BaseRepository<
+  T extends { deletedAt?: Date | null },
+  FindManyArgs extends RepositoryFindArgs,
+  UpdateArgs extends object
+> {
+  protected model: SoftDeleteDelegate<T, FindManyArgs, UpdateArgs>
+
+  constructor(modelDelegate: SoftDeleteDelegate<T, FindManyArgs, UpdateArgs>) {
     this.model = modelDelegate
   }
 
   /**
    * Retrieves all active records (not soft deleted).
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async findActive(args: any = {}): Promise<T[]> {
+  async findActive(args: RepositoryFindArgs = {}): Promise<T[]> {
     const where = args.where || {}
-    return this.model.findMany({
+    const findArgs = {
       ...args,
       where: {
         ...where,
         deletedAt: null
       }
-    })
+    } as unknown as FindManyArgs
+    return this.model.findMany(findArgs)
   }
 
   /**
    * Soft deletes a record by setting deletedAt to current date.
    */
   async softDelete(id: string): Promise<T> {
-    return this.model.update({
+    const updateArgs = {
       where: { id },
       data: {
         deletedAt: new Date()
       }
-    })
+    } as unknown as UpdateArgs
+    return this.model.update(updateArgs)
   }
 }
 

@@ -5,7 +5,7 @@ export const complaintPolicies = {
   async canManage(user: SessionUser) {
     // Check if the user is in Advokasi department
     const department = await prisma.department.findUnique({
-      where: { id: user.departmentId },
+      where: { id: user.departmentId ?? undefined },
       select: { name: true }
     })
 

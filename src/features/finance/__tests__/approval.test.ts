@@ -46,7 +46,7 @@ describe('Finance Service - Approval', () => {
 
     const result = await financeService.approveTier1('req1', 'user1')
     
-    expect(can).toHaveBeenCalledWith('finance.approve.tier1', expect.anything())
+    expect(can).toHaveBeenCalledWith('finance.approve_tier1', expect.anything())
     expect(result.status).toBe('APPROVED_TIER1')
   })
 

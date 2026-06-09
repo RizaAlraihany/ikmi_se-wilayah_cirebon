@@ -1,4 +1,4 @@
-import { registrationRepository } from './repositories'
+import { registrationRepository } from './repository'
 import { RegistrationCreateInput } from './schemas'
 import { prisma } from '@/core/database/prisma'
 import { NotFoundError } from '@/core/errors/custom-errors'

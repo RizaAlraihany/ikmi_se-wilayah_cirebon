@@ -22,15 +22,21 @@ import { Button } from '@/components/ui/button'
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/posts', label: 'Blog', icon: Newspaper },
+  { href: '/admin/cms/posts', label: 'Blog', icon: Newspaper },
+  { href: '/admin/cms/categories', label: 'Categories', icon: BookOpen },
+  { href: '/admin/cms/content-plan', label: 'Content Plan', icon: FileText },
+  { href: '/admin/cms/media', label: 'Media Library', icon: CalendarDays }, // Using placeholder icon
   { href: '/admin/registrations', label: 'Registration', icon: BookOpen },
+  { href: '/admin/kaderisasi', label: 'Kaderisasi', icon: Users },
+  { href: '/admin/membership', label: 'Membership', icon: Users },
   { href: '/admin/finance', label: 'Finance', icon: WalletCards },
   { href: '/admin/complaints', label: 'Complaints', icon: MessageSquareWarning },
   { href: '/admin/events', label: 'Events', icon: CalendarDays },
   { href: '/admin/reports', label: 'Reports', icon: FileText },
   { href: '/admin/letters', label: 'Letters', icon: Mail },
   { href: '/admin/system/audit-logs', label: 'Audit Logs', icon: BarChart3 },
-  { href: '/admin/web-config', label: 'Web Config', icon: Settings },
+  { href: '/admin/cms/analytics', label: 'CMS Analytics', icon: BarChart3 },
+  { href: '/admin/cms/settings', label: 'Web Config', icon: Settings },
 ]
 
 const mobileNavItems = navItems.slice(0, 5)

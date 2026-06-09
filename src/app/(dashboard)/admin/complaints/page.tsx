@@ -15,7 +15,8 @@ export default async function AdminComplaintsPage() {
   const canManage = await complaintPolicies.canManage({
     id: session.user.id!,
     roleId: session.user.roleId,
-    departmentId: session.user.departmentId || ''
+    departmentId: session.user.departmentId || '',
+    positionId: null
   })
 
   if (!canManage) {

@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { registrationService } from '@/features/registration/services'
 import { prismaMock } from '../prisma-mock'
 import { eventBus } from '@/core/events/event-bus'
-import { registrationRepository } from '@/features/registration/repositories'
+import { registrationRepository } from '@/features/registration/repository'
 
-jest.mock('@/features/registration/repositories', () => ({
+jest.mock('@/features/registration/repository', () => ({
   registrationRepository: {
     create: jest.fn(),
     findById: jest.fn()
@@ -25,7 +26,7 @@ describe('Registration Service', () => {
     ;(registrationRepository.create as jest.Mock).mockResolvedValueOnce({
       id: 'reg-1',
       fullName: 'John Doe',
-      campus: 'CIREBON',
+      campus: 'CIREBON', major: 'Teknik', whatsapp: '0812',
       semester: '1',
       address: 'Test',
       reasons: 'Test',
@@ -34,7 +35,7 @@ describe('Registration Service', () => {
 
     const result = await registrationService.submitRegistration({
       fullName: 'John Doe',
-      campus: 'CIREBON',
+      campus: 'CIREBON', major: 'Teknik', whatsapp: '0812',
       semester: '1',
       address: 'Test',
       reasons: 'Test'
@@ -52,7 +53,7 @@ describe('Registration Service', () => {
       id: 'reg-1', status: 'PENDING'
     })
 
-    prismaMock.registration.update.mockResolvedValueOnce({ id: 'reg-1', status: 'APPROVED' } as unknown as { id: string; status: string })
+    prismaMock.registration.update.mockResolvedValueOnce({ id: 'reg-1', status: 'APPROVED' } as any)
 
     const result = await registrationService.reviewRegistration('reg-1', 'APPROVED', 'admin-1')
 
@@ -70,7 +71,7 @@ describe('Registration Service', () => {
       id: 'reg-1', status: 'PENDING'
     })
 
-    prismaMock.registration.update.mockResolvedValueOnce({ id: 'reg-1', status: 'REJECTED' } as unknown as { id: string; status: string })
+    prismaMock.registration.update.mockResolvedValueOnce({ id: 'reg-1', status: 'REJECTED' } as any)
 
     const result = await registrationService.reviewRegistration('reg-1', 'REJECTED', 'admin-1')
 
@@ -78,3 +79,4 @@ describe('Registration Service', () => {
     expect(eventBus.emit).toHaveBeenCalledWith('registration.rejected', { registrationId: 'reg-1' })
   })
 })
+

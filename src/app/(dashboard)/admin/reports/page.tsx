@@ -33,7 +33,7 @@ export default async function ReportsPage() {
   if (!session?.user) redirect('/login')
 
   const isSuperAdmin = session.user.roleId === 'super_admin'
-  const departmentId = isSuperAdmin ? undefined : session.user.departmentId
+  const departmentId = isSuperAdmin ? undefined : session.user.departmentId ?? undefined
 
   const reports = await reportQueries.getReports(departmentId)
   const upcomingEvents = await eventQueries.getEventsWithoutReport(departmentId)

@@ -41,6 +41,7 @@ export const authConfig = {
           name: user.name,
           roleId: user.roleId,
           departmentId: user.departmentId,
+          positionId: user.positionId,
         }
       },
     }),
@@ -51,6 +52,7 @@ export const authConfig = {
         token.id = user.id
         token.roleId = user.roleId
         token.departmentId = user.departmentId
+        token.positionId = user.positionId
       }
       return token
     },
@@ -58,7 +60,8 @@ export const authConfig = {
       if (token) {
         session.user.id = token.id as string
         session.user.roleId = token.roleId as string
-        session.user.departmentId = token.departmentId as string
+        session.user.departmentId = token.departmentId as string | null
+        session.user.positionId = token.positionId as string | null
       }
       return session
     },

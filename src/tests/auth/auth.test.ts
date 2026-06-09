@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { authConfig } from '@/core/auth/auth.config'
 import { prismaMock } from '../prisma-mock'
 import bcrypt from 'bcryptjs'
@@ -12,7 +13,7 @@ describe('Authentication Flow', () => {
   })
 
   // next-auth Credentials provider is at index 0
-  const credentialsProvider = authConfig.providers[0] as unknown as { authorize: (credentials: Record<string, string>) => Promise<unknown> }
+  const credentialsProvider = authConfig.providers[0] as any
 
   it('should return null if email or password is not provided', async () => {
     const result1 = await credentialsProvider.authorize({ email: 'test@mail.com' })
@@ -38,7 +39,7 @@ describe('Authentication Flow', () => {
   it('should return null if user is inactive', async () => {
     prismaMock.user.findUnique.mockResolvedValueOnce({
       id: '1', isActive: false, email: 'test@mail.com', passwordHash: 'hash', deletedAt: null
-    } as unknown as Record<string, string>)
+    } as unknown as any)
     
     const result = await credentialsProvider.authorize({ email: 'test@mail.com', password: 'password' })
     expect(result).toBeNull()
@@ -47,7 +48,7 @@ describe('Authentication Flow', () => {
   it('should return null if user is soft-deleted', async () => {
     prismaMock.user.findUnique.mockResolvedValueOnce({
       id: '1', isActive: true, email: 'test@mail.com', passwordHash: 'hash', deletedAt: new Date()
-    } as unknown as Record<string, string>)
+    } as unknown as any)
     
     const result = await credentialsProvider.authorize({ email: 'test@mail.com', password: 'password' })
     expect(result).toBeNull()
@@ -56,7 +57,7 @@ describe('Authentication Flow', () => {
   it('should return null if password does not match', async () => {
     prismaMock.user.findUnique.mockResolvedValueOnce({
       id: '1', isActive: true, email: 'test@mail.com', passwordHash: 'hash', deletedAt: null
-    } as unknown as Record<string, string>)
+    } as unknown as any)
     
     ;(bcrypt.compare as jest.Mock).mockResolvedValueOnce(false)
 
@@ -74,7 +75,7 @@ describe('Authentication Flow', () => {
       deletedAt: null,
       roleId: 'admin',
       departmentId: 'dept1'
-    } as unknown as Record<string, string>)
+    } as unknown as any)
     
     ;(bcrypt.compare as jest.Mock).mockResolvedValueOnce(true)
 
@@ -89,3 +90,4 @@ describe('Authentication Flow', () => {
     })
   })
 })
+

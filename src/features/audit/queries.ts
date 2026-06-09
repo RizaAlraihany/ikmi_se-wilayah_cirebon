@@ -14,5 +14,12 @@ export const auditQueries = {
     return prisma.auditLog.count({
       where: entity ? { entity } : undefined
     })
+  },
+  async getEntityHistory(entity: string, entityId: string) {
+    return prisma.auditLog.findMany({
+      where: { entity, entityId },
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { name: true, roleId: true } } }
+    })
   }
 }

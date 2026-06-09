@@ -14,7 +14,7 @@ export const eventQueries = {
   async getEventById(id: string) {
     return prisma.event.findUnique({
       where: { id },
-      include: { program: true }
+      include: { program: true, report: true }
     })
   },
 

@@ -1,0 +1,678 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+
+%% =====================================================
+%% DOMAIN PUBLIK
+%% =====================================================
+subgraph PUBLIC["🌐 Domain Publik: ikmicirebon.or.id"]
+
+  A[Landing Page IKMI]
+  A --> B[Hero Section]
+  A --> C[4 Pilar IKMI]
+  A --> D[Tentang IKMI]
+  A --> E[Pengurus]
+  A --> F[Event & Program Kerja]# TASK: EXECUTE SPRINT 3 — MEMBERSHIP & KADERISASI IMPLEMENTATION
+
+## Context
+
+Sprint 1:
+✅ Foundation Refactor Complete
+
+Sprint 2:
+✅ Public Domain Complete
+
+Status saat ini:
+
+Pendaftaran Anggota pada Public Domain sudah dapat:
+
+Form
+↓
+Registration
+↓
+Database
+
+Tetapi lifecycle keanggotaan IKMI belum berjalan.
+
+Sprint 3 akan menjadi implementasi core business utama organisasi.
+
+------------------------------------------------
+
+# SOURCE OF TRUTH
+
+WAJIB membaca:
+
+AGENTS.md
+
+PROJECT-IMPLEMENTATION-KNOWLEDGE.md
+
+MASTER-DATA.md
+
+05-DATABASE-DICTIONARY.md
+
+06-RBAC-MATRIX.md
+
+07-ALUR-FLOW.md
+
+14-ENGINEERING-DOD.md
+
+Diagram:
+
+01-organization-structure
+
+02-membership-lifecycle
+
+04-enterprise-business-flow
+
+------------------------------------------------
+
+# IMPORTANT
+
+DILARANG:
+
+❌ Mengubah dokumentasi
+
+❌ Mengubah Master Data
+
+❌ Mengubah Diagram
+
+❌ Mendesain ulang Public Domain
+
+❌ Membuat Finance Module
+
+❌ Membuat LPJ Module
+
+❌ Membuat CMS Module
+
+❌ Membuat Notification Center
+
+Sprint ini hanya fokus:
+
+MEMBERSHIP
+&
+KADERISASI
+
+------------------------------------------------
+
+# OBJECTIVE
+
+Menyelesaikan lifecycle:
+
+Pendaftar
+↓
+Calon Anggota
+↓
+Verifikasi Kaderisasi
+↓
+Anggota Aktif
+↓
+Pengurus
+↓
+Demisioner
+↓
+Alumni
+
+------------------------------------------------
+
+# PHASE 1
+## Membership Domain Audit
+
+Validasi:
+
+Registration
+
+User
+
+Role
+
+Position
+
+Department
+
+Pastikan struktur database mampu mendukung:
+
+- Calon Anggota
+- Anggota Aktif
+- Pengurus
+- Demisioner
+- Alumni
+
+Jika belum tersedia:
+
+gunakan field/status yang sudah didokumentasikan.
+
+JANGAN mengubah dokumentasi.
+
+Output:
+
+SPRINT3-MEMBERSHIP-AUDIT.md
+
+------------------------------------------------
+
+# PHASE 2
+## Membership Lifecycle Implementation
+
+Implementasikan status:
+
+PENDING
+
+CANDIDATE
+
+ACTIVE
+
+MANAGEMENT
+
+DEMISIONER
+
+ALUMNI
+
+Flow:
+
+Registration
+↓
+Candidate
+↓
+Active
+↓
+Management
+↓
+Demisioner
+↓
+Alumni
+
+------------------------------------------------
+
+# PHASE 3
+## Dashboard Membership Module
+
+Implement:
+
+/dashboard/membership
+
+Menu:
+
+- Pendaftar Baru
+- Calon Anggota
+- Anggota Aktif
+- Pengurus
+- Demisioner
+- Alumni
+
+Filter:
+
+- Kampus
+- Jurusan
+- Kecamatan
+- Status
+
+Search:
+
+- Nama
+- WhatsApp
+- Kampus
+
+------------------------------------------------
+
+# PHASE 4
+## Kaderisasi Module
+
+Implement:
+
+/dashboard/kaderisasi
+
+Dashboard khusus:
+
+Departemen Kaderisasi
+
+------------------------------------------------
+
+Fitur:
+
+### Review Pendaftar
+
+Lihat:
+
+- Biodata
+- Alasan Bergabung
+- Tanggal Daftar
+
+------------------------------------------------
+
+### Verifikasi
+
+Action:
+
+Approve
+
+Reject
+
+Pending
+
+------------------------------------------------
+
+### Catatan Kaderisasi
+
+Input:
+
+- Catatan Interview
+- Catatan Administrasi
+- Catatan Follow Up
+
+------------------------------------------------
+
+### Riwayat Verifikasi
+
+Track:
+
+- Siapa yang memverifikasi
+- Kapan diverifikasi
+- Status sebelum
+- Status sesudah
+
+------------------------------------------------
+
+# PHASE 5
+## Membership Promotion Workflow
+
+Implementasikan:
+
+Candidate
+↓
+Active
+
+Active
+↓
+Management
+
+Management
+↓
+Demisioner
+
+Demisioner
+↓
+Alumni
+
+Setiap perubahan wajib:
+
+- Audit Log
+- Created By
+- Updated By
+
+------------------------------------------------
+
+# PHASE 6
+## Membership Profile
+
+Implement:
+
+/dashboard/membership/[id]
+
+Tampilkan:
+
+- Biodata Lengkap
+- Kampus
+- Jurusan
+- Kecamatan
+- Status Keanggotaan
+- Riwayat Kaderisasi
+- Riwayat Jabatan
+- Riwayat Departemen
+
+------------------------------------------------
+
+# PHASE 7
+## RBAC Integration
+
+Validasi dengan:
+
+06-RBAC-MATRIX.md
+
+------------------------------------------------
+
+Role yang boleh akses:
+
+Super Admin
+
+Ketua Umum
+
+Wakil Ketua Umum
+
+Kadep Kaderisasi
+
+Sekdep Kaderisasi
+
+------------------------------------------------
+
+Role lain:
+
+Read Only
+
+atau
+
+No Access
+
+sesuai matrix.
+
+------------------------------------------------
+
+# PHASE 8
+## Ownership Policy
+
+Pastikan:
+
+User tidak bisa:
+
+- mempromosikan dirinya sendiri
+- memverifikasi dirinya sendiri
+- mengubah status dirinya sendiri
+
+Semua validasi dilakukan di:
+
+services.ts
+
+bukan UI.
+
+------------------------------------------------
+
+# PHASE 9
+## Dashboard KPI Membership
+
+Widget:
+
+Total Pendaftar
+
+Total Calon Anggota
+
+Total Anggota Aktif
+
+Total Pengurus
+
+Total Demisioner
+
+Total Alumni
+
+Pendaftar Bulan Ini
+
+Approval Pending
+
+------------------------------------------------
+
+# PHASE 10
+## Testing & Validation
+
+Validasi:
+
+- Lifecycle berjalan
+- Audit Log tercatat
+- RBAC berjalan
+- Ownership berjalan
+- Build sukses
+- Prisma valid
+
+------------------------------------------------
+
+# OUTPUT
+
+Wajib menghasilkan:
+
+SPRINT3-MEMBERSHIP-AUDIT.md
+
+SPRINT3-LIFECYCLE-REPORT.md
+
+SPRINT3-KADERISASI-REPORT.md
+
+SPRINT3-RBAC-VALIDATION.md
+
+SPRINT3-OWNERSHIP-REPORT.md
+
+SPRINT3-COMPLETION-REPORT.md
+
+------------------------------------------------
+
+# Definition of Done
+
+Sprint 3 dianggap selesai jika:
+
+✅ Membership Lifecycle berjalan
+
+✅ Kaderisasi berjalan
+
+✅ Approval berjalan
+
+✅ Audit Log berjalan
+
+✅ RBAC berjalan
+
+✅ Ownership Policy berjalan
+
+✅ Dashboard Membership selesai
+
+✅ Dashboard Kaderisasi selesai
+
+✅ KPI Membership tersedia
+
+Output akhir:
+
+SPRINT3-COMPLETION-REPORT.md
+
+dengan status:
+
+READY FOR SPRINT 4
+DASHBOARD OPERATIONS IMPLEMENTATION
+  A --> G[Blog & Ruang Gagasan]
+  A --> H[Form Aduan & Aspirasi]
+
+  D --> D1[Halaman Tentang Kami]
+  E --> E1[Struktur Organisasi & Departemen]
+  F --> F1[List Event & Program]
+  F --> F2[Detail Event]
+  G --> G1[List Artikel]
+  G --> G2[Detail Artikel]
+
+  A --> CTA[Gabung Bersama IKMI]
+  CTA --> FORM[Form Pendaftaran Anggota]
+  FORM --> DB[Simpan Data Calon Anggota]
+  FORM --> THANKS[Halaman Terima Kasih]
+  THANKS --> JOINWA[Gabung Grup WhatsApp]
+
+  %% Pengaduan publik → internal
+  H --> ADVOKASIENTRY["Laporan & Aduan dari Publik"]
+  ADVOKASIENTRY -->|Masuk ke sistem internal| DKAJ
+
+end
+
+%% =====================================================
+%% DOMAIN INTERNAL
+%% =====================================================
+subgraph INTERNAL["🔐 Dashboard Internal: dashboard.ikmicirebon.or.id"]
+
+  LOGIN[Login Admin & Pengurus] --> HOME[Dashboard Utama]
+  HOME --> ADMINSTRUKTUR[Manajemen Struktur Organisasi]
+  HOME --> SEMUADEPT[Manajemen Program Departemen]
+  HOME --> KEUANGAN[Manajemen Keuangan]
+  HOME --> SURAT[Persuratan & Arsip]
+  HOME --> KEANGGOTAAN[Database Anggota]
+  HOME --> ADVOKASISYS[Manajemen Aduan & Kajian]
+  HOME --> LPJ[Manajemen LPJ & Verifikasi]
+  HOME --> CMS[CMS & Website Management]
+  HOME --> NOTIF[Notification Center]
+  HOME --> ANALYTICS[Executive Dashboard]
+
+  %% STRUKTUR ORGANISASI DASAR
+  ADMINSTRUKTUR --> KETUA[Ketua Umum]
+  KETUA --> WAKIL[Wakil Ketua Umum]
+  KETUA --> SEK1[Sekretaris Umum I]
+  KETUA --> SEK2[Sekretaris Umum II]
+  KETUA --> BEN1[Bendahara Umum I]
+  KETUA --> BEN2[Bendahara Umum II]
+
+  %% KESETARAAN FUNGSI
+  WAKIL --> K1W[Koordinasi & Supervisi Program Departemen]
+  WAKIL --> K2W[Evaluasi Kinerja dan Monitoring]
+  WAKIL --> K3W[Mendampingi Ketua dalam Keputusan Strategis]
+
+  SEK1 --> SEKPROG1[Rapat Pleno & Pengarsipan Data]
+  SEK1 --> SEKPROG2[Manajemen Surat Masuk & Keluar]
+  SEK1 --> SEKPROG3[Pembuatan Struktur & Kalender Kegiatan]
+
+  SEK2 --> SEK2PROG1[Rapat Pleno & Pengarsipan Data]
+  SEK2 --> SEK2PROG2[Manajemen Surat Masuk & Keluar]
+  SEK2 --> SEK2PROG3[Pembuatan Struktur & Kalender Kegiatan]
+
+  BEN1 --> BENPROG1[Pembukuan & Transaksi Keuangan]
+  BEN1 --> BENPROG2[Laporan Keuangan Berkala]
+  BEN1 --> BENPROG3[Iuran & Transparansi Keuangan]
+
+  BEN2 --> BEN2PROG1[Pembukuan & Transaksi Keuangan]
+  BEN2 --> BEN2PROG2[Laporan Keuangan Berkala]
+  BEN2 --> BEN2PROG3[Iuran & Transparansi Keuangan]
+
+  %% =====================================================
+  %% HIERARKI OPERASIONAL YANG DIREVISI
+  %% =====================================================
+  WAKIL --> DKAD[Departemen Kaderisasi]
+  WAKIL --> DKAJ[Departemen Advokasi & Kajian Strategis]
+  WAKIL --> DPSDA["Departemen Pengembangan Sumber Daya Anggota (PSDA)"]
+  WAKIL --> DEKRAF[Departemen Ekonomi Kreatif]
+  WAKIL --> DKOMDIGI["Departemen Komunikasi & Digitalisasi (Komdigi)"]
+  WAKIL --> DHPM["Departemen Hubungan & Pengabdian Masyarakat (HPM)"]
+
+  %% =====================================================
+  %% PROGRAM KERJA & KEGIATAN
+  %% =====================================================
+
+  %% KADERISASI
+  DKAD --> PRABUMI["Besar: PRABUMI (Penerimaan Anggota Baru)"]
+  DKAD --> MAKRAB["Besar: MAKRAB (Malam Keakraban)"]
+  DKAD --> EKSKAM["Kecil: Ekspedisi Kampus"]
+  DKAD --> SAPARASA["Kecil: Sapa Rasa"]
+  PRABUMI --> PANPRAB["Kepanitiaan PRABUMI"]
+
+  %% ADVOKASI
+  DKAJ --> DISKUSI["Kecil: Diskusi Panel"]
+  DKAJ --> WARLIT["Kecil: WARLIT (Warung Literasi)"]
+  DKAJ --> REFLEKSI["Kecil: Refleksi Hari Besar"]
+  DKAJ --> LAPADUAN["Kecil: Menangani Laporan & Aduan Publik"]
+  ADVOKASISYS --> DKAJ
+
+  %% PSDA
+  DPSDA --> BASKARA["Kecil: BASKARA (Pelatihan Bahasa Kromo)"]
+  DPSDA --> CIMANUK["Kecil: CIMANUK (Akselerasi Keahlian Praktis)"]
+  DPSDA --> REANG["Kecil: REANG (Rekreasi Non-Formal)"]
+
+  %% EKRAF
+  DEKRAF --> INDUSTRI["Kecil: Kunjungan Industri"]
+  DEKRAF --> SERAGAM["Kecil: Seragam & Lanyard"]
+  DEKRAF --> PEMBUKUANEKRAF["Kecil: Pembukuan Ekotif"]
+  DEKRAF --> JUALAN["Kecil: Jual Snack & Nasi Box"]
+  DEKRAF --> USAHA["Kecil: Pendataan Usaha"]
+
+  %% KOMDIGI
+  DKOMDIGI --> PROFILE["Kecil: Company Profile"]
+  DKOMDIGI --> MEDSOS["Kecil: Kelola Media Sosial"]
+  DKOMDIGI --> PELATIHAN["Kecil: Pelatihan Internal"]
+  DKOMDIGI --> PODCAST["Kecil: Podcast Lentera Ayu"]
+  DKOMDIGI --> KABARINDRA["Kecil: Kabar Indramayu"]
+  DKOMDIGI --> CMS
+  CMS --> LANDINGPAGE["Landing Page Updates"]
+  CMS --> BLOG["Blog & Artikel"]
+  CMS --> EVENT["Event & Program Kerja"]
+  CMS --> STRUKTUR["Struktur Organisasi Publik"]
+
+  %% HPM
+  DHPM --> SOSIAL["Besar: IKMI Sosial (Bakti Sosial)"]
+  DHPM --> HARLAH["Besar: Ultah IKMI (Perayaan Harlah)"]
+  DHPM --> PEDULI["Kecil: IKMI Peduli"]
+  DHPM --> NGOBOR["Kecil: Ngobor (Ngopi Bareng Orda)"]
+  DHPM --> SOSPEN["Kecil: Sospen (Sosialisasi Pendidikan)"]
+  SOSIAL --> PANSOS["Kepanitiaan IKMI Sosial"]
+  HARLAH --> PANHARLAH["Kepanitiaan Ultah IKMI"]
+
+  %% =====================================================
+  %% LPJ DOMAIN
+  %% =====================================================
+  SEMUADEPT --> LPJ
+  LPJ --> VERIFKADEP[Verifikasi Ketua Departemen]
+  VERIFKADEP --> VERIFBPH[Verifikasi BPH]
+  VERIFBPH --> ARSIPLPJ[Arsip LPJ]
+  LPJ --> NOTIF
+
+  %% =====================================================
+  %% RELASI KOLABORASI INTERNAL
+  %% =====================================================
+  SEK1 <--> BEN1
+  SEK2 <--> BEN2
+  SEK1 <--> KETUA
+  BEN1 <--> WAKIL
+  DKAJ <--> SEK1
+  DKAJ <--> BEN1
+  DEKRAF <--> KEUANGAN
+  DKOMDIGI <--> DKAJ
+  DKAD <--> DPSDA
+  HPM <--> KOMDIGI
+  WAKIL <--> MONITORING[Monitoring & Evaluasi Program]
+  MONITORING --> EVAL[LPJ & Laporan Triwulan]
+  DKAJ <--> ADVOKASISYS
+
+  %% =====================================================
+  %% DOMAIN NOTIFIKASI
+  %% =====================================================
+  KEUANGAN --> NOTIF
+  SURAT --> NOTIF
+  ADVOKASISYS --> NOTIF
+  DKAD --> NOTIF
+  LPJ --> NOTIF
+
+  %% =====================================================
+  %% DATABASE ANGGOTA TERPERINCI
+  %% =====================================================
+  KEANGGOTAAN --> CALON["Calon Anggota"]
+  KEANGGOTAAN --> AKTIF["Anggota Aktif"]
+  KEANGGOTAAN --> PENGURUS["Pengurus"]
+  KEANGGOTAAN --> DEMISIONER["Demisioner"]
+  KEANGGOTAAN --> ALUMNI["Alumni"]
+
+  %% =====================================================
+  %% EXECUTIVE DASHBOARD
+  %% =====================================================
+  ANALYTICS --> TOTALANGGOTA["Total Anggota"]
+  ANALYTICS --> PROGRAMAKTIF["Program Aktif"]
+  ANALYTICS --> LPJPENDING["LPJ Pending"]
+  ANALYTICS --> KASORG["Kas Organisasi"]
+  ANALYTICS --> ADUANMASUK["Aduan Masuk"]
+
+end
+
+%% =====================================================
+%% DATABASE DAN RELASI
+%% =====================================================
+subgraph DATA["🗄️ Data"]
+  DB --> KEANGGOTAAN
+  KEUANGAN --> DATABANK[Catatan Kas & Iuran]
+  SURAT --> ARSIP[Arsip Surat & Dokumen]
+  SEMUADEPT --> DOKPROG[Dokumentasi Program & LPJ]
+end
+
+%% =====================================================
+%% KETERHUBUNGAN DOMAIN
+%% =====================================================
+PUBLIC -->|Validasi Anggota Baru| INTERNAL
+INTERNAL -->|Publikasi Kegiatan & Artikel| PUBLIC
+PUBLIC -->|Aduan Publik Masuk| DKAJ
+
+%% =====================================
+%% STYLING
+%% =====================================
+classDef publik stroke:#38bdf8,fill:#f0f9ff;
+classDef internal stroke:#a78bfa,fill:#f5f3ff;
+classDef database stroke:#f87171,fill:#fef2f2;
+classDef program stroke:#4ade80,fill:#f0fdf4;
+classDef panitia stroke:#fb923c,fill:#fff7ed;
+
+class PUBLIC,A,B,C,D,E,F,G,H,CTA,FORM,THANKS,JOINWA publik;
+class INTERNAL,LOGIN,HOME,ADMINSTRUKTUR,KETUA,WAKIL,SEK1,SEK2,BEN1,BEN2,DKAD,DKAJ,DPSDA,DEKRAF,DKOMDIGI,DHPM,MONITORING,EVAL,ADVOKASISYS,LPJ,VERIFKADEP,VERIFBPH,ARSIPLPJ,NOTIF,CMS,ANALYTICS internal;
+class DB,KEANGGOTAAN,KEUANGAN,DATABANK,ARSIP,DOKPROG,CALON,AKTIF,PENGURUS,DEMISIONER,ALUMNI database;
+class PRABUMI,MAKRAB,EKSKAM,SAPARASA,DISKUSI,WARLIT,REFLEKSI,LAPADUAN,BASKARA,CIMANUK,REANG,INDUSTRI,SERAGAM,PEMBUKUANEKRAF,JUALAN,USAHA,PROFILE,MEDSOS,PELATIHAN,PODCAST,KABARINDRA,SOSIAL,HARLAH,PEDULI,NGOBOR,SOSPEN,BENPROG1,BENPROG2,BENPROG3,BEN2PROG1,BEN2PROG2,BEN2PROG3,SEKPROG1,SEKPROG2,SEKPROG3,SEK2PROG1,SEK2PROG2,SEK2PROG3,VERIFKADEP,VERIFBPH,ARSIPLPJ,K1W,K2W,K3W program;
+class PANPRAB,PANSOS,PANHARLAH panitia;

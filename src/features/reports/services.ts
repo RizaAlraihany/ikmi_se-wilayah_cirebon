@@ -63,7 +63,7 @@ export const reportService = {
     const userObj = await prisma.user.findUnique({ where: { id: userId } })
     if (!userObj) throw new NotFoundError('User tidak ditemukan')
 
-    if (!(await can('lpj.verify.department', userObj))) {
+    if (!(await can('lpj.verify_department', userObj))) {
       throw new ForbiddenError('Tidak memiliki izin untuk verifikasi LPJ Departemen')
     }
 
@@ -103,7 +103,7 @@ export const reportService = {
     const userObj = await prisma.user.findUnique({ where: { id: userId } })
     if (!userObj) throw new NotFoundError('User tidak ditemukan')
 
-    if (!(await can('lpj.verify.bph', userObj))) {
+    if (!(await can('lpj.verify_bph', userObj))) {
       throw new ForbiddenError('Tidak memiliki izin untuk verifikasi LPJ BPH')
     }
 
@@ -143,8 +143,8 @@ export const reportService = {
     const userObj = await prisma.user.findUnique({ where: { id: userId } })
     if (!userObj) throw new NotFoundError('User tidak ditemukan')
 
-    const canDept = await can('lpj.verify.department', userObj)
-    const canBph = await can('lpj.verify.bph', userObj)
+    const canDept = await can('lpj.verify_department', userObj)
+    const canBph = await can('lpj.verify_bph', userObj)
     
     if (!canDept && !canBph) {
       throw new ForbiddenError('Tidak memiliki izin untuk menolak LPJ')

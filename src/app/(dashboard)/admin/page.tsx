@@ -16,9 +16,12 @@ import { financeQueries } from '@/features/finance/queries'
 import { complaintQueries } from '@/features/complaints/queries'
 import { eventQueries } from '@/features/events/queries'
 import { reportQueries } from '@/features/reports/queries'
+import { letterQueries } from '@/features/letters/queries'
+import { programQueries } from '@/features/programs/queries'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Mail, CalendarDays } from 'lucide-react'
 
 type RoleDashboard = {
   title: string
@@ -80,7 +83,7 @@ export default async function AdminDashboardPage() {
   const roleId = currentUser?.roleId ?? session?.user.roleId ?? 'staff_komdigi'
   const dashboard = roleDashboards[roleId] ?? roleDashboards.staff_komdigi
 
-  const [users, posts, registrations, financeRequests, complaints, events, reports] = await Promise.all([
+  const [users, posts, registrations, financeRequests, complaints, events, reports, letters, programs] = await Promise.all([
     userQueries.getPaginatedUsers(1, 1),
     postQueries.getPaginatedPosts(1, 1),
     registrationQueries.getPaginatedRegistrations(1, 1),
@@ -88,16 +91,20 @@ export default async function AdminDashboardPage() {
     complaintQueries.getUnreadCount(),
     eventQueries.getEvents(undefined, 0, 10),
     reportQueries.getReports(undefined, 0, 10),
+    letterQueries.getLetters(),
+    programQueries.getPrograms(),
   ])
 
   const allKpis = [
     { key: 'users', icon: Users, label: 'Anggota Aktif', value: users.meta.total, trend: '+12%', roles: ['super_admin', 'bph_sekum', 'kadep_kaderisasi', 'staff_kaderisasi'] },
-    { key: 'posts', icon: Newspaper, label: 'Publikasi', value: posts.meta.total, trend: '+8%', roles: ['super_admin', 'kadep_komdigi', 'staff_komdigi'] },
-    { key: 'registrations', icon: BookOpen, label: 'Pendaftar', value: registrations.meta.total, trend: '+18%', roles: ['super_admin', 'kadep_kaderisasi', 'staff_kaderisasi'] },
-    { key: 'finance', icon: WalletCards, label: 'Approval Dana', value: financeRequests.length, trend: 'Prioritas', roles: ['super_admin', 'bph_bendum'] },
-    { key: 'complaints', icon: MessageSquareWarning, label: 'Aduan Baru', value: complaints, trend: 'Butuh respons', roles: ['super_admin', 'kadep_advokasi', 'staff_advokasi'] },
+    { key: 'programs', icon: CalendarDays, label: 'Program', value: programs.length, trend: 'Aktif', roles: ['super_admin', 'bph_sekum'] },
     { key: 'events', icon: CheckCircle2, label: 'Agenda', value: events.length, trend: '+6%', roles: ['super_admin', 'bph_sekum', 'kadep_komdigi', 'staff_komdigi'] },
+    { key: 'finance', icon: WalletCards, label: 'Approval Dana', value: financeRequests.length, trend: 'Prioritas', roles: ['super_admin', 'bph_bendum'] },
     { key: 'reports', icon: FileText, label: 'LPJ', value: reports.length, trend: 'Review', roles: ['super_admin', 'bph_sekum'] },
+    { key: 'letters', icon: Mail, label: 'Persuratan', value: letters.length, trend: 'Arsip', roles: ['super_admin', 'bph_sekum'] },
+    { key: 'registrations', icon: BookOpen, label: 'Pendaftar', value: registrations.meta.total, trend: '+18%', roles: ['super_admin', 'kadep_kaderisasi', 'staff_kaderisasi'] },
+    { key: 'complaints', icon: MessageSquareWarning, label: 'Aduan Baru', value: complaints, trend: 'Butuh respons', roles: ['super_admin', 'kadep_advokasi', 'staff_advokasi'] },
+    { key: 'posts', icon: Newspaper, label: 'Publikasi', value: posts.meta.total, trend: '+8%', roles: ['super_admin', 'kadep_komdigi', 'staff_komdigi'] },
   ]
 
   const visibleKpis = allKpis.filter((kpi) => roleId === 'super_admin' || kpi.roles.includes(roleId))
@@ -161,8 +168,8 @@ export default async function AdminDashboardPage() {
             <div className="space-y-3">
               {[
                 ['Finance request', `${financeRequests.length} item menunggu review`],
-                ['Pendaftaran kader', `${registrations.meta.total} data masuk`],
                 ['LPJ kegiatan', `${reports.length} dokumen aktif`],
+                ['Persuratan', `${letters.length} arsip surat`],
               ].map(([title, description]) => (
                 <div key={title} className="flex items-center justify-between rounded-2xl bg-background p-4">
                   <div>

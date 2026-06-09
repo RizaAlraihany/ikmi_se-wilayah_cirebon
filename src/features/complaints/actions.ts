@@ -37,7 +37,8 @@ export async function processComplaintAction(id: string, data: unknown) {
     await complaintService.processComplaint(id, parsed, {
       id: session.user.id!,
       roleId: (session.user as { roleId: string }).roleId,
-      departmentId: session.user.departmentId!
+      departmentId: session.user.departmentId!,
+    positionId: null
     })
 
     revalidatePath('/admin/complaints')

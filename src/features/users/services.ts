@@ -1,4 +1,4 @@
-import { userRepository } from './repositories'
+import { userRepository } from './repository'
 import { UserCreateInput, UserUpdateInput } from './schemas'
 import { prisma } from '@/core/database/prisma'
 import { ValidationError, NotFoundError } from '@/core/errors/custom-errors'
