@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input, Select } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
+import { ListboxSelect } from '@/components/ui/listbox-select'
 import { Textarea } from '@/components/ui/textarea'
 import { createProgramAction } from '@/features/programs/actions'
 import { prisma } from '@/core/database/prisma'
@@ -62,11 +63,12 @@ export default async function NewProgramPage() {
 
             <div className="space-y-2">
               <label htmlFor="departmentId" className="text-sm font-semibold text-primary">Departemen</label>
-              <Select id="departmentId" name="departmentId" required>
-                {departments.map(d => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </Select>
+              <ListboxSelect
+                id="departmentId"
+                name="departmentId"
+                defaultValue={departments[0]?.id ?? ''}
+                options={departments.map((department) => ({ value: department.id, label: department.name }))}
+              />
             </div>
 
             <div className="space-y-2">

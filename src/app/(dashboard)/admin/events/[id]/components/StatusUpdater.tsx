@@ -1,55 +1,51 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
+import { ListboxSelect } from '@/components/ui/listbox-select'
 import { updateEventAction } from '@/features/events/actions'
 import type { EventStatus } from '@prisma/client'
 
-export function StatusUpdater({ eventId, currentStatus }: { eventId: string, currentStatus: string }) {
-  const [loading, setLoading] = useState(false)
+const statusOptions: { value: EventStatus; label: string }[] = [
+  { value: 'UPCOMING', label: 'Upcoming' },
+  { value: 'COMPLETED', label: 'Completed' },
+]
 
-  const handleUpdate = async (status: EventStatus) => {
+export function StatusUpdater({ eventId, currentStatus }: { eventId: string, currentStatus: EventStatus }) {
+  const router = useRouter()
+  const [status, setStatus] = useState<EventStatus>(currentStatus === 'COMPLETED' ? 'COMPLETED' : 'UPCOMING')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleUpdate = async (nextStatus: EventStatus) => {
+    const previousStatus = status
+    setStatus(nextStatus)
     setLoading(true)
-    await updateEventAction(eventId, { status })
+    setError(null)
+    const result = await updateEventAction(eventId, { status: nextStatus })
+    if (result.error) {
+      setStatus(previousStatus)
+      setError(result.error)
+    } else {
+      router.refresh()
+    }
     setLoading(false)
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button 
-        variant={currentStatus === 'UPCOMING' ? 'primary' : 'secondary'} 
-        size="sm"
-        disabled={loading}
-        onClick={() => handleUpdate('UPCOMING')}
-      >
-        Upcoming
-      </Button>
-      <Button 
-        variant={currentStatus === 'ONGOING' ? 'primary' : 'secondary'} 
-        size="sm"
-        disabled={loading}
-        onClick={() => handleUpdate('ONGOING')}
-      >
-        Ongoing
-      </Button>
-      <Button 
-        variant={currentStatus === 'COMPLETED' ? 'primary' : 'secondary'} 
-        size="sm"
-        className={currentStatus === 'COMPLETED' ? 'bg-success-foreground hover:bg-success-foreground/90' : ''}
-        disabled={loading}
-        onClick={() => handleUpdate('COMPLETED')}
-      >
-        Completed
-      </Button>
-      <Button 
-        variant={currentStatus === 'CANCELLED' ? 'primary' : 'secondary'} 
-        size="sm"
-        className={currentStatus === 'CANCELLED' ? 'bg-danger-foreground hover:bg-danger-foreground/90' : ''}
-        disabled={loading}
-        onClick={() => handleUpdate('CANCELLED')}
-      >
-        Cancelled
-      </Button>
+    <div className="space-y-2">
+      <ListboxSelect
+        value={status}
+        options={statusOptions}
+        disabled={loading || status === 'COMPLETED'}
+        onValueChange={(nextValue) => handleUpdate(nextValue as EventStatus)}
+      />
+      {status === 'COMPLETED' ? (
+        <p className="text-sm font-semibold text-text-secondary">
+          Agenda completed sudah dikunci dan tidak bisa diubah statusnya.
+        </p>
+      ) : null}
+      {error ? <p className="text-sm font-semibold text-danger">{error}</p> : null}
     </div>
   )
 }

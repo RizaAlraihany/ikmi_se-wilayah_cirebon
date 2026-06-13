@@ -36,11 +36,11 @@ export default async function AdminLettersPage({
   const letters = await letterQueries.getLetters(typeFilter, searchFilter)
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-7xl space-y-5 px-0 py-1 md:space-y-6 md:py-3">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-extrabold text-primary">Persuratan</h1>
-          <p className="mt-1 text-sm text-muted">Kelola arsip surat masuk dan surat keluar.</p>
+          <h1 className="font-heading text-3xl font-extrabold text-primary">Persuratan</h1>
+          <p className="mt-1 text-sm text-text-secondary">Kelola arsip surat masuk dan surat keluar.</p>
         </div>
         <LetterForm />
       </div>

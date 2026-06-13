@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createTransactionAction } from '@/features/finance/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input, Select } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
+import { ListboxSelect } from '@/components/ui/listbox-select'
 import { Textarea } from '@/components/ui/textarea'
 import { FinanceTransactionCreateInput } from '@/features/finance/schemas'
 
@@ -55,14 +56,15 @@ export default function NewTransactionPage() {
               <label htmlFor="type" className="mb-1.5 block text-sm font-semibold text-primary">
                 Tipe Transaksi <span className="text-danger">*</span>
               </label>
-              <Select
+              <ListboxSelect
                 id="type"
                 name="type"
-                required
-              >
-                <option value="INCOME">Pemasukan (Income)</option>
-                <option value="EXPENSE">Pengeluaran (Expense)</option>
-              </Select>
+                defaultValue="INCOME"
+                options={[
+                  { value: 'INCOME', label: 'Pemasukan (Income)' },
+                  { value: 'EXPENSE', label: 'Pengeluaran (Expense)' },
+                ]}
+              />
             </div>
 
             <div>
@@ -72,9 +74,11 @@ export default function NewTransactionPage() {
               <Input
                 id="date"
                 name="date"
-                type="date"
+                type="text"
+                inputMode="numeric"
                 required
                 defaultValue={defaultDateStr}
+                placeholder="YYYY-MM-DD"
               />
             </div>
 

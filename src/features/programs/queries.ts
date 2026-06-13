@@ -29,6 +29,23 @@ export const programQueries = {
     })
   },
 
+  async getProgramsForCalendar() {
+    const session = await auth()
+    if (!session?.user) return []
+
+    const where: Prisma.ProgramWhereInput = { deletedAt: null }
+    if (session.user.roleId !== 'super_admin' && session.user.roleId !== 'admin_sekretaris') {
+      if (!session.user.departmentId) return []
+      where.departmentId = session.user.departmentId
+    }
+
+    return prisma.program.findMany({
+      where,
+      include: { department: true },
+      orderBy: [{ department: { name: 'asc' } }, { name: 'asc' }],
+    })
+  },
+
   async getProgramById(id: string) {
     const session = await auth()
     if (!session?.user) return null

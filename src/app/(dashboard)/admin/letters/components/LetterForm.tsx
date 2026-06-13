@@ -5,7 +5,8 @@ import { Plus } from 'lucide-react'
 import { createLetterAction, uploadLetterDocumentAction } from '@/features/letters/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input, Select } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
+import { ListboxSelect } from '@/components/ui/listbox-select'
 
 function getFormString(formData: FormData, key: string) {
   const value = formData.get(key)
@@ -56,14 +57,14 @@ export function LetterForm() {
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)}>
+      <Button onClick={() => setIsOpen(true)} className="w-full sm:w-auto">
         <Plus className="h-4 w-4" />
         Tambah Surat
       </Button>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-primary/45 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="letter-modal-title">
-          <Card className="w-full max-w-lg rounded-t-2xl border-t-4 border-t-accent sm:rounded-2xl">
+          <Card className="w-full max-w-lg rounded-t-3xl border-t-4 border-t-accent shadow-float sm:rounded-2xl">
             <form action={handleSubmit}>
               <CardContent className="space-y-5 p-6">
                 <div>
@@ -81,20 +82,35 @@ export function LetterForm() {
 
                 <div className="space-y-2">
                   <label htmlFor="type" className="text-sm font-semibold text-primary">Tipe Surat</label>
-                  <Select id="type" name="type" required disabled={isSubmitting}>
-                    <option value="IN">Surat Masuk</option>
-                    <option value="OUT">Surat Keluar</option>
-                  </Select>
+                  <ListboxSelect
+                    id="type"
+                    name="type"
+                    defaultValue="IN"
+                    options={[
+                      { value: 'IN', label: 'Surat Masuk' },
+                      { value: 'OUT', label: 'Surat Keluar' },
+                    ]}
+                    disabled={isSubmitting}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <label htmlFor="subject" className="text-sm font-semibold text-primary">Perihal</label>
-                  <Input id="subject" name="subject" required disabled={isSubmitting} />
+                  <Input id="subject" name="subject" required disabled={isSubmitting} className="rounded-2xl" placeholder="Contoh: Undangan rapat BPH" />
                 </div>
 
                 <div className="space-y-2">
                   <label htmlFor="date" className="text-sm font-semibold text-primary">Tanggal Surat</label>
-                  <Input id="date" name="date" type="date" required disabled={isSubmitting} />
+                  <Input
+                    id="date"
+                    name="date"
+                    type="text"
+                    inputMode="numeric"
+                    required
+                    disabled={isSubmitting}
+                    className="rounded-2xl"
+                    placeholder="YYYY-MM-DD"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -106,6 +122,7 @@ export function LetterForm() {
                     accept="application/pdf"
                     required
                     disabled={isSubmitting}
+                    className="rounded-2xl"
                   />
                   <p className="text-xs text-text-secondary">File akan diupload ke Cloudinary dan disimpan sebagai URL.</p>
                 </div>

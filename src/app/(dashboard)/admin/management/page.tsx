@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Users } from 'lucide-react'
+import { ArrowRight, Users } from 'lucide-react'
 import { managementQueries } from '@/features/management/queries'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -21,7 +21,7 @@ export default async function ManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 rounded-3xl bg-surface p-5 shadow-soft ring-1 ring-border lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="font-heading text-3xl font-extrabold text-primary">Manajemen Pengurus</h1>
           <p className="mt-1 text-sm text-text-secondary">
@@ -51,24 +51,31 @@ export default async function ManagementPage() {
               </h2>
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {members.map((user) => (
-                  <Link key={user.id} href={`/admin/management/${user.id}`}>
-                    <Card className="cursor-pointer transition hover:-translate-y-0.5 hover:shadow-card">
-                      <CardContent className="flex items-center gap-4 p-4">
-                        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-card text-sm font-bold text-surface">
-                          {user.name.slice(0, 2).toUpperCase()}
+                  <Link key={user.id} href={`/admin/management/${user.id}`} className="block">
+                    <Card className="cursor-pointer overflow-hidden transition hover:-translate-y-0.5 hover:shadow-card">
+                      <CardContent className="grid grid-cols-[auto_1fr] gap-3 p-4">
+                        <div
+                          className="row-span-2 flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-card bg-cover bg-center text-sm font-bold text-surface"
+                          style={user.photoUrl ? { backgroundImage: `url(${user.photoUrl})` } : undefined}
+                          aria-hidden="true"
+                        >
+                          {user.photoUrl ? null : user.name.slice(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-heading font-bold text-primary truncate">{user.name}</p>
-                          <p className="text-xs text-text-secondary truncate">
+                          <p className="truncate font-heading font-bold leading-tight text-primary">{user.name}</p>
+                          <p className="mt-1 truncate text-xs text-text-secondary">
                             {user.position?.name ?? 'Tanpa Jabatan'}
                           </p>
                         </div>
-                        <Badge
-                          tone={user.isActive ? 'success' : 'surface'}
-                          className="ml-auto flex-shrink-0"
-                        >
-                          {user.isActive ? 'Aktif' : 'Demisioner'}
-                        </Badge>
+                        <div className="col-start-2 flex min-w-0 items-center justify-between gap-2">
+                          <Badge
+                            tone={user.isActive ? 'success' : 'surface'}
+                            className="max-w-full shrink truncate px-2.5"
+                          >
+                            {user.isActive ? 'Aktif' : 'Demisioner'}
+                          </Badge>
+                          <ArrowRight className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
+                        </div>
                       </CardContent>
                     </Card>
                   </Link>

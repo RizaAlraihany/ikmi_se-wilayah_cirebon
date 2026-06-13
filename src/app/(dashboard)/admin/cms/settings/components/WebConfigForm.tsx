@@ -136,14 +136,14 @@ export function WebConfigForm({ configs }: { configs: ConfigValues }) {
 
   return (
     <Card>
-      <div className="flex flex-wrap border-b border-line px-4 pt-4">
+      <div className="flex overflow-x-auto border-b border-line px-4 pt-4 scrollbar-hide">
         {tabs.map((tab) => (
           <button
             key={tab.value}
             type="button"
             onClick={() => { setActiveTab(tab.value); setMessage('') }}
             className={cn(
-              'border-b-2 px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+              'shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
               activeTab === tab.value
                 ? 'border-accent text-primary'
                 : 'border-transparent text-muted hover:text-primary',

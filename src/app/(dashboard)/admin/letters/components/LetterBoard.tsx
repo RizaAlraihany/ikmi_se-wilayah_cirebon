@@ -30,6 +30,17 @@ const filters: { value: FilterValue; label: string }[] = [
   { value: 'OUT', label: 'Surat Keluar' },
 ]
 
+const letterDateFormatter = new Intl.DateTimeFormat('id-ID', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'Asia/Jakarta',
+})
+
+function formatLetterDate(value: Date | string) {
+  return letterDateFormatter.format(new Date(value))
+}
+
 export function LetterBoard({ initialLetters, currentFilter, currentSearch }: { initialLetters: Letter[]; currentFilter?: string; currentSearch?: string }) {
   const router = useRouter()
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
@@ -69,8 +80,8 @@ export function LetterBoard({ initialLetters, currentFilter, currentSearch }: { 
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
+      <div className="rounded-3xl bg-surface p-3 shadow-soft ring-1 ring-border md:flex md:items-center md:justify-between md:gap-4">
+        <div className="grid grid-cols-3 gap-2 md:flex md:flex-wrap">
           {filters.map((filter) => {
             const isActive = (currentFilter || '') === filter.value
             return (
@@ -78,6 +89,7 @@ export function LetterBoard({ initialLetters, currentFilter, currentSearch }: { 
                 key={filter.label}
                 variant={isActive ? 'primary' : 'secondary'}
                 size="sm"
+                className="px-3 text-xs md:px-4 md:text-sm"
                 onClick={() => handleFilter(filter.value)}
               >
                 {filter.label}
@@ -85,13 +97,14 @@ export function LetterBoard({ initialLetters, currentFilter, currentSearch }: { 
             )
           })}
         </div>
-        <form onSubmit={handleSearch} className="flex max-w-sm w-full gap-2">
+        <form onSubmit={handleSearch} className="mt-3 grid w-full grid-cols-[1fr_auto] gap-2 md:mt-0 md:max-w-sm">
           <Input
             placeholder="Cari surat..."
             value={search}
+            className="rounded-2xl"
             onChange={(e) => setSearch(e.target.value)}
           />
-          <Button type="submit" variant="secondary">Cari</Button>
+          <Button type="submit" variant="secondary" className="px-5">Cari</Button>
         </form>
       </div>
 
@@ -102,44 +115,48 @@ export function LetterBoard({ initialLetters, currentFilter, currentSearch }: { 
       )}
 
       {initialLetters.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title="Belum ada arsip surat"
-          description="Surat masuk dan keluar yang ditambahkan akan tampil di sini."
-        />
+        <Card className="border-dashed bg-surface/80">
+          <EmptyState
+            icon={FileText}
+            title="Belum ada arsip surat"
+            description="Surat masuk dan keluar yang ditambahkan akan tampil di sini."
+          />
+        </Card>
       ) : (
         <>
           <div className="grid gap-4 md:hidden">
             {initialLetters.map((letter) => (
-              <Card key={letter.id}>
-                <CardContent className="space-y-4 p-5">
+              <Card key={letter.id} className="overflow-hidden">
+                <CardContent className="space-y-4 p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-heading text-base font-bold text-primary">{letter.letterNumber}</p>
-                      <p className="text-sm text-text-secondary">{new Date(letter.date).toLocaleDateString('id-ID')}</p>
+                      <p className="text-sm text-text-secondary">{formatLetterDate(letter.date)}</p>
                     </div>
                     <Badge tone={letter.type === 'IN' ? 'success' : 'warning'}>
                       {letter.type === 'IN' ? 'Masuk' : 'Keluar'}
                     </Badge>
                   </div>
                   <p className="text-sm leading-6 text-primary/80">{letter.subject}</p>
-                  <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <a
                       href={letter.fileUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-background text-primary transition-colors hover:bg-primary/5"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-surface transition-colors hover:bg-secondary"
                       aria-label={`Lihat dokumen ${letter.letterNumber}`}
                     >
                       <ExternalLink className="h-4 w-4" />
+                      Lihat
                     </a>
                     <button
                       type="button"
                       onClick={() => setPendingDeleteId(letter.id)}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-danger/15 text-primary transition-colors hover:bg-danger/25"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-danger/15 text-sm font-semibold text-primary transition-colors hover:bg-danger/25"
                       aria-label={`Hapus surat ${letter.letterNumber}`}
                     >
                       <Trash2 className="h-4 w-4" />
+                      Hapus
                     </button>
                   </div>
                 </CardContent>
@@ -172,7 +189,7 @@ export function LetterBoard({ initialLetters, currentFilter, currentSearch }: { 
                       </td>
                       <td className="px-5 py-4 text-primary/80">{letter.subject}</td>
                       <td className="whitespace-nowrap px-5 py-4 text-text-secondary">
-                        {new Date(letter.date).toLocaleDateString('id-ID')}
+                        {formatLetterDate(letter.date)}
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-right">
                         <div className="flex justify-end gap-2">

@@ -7,6 +7,7 @@ import { loginAction } from '@/features/auth/actions'
 import { loginSchema, type LoginInput } from '@/features/auth/schemas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 
 export function LoginForm() {
   const [globalError, setGlobalError] = useState<string>('')
@@ -21,14 +22,10 @@ export function LoginForm() {
 
   const onSubmit = async (data: LoginInput) => {
     setGlobalError('')
-    try {
-      const result = await loginAction(data)
+    const result = await loginAction(data)
 
-      if (result?.error) {
-        setGlobalError(result.error)
-      }
-    } catch {
-      setGlobalError('Terjadi kesalahan yang tidak terduga.')
+    if (result?.error) {
+      setGlobalError(result.error)
     }
   }
 
@@ -45,7 +42,7 @@ export function LoginForm() {
       </Field>
 
       <Field label="Password" htmlFor="password" error={errors.password?.message}>
-        <Input id="password" {...register('password')} type="password" placeholder="Masukkan password" autoComplete="current-password" />
+        <PasswordInput id="password" {...register('password')} placeholder="Masukkan password" autoComplete="current-password" />
       </Field>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">

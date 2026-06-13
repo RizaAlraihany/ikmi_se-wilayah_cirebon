@@ -23,8 +23,9 @@ export const eventService = {
     const hasPermission = await can('event.create', userObj as SessionUser)
     const isOwner = eventPolicies.canManageEvent(userObj, program)
     const isGlobal = await can('system.manage', userObj as SessionUser)
+    const canManageCalendar = await can('calendar.manage', userObj as SessionUser)
     
-    if (!hasPermission || (!isOwner && !isGlobal)) {
+    if (!hasPermission || (!isOwner && !isGlobal && !canManageCalendar)) {
       throw new ForbiddenError('Tidak memiliki izin untuk membuat event di program ini')
     }
 
@@ -70,9 +71,39 @@ export const eventService = {
     const hasPermission = await can('event.update', userObj as SessionUser)
     const isOwner = eventPolicies.canManageEvent(userObj, event.program)
     const isGlobal = await can('system.manage', userObj as SessionUser)
+    const canManageCalendar = await can('calendar.manage', userObj as SessionUser)
 
-    if (!hasPermission || (!isOwner && !isGlobal)) {
+    if (!hasPermission || (!isOwner && !isGlobal && !canManageCalendar)) {
       throw new ForbiddenError('Tidak memiliki izin untuk mengubah event ini')
+    }
+
+    if (event.status === EventStatus.COMPLETED && validated.status && validated.status !== EventStatus.COMPLETED) {
+      throw new ValidationError('Agenda yang sudah completed tidak bisa diubah statusnya')
+    }
+
+    if (validated.status === EventStatus.CANCELLED) {
+      const [updated] = await prisma.$transaction([
+        prisma.event.update({
+          where: { id },
+          data: {
+            status: EventStatus.CANCELLED,
+            deletedAt: new Date(),
+            updatedBy: userId,
+          },
+        }),
+        prisma.auditLog.create({
+          data: {
+            action: 'DELETE',
+            entity: 'Event',
+            entityId: id,
+            oldData: JSON.stringify(event),
+            newData: JSON.stringify(validated),
+            userId,
+          },
+        }),
+      ])
+
+      return updated
     }
 
     const [updated] = await prisma.$transaction([
@@ -105,8 +136,9 @@ export const eventService = {
     const hasPermission = await can('event.delete', userObj as SessionUser)
     const isOwner = eventPolicies.canManageEvent(userObj, event.program)
     const isGlobal = await can('system.manage', userObj as SessionUser)
+    const canManageCalendar = await can('calendar.manage', userObj as SessionUser)
 
-    if (!hasPermission || (!isOwner && !isGlobal)) {
+    if (!hasPermission || (!isOwner && !isGlobal && !canManageCalendar)) {
       throw new ForbiddenError('Tidak memiliki izin untuk menghapus event ini')
     }
 

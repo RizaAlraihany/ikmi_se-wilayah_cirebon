@@ -11,6 +11,7 @@ export const cloudinaryFolders = {
   events: 'events',
   reports: 'reports',
   letters: 'letters',
+  documents: 'documents',
   media: 'media-library',
   organizations: 'organizations',
   website: 'website',

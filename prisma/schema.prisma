@@ -589,6 +589,26 @@ model Letter {
   @@map("letters")
 }
 
+model DocumentArchive {
+  id           String   @id @default(cuid())
+  title        String
+  category     String
+  description  String?  @db.Text
+  fileUrl      String   @map("file_url")
+  filePublicId String?  @map("file_public_id")
+  archivedAt   DateTime @map("archived_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  @@index([category])
+  @@index([archivedAt])
+  @@map("document_archives")
+}
+
 // Buku Kas — transaksi keuangan (Bendahara)
 model FinanceTransaction {
   id          String   @id @default(cuid())

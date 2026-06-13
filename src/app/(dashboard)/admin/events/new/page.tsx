@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input, Select } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
+import { ListboxSelect } from '@/components/ui/listbox-select'
 import { Textarea } from '@/components/ui/textarea'
 import { createEventAction } from '@/features/events/actions'
 import { programQueries } from '@/features/programs/queries'
@@ -42,11 +43,12 @@ export default async function NewEventPage({ searchParams }: { searchParams: Pro
           <form action={createEvent} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="programId" className="text-sm font-semibold text-primary">Pilih Program Terkait</label>
-              <Select id="programId" name="programId" required defaultValue={sp.programId}>
-                {programs.map((p: { id: string, name: string }) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </Select>
+              <ListboxSelect
+                id="programId"
+                name="programId"
+                defaultValue={sp.programId ?? programs[0]?.id ?? ''}
+                options={programs.map((program: { id: string, name: string }) => ({ value: program.id, label: program.name }))}
+              />
             </div>
 
             <div className="space-y-2">
@@ -57,11 +59,11 @@ export default async function NewEventPage({ searchParams }: { searchParams: Pro
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="startDate" className="text-sm font-semibold text-primary">Tanggal Mulai</label>
-                <Input id="startDate" name="startDate" type="datetime-local" required />
+                <Input id="startDate" name="startDate" type="text" required placeholder="YYYY-MM-DDTHH:mm" />
               </div>
               <div className="space-y-2">
                 <label htmlFor="endDate" className="text-sm font-semibold text-primary">Tanggal Selesai</label>
-                <Input id="endDate" name="endDate" type="datetime-local" required />
+                <Input id="endDate" name="endDate" type="text" required placeholder="YYYY-MM-DDTHH:mm" />
               </div>
             </div>
 

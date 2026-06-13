@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Department, Role } from '@prisma/client'
 import { userCreateSchema, type UserCreateInput } from '@/features/users/schemas'
 import { createUserAction } from '@/features/users/actions'
 import { Button } from '@/components/ui/button'
-import { Input, Select } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
+import { ListboxSelect } from '@/components/ui/listbox-select'
+import { PasswordInput } from '@/components/ui/password-input'
 
 interface UserFormProps {
   roles: Role[]
@@ -22,9 +24,14 @@ export function UserForm({ roles, departments }: UserFormProps) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<UserCreateInput>({
     resolver: zodResolver(userCreateSchema),
+    defaultValues: {
+      roleId: '',
+      departmentId: '',
+    },
   })
 
   const onSubmit = async (data: UserCreateInput) => {
@@ -60,25 +67,45 @@ export function UserForm({ roles, departments }: UserFormProps) {
         </Field>
 
         <Field label="Password" htmlFor="password" error={errors.password?.message}>
-          <Input id="password" {...register('password')} type="password" disabled={isSubmitting} />
+          <PasswordInput id="password" {...register('password')} disabled={isSubmitting} />
         </Field>
 
         <Field label="Role" htmlFor="roleId" error={errors.roleId?.message}>
-          <Select id="roleId" {...register('roleId')} disabled={isSubmitting}>
-            <option value="">Pilih Role</option>
-            {roles.map((role) => (
-              <option key={role.id} value={role.id}>{role.name}</option>
-            ))}
-          </Select>
+          <Controller
+            control={control}
+            name="roleId"
+            render={({ field }) => (
+              <ListboxSelect
+                id="roleId"
+                value={field.value ?? ''}
+                onValueChange={field.onChange}
+                disabled={isSubmitting}
+                options={[
+                  { value: '', label: 'Pilih Role' },
+                  ...roles.map((role) => ({ value: role.id, label: role.name })),
+                ]}
+              />
+            )}
+          />
         </Field>
 
         <Field label="Departemen" htmlFor="departmentId" error={errors.departmentId?.message}>
-          <Select id="departmentId" {...register('departmentId')} disabled={isSubmitting}>
-            <option value="">Pilih Departemen</option>
-            {departments.map((department) => (
-              <option key={department.id} value={department.id}>{department.name}</option>
-            ))}
-          </Select>
+          <Controller
+            control={control}
+            name="departmentId"
+            render={({ field }) => (
+              <ListboxSelect
+                id="departmentId"
+                value={field.value ?? ''}
+                onValueChange={field.onChange}
+                disabled={isSubmitting}
+                options={[
+                  { value: '', label: 'Pilih Departemen' },
+                  ...departments.map((department) => ({ value: department.id, label: department.name })),
+                ]}
+              />
+            )}
+          />
         </Field>
       </div>
 

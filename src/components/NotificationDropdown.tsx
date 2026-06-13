@@ -13,6 +13,16 @@ type Notification = {
   createdAt: Date
 }
 
+const notificationDateFormatter = new Intl.DateTimeFormat('id-ID', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Jakarta',
+})
+
+function formatNotificationDate(value: Date | string) {
+  return notificationDateFormatter.format(new Date(value))
+}
+
 export function NotificationDropdown({
   initialNotifications,
   unreadCount,
@@ -86,7 +96,7 @@ export function NotificationDropdown({
                         <p className="truncate text-sm font-semibold text-primary">{notification.title}</p>
                         <p className="mt-1 line-clamp-2 text-xs text-muted">{notification.message}</p>
                         <p className="mt-2 text-xs font-medium text-muted">
-                          {new Date(notification.createdAt).toLocaleString('id-ID')}
+                          {formatNotificationDate(notification.createdAt)}
                         </p>
                       </div>
                       {!notification.readAt ? (

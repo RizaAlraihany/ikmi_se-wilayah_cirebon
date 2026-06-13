@@ -19,60 +19,63 @@ export default async function AdminFinancePage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading text-3xl font-extrabold text-primary">Buku Kas (Keuangan)</h1>
-          <p className="mt-1 text-sm text-text-secondary">Pantau pemasukan dan pengeluaran keuangan organisasi.</p>
+          <h1 className="font-heading text-3xl font-extrabold text-primary">Buku Iuran (Keuangan)</h1>
+          <p className="mt-1 text-sm text-text-secondary">Pantau pemasukan dan pengeluaran iuran organisasi.</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/admin/finance/tokens">
-            <Button variant="secondary">
-              LPJ Token
-            </Button>
-          </Link>
-          <Link href="/admin/finance/new">
+        <div>
+          {/* Desktop Button */}
+          <Link href="/admin/finance/new" className="hidden md:block">
             <Button>
               <Plus className="w-4 h-4 mr-2" />
               Catat Transaksi
             </Button>
           </Link>
+
+          {/* Mobile Floating Action Button */}
+          <Link href="/admin/finance/new" className="md:hidden">
+            <Button className="fixed bottom-24 right-4 h-14 w-14 rounded-full shadow-lg z-40 p-0 flex items-center justify-center">
+              <Plus className="h-6 w-6" />
+            </Button>
+          </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 md:gap-4">
         <Card className="border-t-4 border-t-success">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-success/10 rounded-full">
-              <ArrowDownRight className="w-6 h-6 text-success" />
+          <CardContent className="p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
+            <div className="p-2 md:p-3 bg-success/10 rounded-full shrink-0">
+              <ArrowDownRight className="w-5 h-5 md:w-6 md:h-6 text-success" />
             </div>
-            <div>
-              <p className="text-xs font-medium uppercase text-text-secondary">Total Pemasukan</p>
-              <div className="mt-1 font-heading text-2xl font-extrabold text-primary">
-                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(summary.totalIncome)}
+            <div className="min-w-0 break-words">
+              <p className="text-[10px] md:text-xs font-medium uppercase text-text-secondary leading-tight">Total Pemasukan</p>
+              <div className="mt-1 font-heading text-sm md:text-2xl font-extrabold text-primary truncate">
+                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(summary.totalIncome)}
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-t-4 border-t-danger">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-danger/10 rounded-full">
-              <ArrowUpRight className="w-6 h-6 text-danger" />
+          <CardContent className="p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
+            <div className="p-2 md:p-3 bg-danger/10 rounded-full shrink-0">
+              <ArrowUpRight className="w-5 h-5 md:w-6 md:h-6 text-danger" />
             </div>
-            <div>
-              <p className="text-xs font-medium uppercase text-text-secondary">Total Pengeluaran</p>
-              <div className="mt-1 font-heading text-2xl font-extrabold text-primary">
-                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(summary.totalExpense)}
+            <div className="min-w-0 break-words">
+              <p className="text-[10px] md:text-xs font-medium uppercase text-text-secondary leading-tight">Total Pengeluaran</p>
+              <div className="mt-1 font-heading text-sm md:text-2xl font-extrabold text-primary truncate">
+                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(summary.totalExpense)}
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="border-t-4 border-t-primary">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <ArrowRightLeft className="w-6 h-6 text-primary" />
+          <CardContent className="p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
+            <div className="p-2 md:p-3 bg-primary/10 rounded-full shrink-0">
+              <ArrowRightLeft className="w-5 h-5 md:w-6 md:h-6 text-primary" />
             </div>
-            <div>
-              <p className="text-xs font-medium uppercase text-text-secondary">Saldo Saat Ini</p>
-              <div className="mt-1 font-heading text-2xl font-extrabold text-primary">
-                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(summary.balance)}
+            <div className="min-w-0 break-words">
+              <p className="text-[10px] md:text-xs font-medium uppercase text-text-secondary leading-tight">Saldo Saat Ini</p>
+              <div className="mt-1 font-heading text-sm md:text-2xl font-extrabold text-primary truncate">
+                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(summary.balance)}
               </div>
             </div>
           </CardContent>

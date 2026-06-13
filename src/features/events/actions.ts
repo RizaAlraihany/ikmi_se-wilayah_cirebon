@@ -10,9 +10,10 @@ export async function createEventAction(data: EventCreateInput) {
     const session = await auth()
     if (!session?.user?.id) return { error: 'Akses ditolak.' }
 
-    await eventService.createEvent(data, session.user.id)
+    const event = await eventService.createEvent(data, session.user.id)
+    revalidatePath('/admin/events')
     revalidatePath('/dashboard/events')
-    return { success: true }
+    return { success: true, event }
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return { error: 'Data tidak valid' }
     if (error instanceof Error) return { error: error.message || 'Terjadi kesalahan' }
@@ -25,9 +26,11 @@ export async function updateEventAction(id: string, data: EventUpdateInput) {
     const session = await auth()
     if (!session?.user?.id) return { error: 'Akses ditolak.' }
 
-    await eventService.updateEvent(id, data, session.user.id)
+    const event = await eventService.updateEvent(id, data, session.user.id)
+    revalidatePath('/admin/events')
+    revalidatePath(`/admin/events/${id}`)
     revalidatePath('/dashboard/events')
-    return { success: true }
+    return { success: true, event }
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return { error: 'Data tidak valid' }
     if (error instanceof Error) return { error: error.message }
@@ -41,6 +44,7 @@ export async function deleteEventAction(id: string) {
     if (!session?.user?.id) return { error: 'Akses ditolak.' }
 
     await eventService.deleteEvent(id, session.user.id)
+    revalidatePath('/admin/events')
     revalidatePath('/dashboard/events')
     return { success: true }
   } catch (error) {

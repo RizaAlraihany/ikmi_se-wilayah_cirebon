@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import Link from 'next/link'
 import { Metadata } from 'next'
 import { LoginForm } from './login-form'
 import { Card, CardContent } from '@/components/ui/card'
@@ -26,21 +25,22 @@ export default function LoginPage() {
 
       <section className="flex items-center justify-center">
         <Card className="w-full max-w-md">
-          <CardContent className="space-y-8 p-6 sm:p-8">
-            <div className="space-y-3 text-center">
-              <Image src="/ikmi-logo.png" alt="Logo IKMI Cirebon" width={64} height={64} className="mx-auto rounded-full md:hidden" />
-              <div>
-                <h2 className="font-heading text-2xl font-extrabold text-primary">Masuk Dashboard</h2>
-                <p className="mt-1 text-sm text-muted">Gunakan akun pengurus yang sudah terdaftar.</p>
+          <CardContent className="p-6 sm:p-8">
+            <div className="space-y-6">
+              <div className="space-y-3 text-center">
+                <Image src="/ikmi-logo.png" alt="Logo IKMI Cirebon" width={64} height={64} className="mx-auto rounded-full md:hidden" />
+                <div>
+                  <h2 className="font-heading text-2xl font-extrabold text-primary">Masuk Dashboard</h2>
+                  <p className="mt-1 text-sm text-muted">Gunakan akun pengurus yang sudah terdaftar.</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <LoginForm />
+                <p className="text-center text-sm text-muted">
+                  hubungi komdigi untuk mendapatkan akses
+                </p>
               </div>
             </div>
-            <LoginForm />
-            <p className="text-center text-sm text-muted">
-              Ingin bergabung sebagai kader?{' '}
-              <Link href="/register" className="font-semibold text-accent">
-                Daftar di sini
-              </Link>
-            </p>
           </CardContent>
         </Card>
       </section>

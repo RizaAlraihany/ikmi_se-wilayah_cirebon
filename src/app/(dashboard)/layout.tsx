@@ -1,7 +1,7 @@
 import { auth, signOut } from '@/core/auth/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Bell, LogOut } from 'lucide-react'
+import { ChevronDown, LogOut, UserCircle } from 'lucide-react'
 import { notificationQueries } from '@/features/notifications/queries'
 import { NotificationDropdown } from '@/components/NotificationDropdown'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ const navItems = [
   { href: '/admin/users', label: 'Manajemen User', icon: 'users', permission: 'user.view' },
   { href: '/admin/finance/tokens', label: 'LPJ Token', icon: 'key', permission: 'lpj_token.manage' },
   { href: '/admin/system/audit-logs', label: 'Audit Logs', icon: 'audit', permission: 'audit.view' },
-  { href: '/admin/cms/settings', label: 'Web Config', icon: 'settings', permission: 'system.manage' },
+  { href: '/admin/cms/settings', label: 'Landing Page', icon: 'settings', permission: 'cms.update' },
   { href: '/admin/cms/content-plan', label: 'Content Plan', icon: 'file', permission: 'content_plan.view' },
   { href: '/admin/cms/posts', label: 'Blog & Artikel', icon: 'newspaper', permission: 'post.view' },
   { href: '/admin/cms/categories', label: 'Kategori', icon: 'book', permission: 'cms.view' },
@@ -29,7 +29,8 @@ const navItems = [
   { href: '/admin/events', label: 'Kalender Kegiatan', icon: 'calendar', permission: 'calendar.view' },
   { href: '/admin/announcements', label: 'Pengumuman', icon: 'megaphone', permission: 'announcement.view' },
   { href: '/admin/letters', label: 'Persuratan', icon: 'mail', permission: 'letter.view' },
-  { href: '/admin/management', label: 'Manajemen Pengurus', icon: 'users', permission: 'management.view' },
+  { href: '/admin/documents', label: 'Arsip Dokumen', icon: 'archive', permission: 'letter.view' },
+  { href: '/admin/management', label: 'Manajemen Pengurus', icon: 'users', permission: 'user.view' },
   { href: '/admin/registrations', label: 'Anggota Baru', icon: 'book', permission: 'registration.view' },
   { href: '/admin/finance', label: 'Buku Kas', icon: 'wallet', permission: 'finance.view' },
   { href: '/admin/reports', label: 'LPJ Module', icon: 'file', permission: 'lpj.view' },
@@ -50,23 +51,47 @@ const navGroups = [
   },
   {
     label: 'Sekretaris',
-    items: [navItems[9], navItems[10], navItems[11], navItems[12], navItems[13]],
+    items: [navItems[9], navItems[10], navItems[11], navItems[12], navItems[13], navItems[14]],
   },
   {
     label: 'Bendahara',
-    items: [navItems[14], navItems[15]],
+    items: [navItems[15], navItems[16]],
   },
 ]
 
-const mobileNavItems = [
+const defaultMobileNavItems = [
   { href: '/admin', label: 'Dashboard', icon: 'dashboard', permission: null },
   { href: '/admin/events', label: 'Kalender', icon: 'calendar', permission: 'calendar.view' },
   { href: '/admin/letters', label: 'Surat', icon: 'mail', permission: 'letter.view' },
-  { href: '/admin/users', label: 'User', icon: 'users', permission: 'user.view' },
+  { href: '/admin/documents', label: 'Arsip', icon: 'archive', permission: 'letter.view' },
+  { href: '/admin/management', label: 'Pengurus', icon: 'users', permission: 'user.view' },
   { href: '/admin/announcements', label: 'Info', icon: 'megaphone', permission: 'announcement.view' },
   { href: '/admin/cms/posts', label: 'Artikel', icon: 'newspaper', permission: 'post.view' },
   { href: '/dashboard/profile', label: 'Profil', icon: 'profile', permission: null },
 ] satisfies PermissionNavItem[]
+
+const mobileNavByRole: Record<string, PermissionNavItem[]> = {
+  admin_komdigi: [
+    { href: '/admin', label: 'Dashboard', icon: 'dashboard', permission: null },
+    { href: '/admin/cms/settings', label: 'Landing', icon: 'settings', permission: 'cms.update' },
+    { href: '/admin/cms/content-plan', label: 'Plan', icon: 'calendar', permission: 'content_plan.view' },
+    { href: '/admin/cms/posts', label: 'Blog', icon: 'newspaper', permission: 'post.view' },
+    { href: '/admin/cms/media', label: 'Media', icon: 'archive', permission: 'cms.view' },
+  ],
+  admin_sekretaris: [
+    { href: '/admin', label: 'Dashboard', icon: 'dashboard', permission: null },
+    { href: '/admin/events', label: 'Kalender', icon: 'calendar', permission: 'calendar.view' },
+    { href: '/admin/letters', label: 'Surat', icon: 'mail', permission: 'letter.view' },
+    { href: '/admin/documents', label: 'Arsip', icon: 'archive', permission: 'letter.view' },
+    { href: '/admin/management', label: 'Pengurus', icon: 'users', permission: 'user.view' },
+  ],
+  admin_bendahara: [
+    { href: '/admin', label: 'Dashboard', icon: 'dashboard', permission: null },
+    { href: '/admin/finance', label: 'Iuran', icon: 'wallet', permission: 'finance.view' },
+    { href: '/admin/finance/tokens', label: 'Token', icon: 'key', permission: 'lpj_token.manage' },
+    { href: '/admin/reports', label: 'LPJ', icon: 'file', permission: 'lpj.view' },
+  ],
+}
 
 function stripPermission(item: PermissionNavItem): DashboardNavItem {
   return {
@@ -111,13 +136,23 @@ export default async function DashboardLayout({
 
   const activeNavGroups = authorizedNavGroups.filter((group) => group.items.length > 0) as DashboardNavGroup[]
 
+  const roleMobileNavItems = mobileNavByRole[sessionUser.roleId] ?? defaultMobileNavItems
   const authorizedMobileNavItems = await Promise.all(
-    mobileNavItems.map(async (item) => ((await hasNavAccess(item, sessionUser)) ? stripPermission(item) : null)),
+    roleMobileNavItems.map(async (item) => ((await hasNavAccess(item, sessionUser)) ? stripPermission(item) : null)),
   )
   const activeMobileNavItems = (authorizedMobileNavItems.filter(Boolean) as DashboardNavItem[]).slice(0, 5)
 
   const canManageSystem = await can('system.manage', sessionUser)
   const showMobileMenuToggle = canManageSystem
+  const userName = session.user.name ?? 'Pengurus IKMI'
+  const userInitials = userName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    || 'IK'
 
   return (
     <div className="min-h-screen bg-background text-primary">
@@ -135,21 +170,46 @@ export default async function DashboardLayout({
             </div>
             <div className="flex items-center gap-2">
               <NotificationDropdown initialNotifications={initialNotifications} unreadCount={unreadCount} />
-              <Link href="/admin/notifications">
-                <Button variant="ghost" size="icon" aria-label="Semua notifikasi">
-                  <Bell className="h-5 w-5" aria-hidden="true" />
-                </Button>
-              </Link>
-              <form
-                action={async () => {
-                  'use server'
-                  await signOut({ redirectTo: '/login' })
-                }}
-              >
-                <Button type="submit" variant="ghost" size="icon" aria-label="Keluar">
-                  <LogOut className="h-5 w-5" aria-hidden="true" />
-                </Button>
-              </form>
+              <details className="relative">
+                <summary className="flex h-11 cursor-pointer list-none items-center gap-2 rounded-full bg-surface px-2 pr-3 text-primary shadow-soft ring-1 ring-border transition hover:bg-surface-alt [&::-webkit-details-marker]:hidden">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-card font-heading text-xs font-extrabold text-surface">
+                    {userInitials}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-text-secondary" aria-hidden="true" />
+                  <span className="sr-only">Buka menu profil</span>
+                </summary>
+                <div className="absolute right-0 top-13 z-50 w-72 rounded-2xl bg-surface p-3 shadow-float ring-1 ring-border">
+                  <div className="flex items-center gap-3 rounded-2xl bg-surface-alt p-3">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-card font-heading text-sm font-extrabold text-surface">
+                      {userInitials}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate font-heading text-sm font-extrabold text-primary">{userName}</p>
+                      <p className="truncate text-xs font-medium text-text-secondary">{currentUserRoleLabel(session.user.roleId)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 space-y-1">
+                    <Link
+                      href="/dashboard/profile"
+                      className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
+                    >
+                      <UserCircle className="h-4 w-4 text-accent" aria-hidden="true" />
+                      Profil saya
+                    </Link>
+                    <form
+                      action={async () => {
+                        'use server'
+                        await signOut({ redirectTo: '/login' })
+                      }}
+                    >
+                      <Button type="submit" variant="ghost" className="w-full justify-start rounded-xl px-3 text-danger hover:bg-danger/10">
+                        <LogOut className="h-4 w-4" aria-hidden="true" />
+                        Keluar
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
         </header>
@@ -162,4 +222,16 @@ export default async function DashboardLayout({
       {!showMobileMenuToggle ? <DashboardBottomNav items={activeMobileNavItems} /> : null}
     </div>
   )
+}
+
+function currentUserRoleLabel(roleId: string | null | undefined) {
+  const labels: Record<string, string> = {
+    super_admin: 'Super Admin',
+    admin_komdigi: 'Admin Komdigi',
+    admin_sekretaris: 'Admin Sekretaris',
+    admin_bendahara: 'Admin Bendahara',
+    user: 'Anggota',
+  }
+
+  return roleId ? labels[roleId] ?? 'Pengurus IKMI' : 'Pengurus IKMI'
 }

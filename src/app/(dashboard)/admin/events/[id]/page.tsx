@@ -7,14 +7,17 @@ import { Calendar, MapPin, FileText } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { StatusUpdater } from './components/StatusUpdater'
+import { auth } from '@/core/auth/auth'
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const p = await params
-  const event = await eventQueries.getEventById(p.id)
+  const [event, session] = await Promise.all([eventQueries.getEventById(p.id), auth()])
 
   if (!event) {
     notFound()
   }
+
+  const showReportPanel = session?.user.roleId !== 'admin_sekretaris'
 
   return (
     <div className="space-y-6">
@@ -25,8 +28,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         <h1 className="font-heading text-3xl font-extrabold text-primary">Detail Event</h1>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
+      <div className={showReportPanel ? 'grid gap-6 md:grid-cols-3' : 'grid gap-6'}>
+        <div className={showReportPanel ? 'space-y-6 md:col-span-2' : 'space-y-6'}>
           <Card>
             <CardHeader className="pb-4">
               <div className="flex justify-between items-start">
@@ -72,40 +75,42 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                LPJ / Laporan
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {event.report ? (
-                <div className="p-3 border rounded-lg bg-muted/20">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-semibold">Status LPJ</span>
-                    <Badge tone={event.report.status === 'VERIFIED' ? 'success' : 'warning'}>{event.report.status}</Badge>
-                  </div>
-                  <Link href={`/admin/reports/${event.report.id}`} className="text-sm text-primary hover:underline">
-                    Lihat Detail Laporan
-                  </Link>
-                </div>
-              ) : (
-                <div className="text-center p-4 border border-dashed rounded-lg text-muted-foreground text-sm">
-                  Belum ada laporan pertanggungjawaban.
-                  {event.status === 'COMPLETED' && (
-                    <div className="mt-3">
-                      <Link href={`/admin/reports/new?eventId=${event.id}`} className="text-primary hover:underline font-medium">
-                        Buat Laporan Sekarang
-                      </Link>
+        {showReportPanel ? (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  LPJ / Laporan
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {event.report ? (
+                  <div className="p-3 border rounded-lg bg-muted/20">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-semibold">Status LPJ</span>
+                      <Badge tone={event.report.status === 'VERIFIED' ? 'success' : 'warning'}>{event.report.status}</Badge>
                     </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                    <Link href={`/admin/reports/${event.report.id}`} className="text-sm text-primary hover:underline">
+                      Lihat Detail Laporan
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="text-center p-4 border border-dashed rounded-lg text-muted-foreground text-sm">
+                    Belum ada laporan pertanggungjawaban.
+                    {event.status === 'COMPLETED' && (
+                      <div className="mt-3">
+                        <Link href={`/admin/reports/new?eventId=${event.id}`} className="text-primary hover:underline font-medium">
+                          Buat Laporan Sekarang
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
       </div>
     </div>
   )

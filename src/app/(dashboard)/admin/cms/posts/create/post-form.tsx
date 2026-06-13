@@ -9,7 +9,8 @@ import { postCreateSchema, postUpdateSchema, type PostCreateInput, type PostUpda
 import { createPostAction, updatePostAction, uploadBlogCoverAction } from '@/features/blog/actions'
 import { Editor } from '@/components/ui/editor'
 import { Button } from '@/components/ui/button'
-import { Input, Select } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
+import { ListboxSelect } from '@/components/ui/listbox-select'
 import { Textarea } from '@/components/ui/textarea'
 
 type CategoryOption = {
@@ -139,15 +140,19 @@ export function PostForm({ categories, initialPost }: { categories: CategoryOpti
 
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Kategori" htmlFor="categoryId" error={errors.categoryId?.message}>
-          <Select
-            id="categoryId"
-            {...register('categoryId')}
-            disabled={isSubmitting}
-          >
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>{category.name}</option>
-            ))}
-          </Select>
+          <Controller
+            name="categoryId"
+            control={control}
+            render={({ field }) => (
+              <ListboxSelect
+                id="categoryId"
+                value={field.value ?? categories[0]?.id ?? ''}
+                onValueChange={field.onChange}
+                disabled={isSubmitting}
+                options={categories.map((category) => ({ value: category.id, label: category.name }))}
+              />
+            )}
+          />
         </Field>
 
         <Field label="Featured Image URL" htmlFor="featuredImage" error={errors.featuredImage?.message}>

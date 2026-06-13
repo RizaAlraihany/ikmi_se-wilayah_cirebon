@@ -3,7 +3,11 @@ import { prisma } from '@/core/database/prisma'
 export const eventQueries = {
   async getEvents(programId?: string, skip = 0, take = 10) {
     return prisma.event.findMany({
-      where: programId ? { programId } : undefined,
+      where: {
+        deletedAt: null,
+        status: { not: 'CANCELLED' },
+        ...(programId ? { programId } : {}),
+      },
       skip,
       take,
       include: { program: true },
@@ -12,8 +16,8 @@ export const eventQueries = {
   },
 
   async getEventById(id: string) {
-    return prisma.event.findUnique({
-      where: { id },
+    return prisma.event.findFirst({
+      where: { id, deletedAt: null, status: { not: 'CANCELLED' } },
       include: { program: true, report: true }
     })
   },
