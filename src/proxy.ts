@@ -22,8 +22,15 @@ export default auth((req) => {
   ]
   const isApiRoute = req.nextUrl.pathname.startsWith('/api')
   const hostname = (req.headers.get('host') ?? req.nextUrl.hostname).split(':')[0].toLowerCase()
-  const publicHosts = new Set(['ikmicirebon.or.id', 'www.ikmicirebon.or.id'])
-  const dashboardHost = 'dashboard.ikmicirebon.or.id'
+  const publicToDashboardHost = new Map([
+    ['ikmicirebon.or.id', 'dashboard.ikmicirebon.or.id'],
+    ['www.ikmicirebon.or.id', 'dashboard.ikmicirebon.or.id'],
+    ['ikmicirebon.vercel.app', 'dashboard-ikmicirebon.vercel.app'],
+  ])
+  const dashboardHosts = new Set([
+    'dashboard.ikmicirebon.or.id',
+    'dashboard-ikmicirebon.vercel.app',
+  ])
   const logRequest = (status: number) => {
     logger.request({
       method: req.method,
@@ -39,12 +46,18 @@ export default auth((req) => {
     return
   }
 
-  if (hostname === dashboardHost && req.nextUrl.pathname === '/') {
+  if (dashboardHosts.has(hostname) && req.nextUrl.pathname === '/') {
     logRequest(302)
     return Response.redirect(new URL('/admin', req.nextUrl))
   }
 
-  if (publicHosts.has(hostname) && (isAuthRoute || isDashboardRoute)) {
+  if (dashboardHosts.has(hostname) && !isAuthRoute && !isDashboardRoute) {
+    logRequest(302)
+    return Response.redirect(new URL('/admin', req.nextUrl))
+  }
+
+  const dashboardHost = publicToDashboardHost.get(hostname)
+  if (dashboardHost && (isAuthRoute || isDashboardRoute)) {
     const dashboardUrl = new URL(req.nextUrl)
     dashboardUrl.protocol = 'https:'
     dashboardUrl.hostname = dashboardHost
