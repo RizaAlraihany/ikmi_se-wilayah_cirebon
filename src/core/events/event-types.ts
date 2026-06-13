@@ -23,9 +23,7 @@ export type EventMap = {
   'member.alumni': { userId: string }
 
   'lpj.submitted': { id: string }
-  'lpj.verified': { id: string; level: 'DEPARTMENT' | 'BPH' }
-  'lpj.verified.department': { id: string }
-  'lpj.verified.bph': { id: string }
+  'lpj.verified': { id: string }
   'lpj.rejected': { id: string }
 
   'letter.created': { id: string; type: 'IN' | 'OUT'; createdBy: string }

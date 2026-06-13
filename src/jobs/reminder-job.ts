@@ -1,7 +1,6 @@
 import { eventBus } from '@/core/events/event-bus'
 import { prisma } from '@/core/database/prisma'
 import { eventQueries } from '@/features/events/queries'
-import { financeQueries } from '@/features/finance/queries'
 
 const EVENT_REMINDER_DAYS = [30, 14, 7, 3, 1]
 
@@ -21,11 +20,7 @@ export const reminderJob = {
       remindedEvents += upcomingEvents.length
     }
 
-    const pendingFinances = await financeQueries.getPendingRequests()
 
-    for (const req of pendingFinances) {
-      await eventBus.emit('finance.reminder.sent', { requestId: req.id, amount: req.amount.toString() })
-    }
 
     const sevenDaysAgo = new Date(now)
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -47,7 +42,7 @@ export const reminderJob = {
 
     return {
       remindedEvents,
-      remindedFinances: pendingFinances.length,
+      remindedFinances: 0,
       overdueLpj: overdueEvents.length,
       remindedRegistrations: pendingRegistrations.length,
     }

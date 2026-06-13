@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "db:seed": "node scripts/generate-master-data-seed.mjs && tsx prisma/seed.ts",
     "test": "jest",
     "test:coverage": "jest --coverage"
   },

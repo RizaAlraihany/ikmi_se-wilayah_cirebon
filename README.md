@@ -3,7 +3,6 @@
 Aplikasi web modern yang dibangun untuk mendukung seluruh operasional dan profil publik organisasi **Ikatan Keluarga Mahasiswa Indramayu (IKMI) Se-Wilayah Cirebon**. Sistem ini mengusung arsitektur *Enterprise Ready Modular Monolith*.
 
 ---
-
 ## 🎯 Gambaran Umum Aplikasi
 
 Aplikasi ini dibagi menjadi dua *domain* utama:

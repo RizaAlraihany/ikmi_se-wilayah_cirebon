@@ -35,7 +35,7 @@ export function StatusUpdater({ eventId, currentStatus }: { eventId: string, cur
       <Button 
         variant={currentStatus === 'COMPLETED' ? 'primary' : 'secondary'} 
         size="sm"
-        className={currentStatus === 'COMPLETED' ? 'bg-green-600 hover:bg-green-700' : ''}
+        className={currentStatus === 'COMPLETED' ? 'bg-success-foreground hover:bg-success-foreground/90' : ''}
         disabled={loading}
         onClick={() => handleUpdate('COMPLETED')}
       >
@@ -44,7 +44,7 @@ export function StatusUpdater({ eventId, currentStatus }: { eventId: string, cur
       <Button 
         variant={currentStatus === 'CANCELLED' ? 'primary' : 'secondary'} 
         size="sm"
-        className={currentStatus === 'CANCELLED' ? 'bg-red-600 hover:bg-red-700' : ''}
+        className={currentStatus === 'CANCELLED' ? 'bg-danger-foreground hover:bg-danger-foreground/90' : ''}
         disabled={loading}
         onClick={() => handleUpdate('CANCELLED')}
       >

@@ -25,7 +25,7 @@ export default async function WebConfigPage() {
 
   await requireCmsUpdate(session.user.id)
 
-  const keys = ['landing_hero', 'landing_about', 'landing_cta', 'about_page', 'contact_info', 'seo_config']
+  const keys = ['landing_hero', 'landing_about', 'landing_sections', 'landing_cta', 'about_page', 'contact_info', 'seo_config']
   const dbConfigs = await Promise.all(keys.map((key) => webConfigQueries.getWebConfigByKey(key)))
 
   const configsMap: ConfigMap = {}

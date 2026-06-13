@@ -48,35 +48,20 @@ describe('Registration Service', () => {
     }))
   })
 
-  it('should review registration and approve', async () => {
+  it('should mark registration as PROCESSED', async () => {
     ;(registrationRepository.findById as jest.Mock).mockResolvedValueOnce({
       id: 'reg-1', status: 'PENDING'
     })
 
-    prismaMock.registration.update.mockResolvedValueOnce({ id: 'reg-1', status: 'APPROVED' } as any)
+    prismaMock.registration.update.mockResolvedValueOnce({ id: 'reg-1', status: 'PROCESSED' } as any)
 
-    const result = await registrationService.reviewRegistration('reg-1', 'APPROVED', 'admin-1')
+    const result = await registrationService.markProcessed('reg-1', 'admin-1')
 
-    expect(result.status).toBe('APPROVED')
+    expect(result.status).toBe('PROCESSED')
     expect(prismaMock.registration.update).toHaveBeenCalledWith({
       where: { id: 'reg-1' },
-      data: { status: 'APPROVED' }
+      data: { status: 'PROCESSED' }
     })
     expect(prismaMock.auditLog.create).toHaveBeenCalled()
-    expect(eventBus.emit).toHaveBeenCalledWith('registration.approved', { registrationId: 'reg-1' })
-  })
-
-  it('should review registration and reject', async () => {
-    ;(registrationRepository.findById as jest.Mock).mockResolvedValueOnce({
-      id: 'reg-1', status: 'PENDING'
-    })
-
-    prismaMock.registration.update.mockResolvedValueOnce({ id: 'reg-1', status: 'REJECTED' } as any)
-
-    const result = await registrationService.reviewRegistration('reg-1', 'REJECTED', 'admin-1')
-
-    expect(result.status).toBe('REJECTED')
-    expect(eventBus.emit).toHaveBeenCalledWith('registration.rejected', { registrationId: 'reg-1' })
   })
 })
-

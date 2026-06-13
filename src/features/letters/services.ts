@@ -42,6 +42,7 @@ export const letterService = {
       
       const letter = await letterRepository.create({
         ...data,
+        filePublicId: data.filePublicId || undefined,
         letterNumber
       })
 
@@ -70,7 +71,7 @@ export const letterService = {
     if (!letter) throw new Error('Surat tidak ditemukan')
     
     return prisma.$transaction(async (tx) => {
-      const updated = await tx.letter.update({ where: { id }, data })
+      const updated = await tx.letter.update({ where: { id }, data: { ...data, filePublicId: data.filePublicId || letter.filePublicId || undefined } })
       await tx.auditLog.create({
         data: {
           action: 'UPDATE',

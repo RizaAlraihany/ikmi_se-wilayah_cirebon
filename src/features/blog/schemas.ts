@@ -7,6 +7,7 @@ export const postCreateSchema = z.object({
   content: z.string().min(10, { message: 'Konten terlalu pendek' }),
   excerpt: z.string().optional(),
   featuredImage: z.string().url({ message: 'URL gambar tidak valid' }).optional().or(z.literal('')),
+  featuredImagePublicId: z.string().optional().or(z.literal('')),
   seoTitle: z.string().max(70, 'SEO title maksimal 70 karakter').optional(),
   seoDescription: z.string().max(160, 'SEO description maksimal 160 karakter').optional(),
   seoKeywords: z.string().max(240, 'SEO keywords maksimal 240 karakter').optional(),

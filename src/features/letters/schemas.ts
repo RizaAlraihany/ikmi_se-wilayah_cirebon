@@ -4,6 +4,7 @@ export const createLetterSchema = z.object({
   type: z.enum(['IN', 'OUT']),
   subject: z.string().min(3, 'Perihal minimal 3 karakter'),
   fileUrl: z.string().url('URL Dokumen harus valid (Simulasi Upload)'),
+  filePublicId: z.string().optional(),
   date: z.string().or(z.date()).transform(val => new Date(val))
 })
 

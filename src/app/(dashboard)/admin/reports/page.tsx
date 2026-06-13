@@ -18,9 +18,7 @@ function getReportStatusTone(status: LPJStatus): React.ComponentProps<typeof Bad
   switch (status) {
     case 'SUBMITTED':
       return 'warning'
-    case 'VERIFIED_DEPARTMENT':
-      return 'accent'
-    case 'VERIFIED_BPH':
+    case 'VERIFIED':
       return 'success'
     case 'REJECTED':
       return 'danger'
@@ -32,11 +30,9 @@ export default async function ReportsPage() {
   const session = await auth()
   if (!session?.user) redirect('/login')
 
-  const isSuperAdmin = session.user.roleId === 'super_admin'
-  const departmentId = isSuperAdmin ? undefined : session.user.departmentId ?? undefined
 
-  const reports = await reportQueries.getReports(departmentId)
-  const upcomingEvents = await eventQueries.getEventsWithoutReport(departmentId)
+  const reports = await reportQueries.getReports()
+  const upcomingEvents = await eventQueries.getEventsWithoutReport()
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
@@ -61,12 +57,12 @@ export default async function ReportsPage() {
                     <CardContent className="space-y-4 p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-heading text-base font-bold text-primary">{report.event.title}</p>
-                          <p className="text-sm text-muted">{report.event.program.name}</p>
+                          <p className="font-heading text-base font-bold text-primary">{report.event?.title ?? 'Event Tidak Diketahui'}</p>
+                          <p className="text-sm text-muted">{report.event?.program?.name ?? 'Program Tidak Diketahui'}</p>
                         </div>
                         <Badge tone={getReportStatusTone(report.status)}>{report.status}</Badge>
                       </div>
-                      <LpjViewer url={report.documentUrl} title={report.event.title} />
+                      <LpjViewer url={report.documentUrl} title={report.event?.title ?? 'Dokumen LPJ'} />
                     </CardContent>
                   </Card>
                 ))}
@@ -86,14 +82,14 @@ export default async function ReportsPage() {
                       {reports.map((report) => (
                         <tr key={report.id} className="transition-colors hover:bg-background">
                           <td className="px-5 py-4">
-                            <span className="block font-semibold text-primary">{report.event.title}</span>
-                            <span className="block text-xs text-muted">{report.event.program.name}</span>
+                            <span className="block font-semibold text-primary">{report.event?.title ?? 'Event Tidak Diketahui'}</span>
+                            <span className="block text-xs text-muted">{report.event?.program?.name ?? '-'}</span>
                           </td>
                           <td className="px-5 py-4">
                             <Badge tone={getReportStatusTone(report.status)}>{report.status}</Badge>
                           </td>
                           <td className="px-5 py-4 text-right">
-                            <LpjViewer url={report.documentUrl} title={report.event.title} />
+                            <LpjViewer url={report.documentUrl} title={report.event?.title ?? 'Dokumen'} />
                           </td>
                         </tr>
                       ))}

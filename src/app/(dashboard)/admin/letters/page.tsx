@@ -5,7 +5,6 @@ import { can } from '@/core/authorization/rbac'
 import { LetterBoard } from './components/LetterBoard'
 import { LetterForm } from './components/LetterForm'
 
-
 export const metadata = {
   title: 'Manajemen Persuratan | IKMI Cirebon',
 }
@@ -21,19 +20,20 @@ export default async function AdminLettersPage({
 
   const isAuthorized = await can('letter.view', {
     id: session.user.id,
-    roleId: session.user.roleId,
+    roleId: session.user.roleId as string,
     departmentId: session.user.departmentId,
     positionId: null
   })
 
   if (!isAuthorized) {
-    redirect('/admin/dashboard')
+    redirect('/admin')
   }
 
   const resolvedParams = await searchParams
   const typeFilter = typeof resolvedParams.type === 'string' && (resolvedParams.type === 'IN' || resolvedParams.type === 'OUT') ? resolvedParams.type : undefined
+  const searchFilter = typeof resolvedParams.q === 'string' ? resolvedParams.q : undefined
 
-  const letters = await letterQueries.getLetters(typeFilter)
+  const letters = await letterQueries.getLetters(typeFilter, searchFilter)
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
@@ -45,7 +45,7 @@ export default async function AdminLettersPage({
         <LetterForm />
       </div>
 
-      <LetterBoard initialLetters={letters} currentFilter={typeFilter} />
+      <LetterBoard initialLetters={letters} currentFilter={typeFilter} currentSearch={searchFilter} />
     </div>
   )
 }

@@ -373,22 +373,14 @@ export function registerEventHandlers() {
 
   eventBus.on('lpj.verified', async (payload) => {
     await notifyUsers({
-      userIds: uniqueIds([...(await usersByPermission('lpj.view')), ...(await usersByPermission('lpj.verify_bph'))]),
+      userIds: uniqueIds([...(await usersByPermission('lpj.view')), ...(await usersByPermission('lpj.verify'))]),
       type: NotificationType.LPJ,
       title: 'LPJ terverifikasi',
-      message: `LPJ telah diverifikasi pada level ${payload.level}.`,
+      message: `LPJ telah diverifikasi.`,
       actionUrl: `/dashboard/admin/lpj`,
       event: 'lpj.verified',
       entityId: payload.id,
     })
-  })
-
-  eventBus.on('lpj.verified.department', async (payload) => {
-    await eventBus.emit('lpj.verified', { id: payload.id, level: 'DEPARTMENT' })
-  })
-
-  eventBus.on('lpj.verified.bph', async (payload) => {
-    await eventBus.emit('lpj.verified', { id: payload.id, level: 'BPH' })
   })
 
   eventBus.on('lpj.rejected', async (payload) => {

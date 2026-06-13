@@ -53,14 +53,14 @@ export function CategoryModal({ category, onClose }: { category: CategoryModalVa
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-surface p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-primary/45 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="w-full max-w-lg rounded-t-2xl border-t-4 border-t-accent bg-surface p-5 shadow-card ring-1 ring-border sm:rounded-2xl sm:p-6">
         <h3 className="mb-4 font-heading text-xl font-extrabold text-primary">
           {category ? 'Edit Kategori' : 'Tambah Kategori'}
         </h3>
         
         {error && (
-          <div className="mb-4 rounded-xl bg-danger/10 px-4 py-3 text-sm font-medium text-danger">
+          <div className="mb-4 rounded-xl bg-danger px-4 py-3 text-sm font-medium text-danger-foreground">
             {error}
           </div>
         )}
@@ -83,7 +83,7 @@ export function CategoryModal({ category, onClose }: { category: CategoryModalVa
               placeholder="contoh-slug"
               required
             />
-            <p className="text-xs text-muted">Hanya huruf kecil, angka, dan strip (-).</p>
+            <p className="text-xs text-text-secondary">Hanya huruf kecil, angka, dan strip (-).</p>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-primary">Deskripsi</label>
@@ -95,7 +95,7 @@ export function CategoryModal({ category, onClose }: { category: CategoryModalVa
             />
           </div>
 
-          <div className="mt-6 flex justify-end gap-3">
+          <div className="mt-6 flex flex-col-reverse gap-3 border-t border-border pt-4 sm:flex-row sm:justify-end">
             <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
               Batal
             </Button>

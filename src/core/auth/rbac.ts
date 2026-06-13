@@ -1,4 +1,5 @@
 import { prisma } from '@/core/database/prisma'
+import { isKomdigiAdminRole, isSuperAdminRole } from './roles'
 
 export const RBAC = {
   async hasPermission(userId: string, permission: string) {
@@ -10,28 +11,20 @@ export const RBAC = {
     if (!user) return false
     
     // Super Admin override
-    if (user.role.id === 'super_admin') return true
+    if (isSuperAdminRole(user.role.id)) return true
 
     return user.role.permissions.some(p => p.permission.name === permission || p.permission.id === permission)
   },
 
-  async canManageKaderisasi(userId: string) {
+  async canManageKomdigiContent(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { role: true, department: true }
     })
 
     if (!user) return false
-    if (user.role.id === 'super_admin' || user.role.id === 'ketua_umum' || user.role.id === 'wakil_ketua_umum') return true
+    if (isSuperAdminRole(user.role.id)) return true
 
-    // Check if user is Kadep / Sekdep of Kaderisasi
-    if (
-      user.department?.code === 'KAD' && 
-      (user.role.id === 'ketua_departemen' || user.role.id === 'sekretaris_departemen')
-    ) {
-      return true
-    }
-
-    return false
+    return isKomdigiAdminRole(user.role.id) && user.department?.code === 'KOMDIGI'
   }
 }

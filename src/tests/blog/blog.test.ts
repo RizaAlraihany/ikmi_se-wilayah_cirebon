@@ -28,7 +28,8 @@ describe('Blog Service', () => {
       const result = await blogService.createPost({
         title: 'Test',
         content: 'Content',
-        slug: 'test-slug'
+        slug: 'test-slug',
+        categoryId: 'cat-1'
       }, 'author-1', 'dept-1')
 
       expect(result.id).toBe('post-1')
@@ -75,4 +76,3 @@ describe('Blog Service', () => {
     })
   })
 })
-

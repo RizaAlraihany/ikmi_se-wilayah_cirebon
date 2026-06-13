@@ -14,7 +14,7 @@ type Post = {
   slug: string
   title: string
   content: string
-  thumbnailUrl: string
+  thumbnailUrl: string | null
   publishedAt: Date | null
   category: {
     slug: string
@@ -26,12 +26,6 @@ function getToneForCategory(categorySlug: string): 'accent' | 'primary' | 'succe
   if (categorySlug.includes('berita')) return 'accent'
   if (categorySlug.includes('opini')) return 'primary'
   return 'success'
-}
-
-function getGradientForCategory(categorySlug: string) {
-  if (categorySlug.includes('berita')) return 'from-blue-50 to-blue-100'
-  if (categorySlug.includes('opini')) return 'from-amber-50 to-amber-100'
-  return 'from-green-50 to-green-100'
 }
 
 export function BlogList({
@@ -57,11 +51,9 @@ export function BlogList({
 
   return (
     <>
-      {/* Filter & Search Bar */}
-      <div className="mb-10 flex flex-col md:flex-row justify-between gap-4 items-center bg-surface p-4 rounded-2xl shadow-sm border border-line">
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
-          <div className="flex items-center gap-2 mr-2 text-muted md:hidden">
+      <div className="mb-6 flex flex-col items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-3 shadow-soft md:mb-8 md:flex-row md:gap-4 md:p-4">
+        <div className="flex w-full gap-2 overflow-x-auto pb-1 md:w-auto md:pb-0 scrollbar-hide">
+          <div className="mr-2 flex items-center gap-2 text-text-secondary md:hidden">
             <Filter className="h-4 w-4" />
           </div>
           {allCategories.map((cat) => (
@@ -70,29 +62,27 @@ export function BlogList({
               variant={activeCategory === cat ? 'primary' : 'secondary'}
               size="sm"
               onClick={() => setActiveCategory(cat)}
-              className="rounded-full whitespace-nowrap"
+              className="min-h-9 whitespace-nowrap rounded-full px-3 text-xs md:min-h-11 md:px-4 md:text-sm"
             >
               {cat}
             </Button>
           ))}
         </div>
 
-        {/* Search Input */}
         <div className="relative w-full md:w-[300px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-secondary md:h-4 md:w-4" />
           <Input
             type="text"
             placeholder="Cari artikel..."
-            className="pl-9 rounded-full bg-background-warm border-transparent focus:border-primary"
+            className="min-h-10 rounded-full bg-surface-alt pl-8 text-sm md:min-h-11 md:pl-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
 
-      {/* Grid Artikel */}
       {filteredPosts.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredPosts.map((post) => {
             const dateStr = post.publishedAt
               ? new Date(post.publishedAt).toLocaleDateString('id-ID', {
@@ -105,10 +95,10 @@ export function BlogList({
             return (
               <Card
                 key={post.id}
-                className="overflow-hidden transition-shadow duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] flex flex-col"
+                className="flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-soft"
               >
                 {post.thumbnailUrl ? (
-                  <div className="relative aspect-[16/9] w-full bg-muted/20">
+                  <div className="relative aspect-[16/9] w-full bg-surface-alt">
                     <Image
                       src={post.thumbnailUrl}
                       alt={post.title}
@@ -117,33 +107,28 @@ export function BlogList({
                     />
                   </div>
                 ) : (
-                  <div
-                    className={`flex aspect-[16/9] items-center justify-center bg-gradient-to-br ${getGradientForCategory(
-                      post.category.slug
-                    )}`}
-                    aria-hidden="true"
-                  >
-                    <BookOpen className="h-10 w-10 text-primary/20" />
+                  <div className="flex aspect-[16/9] items-center justify-center bg-surface-alt">
+                    <BookOpen className="h-10 w-10 text-accent" aria-hidden="true" />
                   </div>
                 )}
-                <CardContent className="space-y-3 p-5 flex flex-col flex-grow">
+                <CardContent className="flex flex-grow flex-col space-y-2.5 p-4 md:space-y-3 md:p-5">
                   <Badge tone={getToneForCategory(post.category.slug)}>
                     {post.category.name}
                   </Badge>
                   <Link href={`/blog/${post.slug}`}>
-                    <h3 className="font-heading text-lg font-bold leading-snug text-primary flex-grow hover:text-accent">
+                    <h3 className="font-heading flex-grow text-base font-bold leading-snug text-primary hover:text-accent md:text-lg">
                       {post.title}
                     </h3>
                   </Link>
-                  <p className="text-sm leading-relaxed text-muted line-clamp-3">
+                  <p className="line-clamp-2 text-xs leading-5 text-text-secondary md:line-clamp-3 md:text-sm md:leading-relaxed">
                     {post.content.replace(/<[^>]+>/g, '')}
                   </p>
-                  <div className="pt-4 mt-auto border-t border-line/50 flex justify-between items-center">
-                    <p className="text-xs font-semibold text-muted">{dateStr}</p>
+                  <div className="mt-auto flex items-center justify-between border-t border-border pt-3 md:pt-4">
+                    <p className="text-[11px] font-semibold text-text-muted md:text-xs">{dateStr}</p>
                     <ButtonLink
                       variant="ghost"
                       size="sm"
-                      className="h-8 px-2 text-accent hover:text-accent hover:bg-accent/10"
+                      className="min-h-9 px-2 text-xs text-accent hover:bg-accent/10 hover:text-accent md:min-h-11 md:text-sm"
                       href={`/blog/${post.slug}`}
                     >
                       Baca <ArrowRight className="ml-1 h-3 w-3" />
@@ -155,12 +140,12 @@ export function BlogList({
           })}
         </div>
       ) : (
-        <div className="text-center py-20 bg-background-warm rounded-3xl border border-line border-dashed">
-          <BookOpen className="mx-auto h-12 w-12 text-muted mb-4 opacity-50" />
-          <h3 className="text-lg font-bold text-primary mb-2">
+        <div className="rounded-2xl border border-dashed border-border bg-surface-alt px-4 py-12 text-center md:rounded-3xl md:py-20">
+          <BookOpen className="mx-auto mb-3 h-10 w-10 text-text-muted md:mb-4 md:h-12 md:w-12" />
+          <h3 className="mb-2 text-base font-bold text-primary md:text-lg">
             Tidak ada artikel ditemukan
           </h3>
-          <p className="text-muted">Cobalah kata kunci lain atau ubah filter kategori.</p>
+          <p className="text-sm text-text-secondary">Cobalah kata kunci lain atau ubah filter kategori.</p>
           <Button
             variant="secondary"
             className="mt-6"

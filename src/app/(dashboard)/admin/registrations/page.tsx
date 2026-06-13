@@ -1,6 +1,6 @@
-import { BookOpen, CheckCircle, Search, XCircle } from 'lucide-react'
+import { BookOpen, CheckCircle, Search } from 'lucide-react'
 import { registrationQueries } from '@/features/registration/queries'
-import { reviewRegistrationAction } from '@/features/registration/actions'
+
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -40,28 +40,18 @@ export default async function AdminRegistrationsPage({
                       <p className="text-sm text-muted">{registration.campus} - Semester {registration.semester}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge tone={registration.status === 'APPROVED' ? 'success' : registration.status === 'REJECTED' ? 'danger' : 'warning'}>{registration.status}</Badge>
+                      <Badge tone={registration.status === 'PROCESSED' ? 'success' : 'warning'}>{registration.status}</Badge>
                       {registration.status === 'PENDING' ? (
-                        <>
-                          <form action={async () => {
-                            'use server'
-                            await reviewRegistrationAction(registration.id, 'APPROVED')
-                          }}>
-                            <Button type="submit" size="sm" variant="secondary">
-                              <CheckCircle className="h-4 w-4" aria-hidden="true" />
-                              Setujui
-                            </Button>
-                          </form>
-                          <form action={async () => {
-                            'use server'
-                            await reviewRegistrationAction(registration.id, 'REJECTED')
-                          }}>
-                            <Button type="submit" size="sm" variant="danger">
-                              <XCircle className="h-4 w-4" aria-hidden="true" />
-                              Tolak
-                            </Button>
-                          </form>
-                        </>
+                        <form action={async () => {
+                          'use server'
+                          const { markProcessedAction } = await import('@/features/registration/actions')
+                          await markProcessedAction(registration.id)
+                        }}>
+                          <Button type="submit" size="sm" variant="secondary">
+                            <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
+                            Tandai Diproses
+                          </Button>
+                        </form>
                       ) : null}
                     </div>
                   </CardContent>

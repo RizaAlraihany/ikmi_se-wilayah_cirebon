@@ -72,7 +72,7 @@ export function ActivityList({ activities, programId }: { activities: { id: stri
               <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
                 {activity.createdAt && <span>Direncanakan: {new Date(activity.createdAt).toLocaleDateString('id-ID')}</span>}
                 {activity.status === 'COMPLETED' && activity.updatedAt && (
-                  <span className="text-green-600 font-medium">Selesai: {new Date(activity.updatedAt).toLocaleDateString('id-ID')}</span>
+                  <span className="font-medium text-success-foreground">Selesai: {new Date(activity.updatedAt).toLocaleDateString('id-ID')}</span>
                 )}
               </div>
             </div>
@@ -84,11 +84,11 @@ export function ActivityList({ activities, programId }: { activities: { id: stri
                 </Button>
               )}
               {activity.status === 'ONGOING' && (
-                <Button size="sm" variant="secondary" className="text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => handleStatusChange(activity.id, 'COMPLETED')}>
+                <Button size="sm" variant="secondary" className="text-success-foreground hover:bg-success hover:text-success-foreground" onClick={() => handleStatusChange(activity.id, 'COMPLETED')}>
                   <CheckCircle2 className="w-4 h-4 mr-1" /> Selesai
                 </Button>
               )}
-              <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(activity.id)}>
+              <Button size="sm" variant="ghost" className="text-danger-foreground hover:text-danger-foreground" onClick={() => handleDelete(activity.id)}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>

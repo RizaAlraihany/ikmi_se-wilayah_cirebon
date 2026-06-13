@@ -23,7 +23,7 @@ export function JsonDiffViewer({ oldData, newData }: { oldData: unknown; newData
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 p-4" role="dialog" aria-modal="true" aria-labelledby="json-diff-title">
-      <Card className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[20px]">
+      <Card className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl">
         <div className="flex items-center justify-between gap-4 border-b border-line px-5 py-4">
           <h3 id="json-diff-title" className="font-heading text-lg font-bold text-primary">
             Detail Perubahan Data

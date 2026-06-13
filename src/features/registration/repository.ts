@@ -8,7 +8,7 @@ export const registrationRepository = {
     return prisma.registration.create({ data })
   },
   
-  async updateStatus(id: string, status: 'PENDING' | 'APPROVED' | 'REJECTED') {
+  async updateStatus(id: string, status: 'PENDING' | 'PROCESSED') {
     return prisma.registration.update({
       where: { id },
       data: { status }

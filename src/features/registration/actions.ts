@@ -16,10 +16,10 @@ export async function submitRegistrationAction(data: RegistrationCreateInput) {
     await rateLimit(`register:${ip}`, 3, 3600) // max 3 per hour
 
     const parsed = registrationCreateSchema.parse(data)
-    
+
     // Anti-spam check
     checkHoneypot(parsed.bot_field)
-    
+
     await registrationService.submitRegistration(parsed)
     return { success: true }
   } catch (error) {
@@ -30,20 +30,20 @@ export async function submitRegistrationAction(data: RegistrationCreateInput) {
   }
 }
 
-export async function reviewRegistrationAction(id: string, status: 'APPROVED' | 'REJECTED') {
+export async function markProcessedAction(id: string) {
   try {
     const session = await auth()
-    if (!session?.user?.id || !(await can('registration.review', { 
-      id: session.user.id, 
-      roleId: (session.user as { roleId: string }).roleId, 
+    if (!session?.user?.id || !(await can('registration.review', {
+      id: session.user.id,
+      roleId: (session.user as { roleId: string }).roleId,
       departmentId: session.user.departmentId!,
-    positionId: null 
+      positionId: null
     }))) {
       return { error: 'Anda tidak memiliki akses untuk melakukan aksi ini' }
     }
-    
-    await registrationService.reviewRegistration(id, status, session.user.id)
-    revalidatePath('/dashboard/registrations')
+
+    await registrationService.markProcessed(id, session.user.id)
+    revalidatePath('/admin/registrations')
     return { success: true }
   } catch (error) {
     if (error instanceof Error) return { error: error.message || 'Terjadi kesalahan saat memproses pendaftaran' }

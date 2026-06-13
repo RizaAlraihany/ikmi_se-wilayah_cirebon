@@ -23,3 +23,9 @@ export function validateDocument(file: File): { valid: boolean; error?: string }
   }
   return { valid: true }
 }
+
+export function validateImageOrDocument(file: File): { valid: boolean; error?: string } {
+  if (ALLOWED_IMAGE_TYPES.includes(file.type)) return validateImage(file)
+  if (ALLOWED_DOCUMENT_TYPES.includes(file.type)) return validateDocument(file)
+  return { valid: false, error: 'Invalid file type. Only JPG, PNG, WEBP, and PDF are allowed.' }
+}

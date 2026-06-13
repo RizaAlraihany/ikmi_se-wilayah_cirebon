@@ -50,28 +50,28 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
   }
 
   return (
-    <main className="bg-background min-h-screen pb-20">
+    <main className="min-h-screen bg-background pb-12 md:pb-20">
       {/* ─── BREADCRUMB & HEADER ─────────────────────────────────────────── */}
-      <section className="bg-primary px-4 pb-16 pt-24 md:px-6 lg:px-8">
+      <section className="bg-gradient-hero px-4 pb-10 pt-14 md:px-6 md:pb-16 md:pt-20 lg:px-8">
         <div className="mx-auto max-w-[800px]">
           <ButtonLink 
             href="/blog" 
             variant="ghost" 
-            className="mb-8 -ml-4 text-surface/70 hover:text-surface hover:bg-surface/10"
+            className="mb-5 min-h-9 px-3 text-xs text-surface/70 hover:bg-surface/10 hover:text-surface md:mb-8 md:-ml-4 md:min-h-11 md:text-sm"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Blog
+            <ArrowLeft className="mr-1 h-3.5 w-3.5 md:mr-2 md:h-4 md:w-4" /> Kembali ke Blog
           </ButtonLink>
           
-          <div className="space-y-6 text-center md:text-left">
+          <div className="space-y-4 text-center md:space-y-6 md:text-left">
             <Badge tone={getToneForCategory(post.category.slug)}>
               {post.category.name}
             </Badge>
             
-            <h1 className="font-heading text-3xl font-extrabold text-surface sm:text-4xl md:text-5xl leading-tight">
+            <h1 className="font-heading text-2xl font-extrabold leading-tight text-surface sm:text-4xl md:text-5xl">
               {post.title}
             </h1>
 
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-surface/80 pt-4 border-t border-surface/10">
+            <div className="flex flex-wrap items-center justify-center gap-3 border-t border-surface/10 pt-3 text-xs text-surface/80 md:justify-start md:gap-4 md:pt-4 md:text-sm">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
                 <span>{dateStr}</span>
@@ -86,13 +86,13 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
       </section>
 
       {/* ─── THUMBNAIL & CONTENT ─────────────────────────────────────────── */}
-      <section className="px-4 py-12 md:px-6 lg:px-8 -mt-8">
+      <section className="-mt-6 px-4 py-8 md:-mt-8 md:px-6 md:py-12 lg:px-8">
         <div className="mx-auto max-w-[800px]">
-          <div className="bg-surface rounded-3xl p-6 md:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.08)] ring-1 ring-line space-y-10">
+          <div className="space-y-6 rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border md:space-y-10 md:p-10">
             
             {/* Thumbnail */}
             {post.thumbnailUrl && (
-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-muted/20">
+              <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-surface-alt md:rounded-2xl">
                 <Image
                   src={post.thumbnailUrl}
                   alt={post.title}
@@ -105,7 +105,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
 
             {/* Rich Text Content */}
             <div 
-              className="prose prose-sm md:prose-base lg:prose-lg prose-primary max-w-none text-muted leading-relaxed
+              className="prose prose-sm max-w-none leading-relaxed text-text-secondary md:prose-base lg:prose-lg
                 prose-headings:font-heading prose-headings:text-primary prose-headings:font-bold
                 prose-a:text-accent hover:prose-a:text-primary prose-a:transition-colors
                 prose-img:rounded-xl"

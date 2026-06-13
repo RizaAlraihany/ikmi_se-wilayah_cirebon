@@ -8,8 +8,22 @@ export default auth((req) => {
   const startedAt = Date.now()
   const isLoggedIn = !!req.auth
   const isAuthRoute = req.nextUrl.pathname.startsWith('/login')
-  const isDashboardRoute = req.nextUrl.pathname.startsWith('/dashboard')
+  const isDashboardRoute =
+    req.nextUrl.pathname.startsWith('/dashboard') ||
+    req.nextUrl.pathname.startsWith('/admin')
+  const deprecatedDashboardPrefixes = [
+    '/admin/kaderisasi',
+    '/admin/membership',
+    '/admin/complaints',
+    '/admin/notifications',
+    '/admin/operations',
+    '/admin/programs',
+    '/admin/cms/analytics',
+  ]
   const isApiRoute = req.nextUrl.pathname.startsWith('/api')
+  const hostname = (req.headers.get('host') ?? req.nextUrl.hostname).split(':')[0].toLowerCase()
+  const publicHosts = new Set(['ikmicirebon.or.id', 'www.ikmicirebon.or.id'])
+  const dashboardHost = 'dashboard.ikmicirebon.or.id'
   const logRequest = (status: number) => {
     logger.request({
       method: req.method,
@@ -25,10 +39,23 @@ export default auth((req) => {
     return
   }
 
+  if (hostname === dashboardHost && req.nextUrl.pathname === '/') {
+    logRequest(302)
+    return Response.redirect(new URL('/admin', req.nextUrl))
+  }
+
+  if (publicHosts.has(hostname) && (isAuthRoute || isDashboardRoute)) {
+    const dashboardUrl = new URL(req.nextUrl)
+    dashboardUrl.protocol = 'https:'
+    dashboardUrl.hostname = dashboardHost
+    logRequest(308)
+    return Response.redirect(dashboardUrl, 308)
+  }
+
   if (isAuthRoute) {
     if (isLoggedIn) {
       logRequest(302)
-      return Response.redirect(new URL('/dashboard', req.nextUrl))
+      return Response.redirect(new URL('/admin', req.nextUrl))
     }
     logRequest(200)
     return
@@ -39,6 +66,12 @@ export default auth((req) => {
       logRequest(302)
       return Response.redirect(new URL('/login', req.nextUrl))
     }
+
+    if (deprecatedDashboardPrefixes.some((prefix) => req.nextUrl.pathname.startsWith(prefix))) {
+      logRequest(302)
+      return Response.redirect(new URL('/admin', req.nextUrl))
+    }
+
     logRequest(200)
     return
   }

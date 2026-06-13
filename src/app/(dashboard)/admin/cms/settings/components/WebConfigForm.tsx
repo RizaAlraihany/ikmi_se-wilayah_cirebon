@@ -2,18 +2,19 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save } from 'lucide-react'
+import { Save, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { upsertWebConfigAction } from '@/features/web-config/actions'
+import { upsertWebConfigAction, uploadWebConfigImageAction } from '@/features/web-config/actions'
 import { defaultWebConfig } from '@/features/web-config/default-config'
 import { cn } from '@/lib/utils'
 
 type HeroConfig = typeof defaultWebConfig.landing_hero
 type AboutConfig = typeof defaultWebConfig.landing_about
 type CtaConfig = typeof defaultWebConfig.landing_cta
+type LandingSectionsConfig = typeof defaultWebConfig.landing_sections
 type AboutPageConfig = typeof defaultWebConfig.about_page
 type ContactConfig = typeof defaultWebConfig.contact_info
 type SeoConfig = typeof defaultWebConfig.seo_config
@@ -21,16 +22,18 @@ type SeoConfig = typeof defaultWebConfig.seo_config
 type ConfigValues = {
   landing_hero?: unknown
   landing_about?: unknown
+  landing_sections?: unknown
   landing_cta?: unknown
   about_page?: unknown
   contact_info?: unknown
   seo_config?: unknown
 }
 
-type WebConfigTab = 'HERO' | 'ABOUT' | 'CONTACT' | 'SEO'
+type WebConfigTab = 'HERO' | 'LANDING' | 'ABOUT' | 'CONTACT' | 'SEO'
 
 const tabs: { value: WebConfigTab; label: string }[] = [
   { value: 'HERO', label: 'Hero' },
+  { value: 'LANDING', label: 'Landing' },
   { value: 'ABOUT', label: 'About' },
   { value: 'CONTACT', label: 'Contact' },
   { value: 'SEO', label: 'SEO' },
@@ -38,6 +41,52 @@ const tabs: { value: WebConfigTab; label: string }[] = [
 
 function withFallback<T>(value: unknown, fallback: T): T {
   return typeof value === 'object' && value !== null ? { ...fallback, ...value } : fallback
+}
+
+function lines(value: string) {
+  return value.split('\n').map((item) => item.trim()).filter(Boolean)
+}
+
+function slidesToText(slides: { url: string; label: string }[]) {
+  return slides.map((slide) => `${slide.url}|${slide.label}`).join('\n')
+}
+
+function textToSlides(value: string) {
+  return lines(value).map((line, index) => {
+    const [url, label] = line.split('|')
+    return {
+      url: url?.trim() || '',
+      label: label?.trim() || `Slide ${index + 1}`,
+    }
+  })
+}
+
+function imageItemsToText(items: { url: string; label: string }[]) {
+  return items.map((item) => `${item.url}|${item.label}`).join('\n')
+}
+
+function textToImageItems(value: string) {
+  return lines(value).map((line, index) => {
+    const [url, label] = line.split('|')
+    return {
+      url: url?.trim() || '',
+      label: label?.trim() || `Gambar ${index + 1}`,
+    }
+  })
+}
+
+function pillarsToText(items: { title: string; description: string }[]) {
+  return items.map((item) => `${item.title}|${item.description}`).join('\n')
+}
+
+function textToPillars(value: string) {
+  return lines(value).map((line) => {
+    const [title, description] = line.split('|')
+    return {
+      title: title?.trim() || '',
+      description: description?.trim() || '',
+    }
+  }).filter((item) => item.title)
 }
 
 export function WebConfigForm({ configs }: { configs: ConfigValues }) {
@@ -48,6 +97,7 @@ export function WebConfigForm({ configs }: { configs: ConfigValues }) {
 
   const [hero, setHero] = useState<HeroConfig>(withFallback(configs.landing_hero, defaultWebConfig.landing_hero))
   const [landingAbout, setLandingAbout] = useState<AboutConfig>(withFallback(configs.landing_about, defaultWebConfig.landing_about))
+  const [landingSections, setLandingSections] = useState<LandingSectionsConfig>(withFallback(configs.landing_sections, defaultWebConfig.landing_sections))
   const [cta, setCta] = useState<CtaConfig>(withFallback(configs.landing_cta, defaultWebConfig.landing_cta))
   const [aboutPage, setAboutPage] = useState<AboutPageConfig>(withFallback(configs.about_page, defaultWebConfig.about_page))
   const [contact, setContact] = useState<ContactConfig>(withFallback(configs.contact_info, defaultWebConfig.contact_info))
@@ -63,6 +113,25 @@ export function WebConfigForm({ configs }: { configs: ConfigValues }) {
     setMessage(result?.error || 'Konfigurasi berhasil disimpan.')
     setLoadingKey(null)
     router.refresh()
+  }
+
+  async function uploadImage(file: File | undefined, onUploaded: (url: string) => void) {
+    if (!file) return
+    setLoadingKey(`upload:${file.name}`)
+    setMessage('')
+
+    const formData = new FormData()
+    formData.append('file', file)
+    const result = await uploadWebConfigImageAction(formData)
+
+    if (result.error || !result.url) {
+      setMessage(result.error || 'Upload gambar gagal.')
+    } else {
+      onUploaded(result.url)
+      setMessage('Gambar berhasil diupload ke Cloudinary.')
+    }
+
+    setLoadingKey(null)
   }
 
   return (
@@ -101,8 +170,34 @@ export function WebConfigForm({ configs }: { configs: ConfigValues }) {
               <Field label="Subtitle" htmlFor="hero-subtitle">
                 <Textarea id="hero-subtitle" value={hero.subtitle} rows={4} onChange={(event) => setHero({ ...hero, subtitle: event.target.value })} />
               </Field>
-              <Field label="CTA Utama" htmlFor="hero-cta">
-                <Input id="hero-cta" value="Bergabung Bersama Kami" disabled />
+              <Field label="Eyebrow" htmlFor="hero-eyebrow">
+                <Input id="hero-eyebrow" value={hero.eyebrow} onChange={(event) => setHero({ ...hero, eyebrow: event.target.value })} />
+              </Field>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="CTA Utama" htmlFor="hero-primary-cta">
+                  <Input id="hero-primary-cta" value={hero.primaryCtaLabel} onChange={(event) => setHero({ ...hero, primaryCtaLabel: event.target.value })} />
+                </Field>
+                <Field label="URL CTA Utama" htmlFor="hero-primary-href">
+                  <Input id="hero-primary-href" value={hero.primaryCtaHref} onChange={(event) => setHero({ ...hero, primaryCtaHref: event.target.value })} />
+                </Field>
+                <Field label="CTA Kedua" htmlFor="hero-secondary-cta">
+                  <Input id="hero-secondary-cta" value={hero.secondaryCtaLabel} onChange={(event) => setHero({ ...hero, secondaryCtaLabel: event.target.value })} />
+                </Field>
+                <Field label="URL CTA Kedua" htmlFor="hero-secondary-href">
+                  <Input id="hero-secondary-href" value={hero.secondaryCtaHref} onChange={(event) => setHero({ ...hero, secondaryCtaHref: event.target.value })} />
+                </Field>
+              </div>
+              <Field label="Label Pilar" htmlFor="hero-pillars-label">
+                <Input id="hero-pillars-label" value={hero.pillarsLabel} onChange={(event) => setHero({ ...hero, pillarsLabel: event.target.value })} />
+              </Field>
+              <Field label="Pilar Hero" htmlFor="hero-pillars">
+                <Textarea
+                  id="hero-pillars"
+                  value={pillarsToText(hero.pillars)}
+                  rows={6}
+                  onChange={(event) => setHero({ ...hero, pillars: textToPillars(event.target.value) })}
+                />
+                <p className="text-xs text-muted">Format: Judul|Deskripsi, satu pilar per baris.</p>
               </Field>
             </ConfigPanel>
 
@@ -113,6 +208,130 @@ export function WebConfigForm({ configs }: { configs: ConfigValues }) {
               <Field label="Description" htmlFor="cta-description">
                 <Textarea id="cta-description" value={cta.description} rows={4} onChange={(event) => setCta({ ...cta, description: event.target.value })} />
               </Field>
+            </ConfigPanel>
+
+            <ConfigPanel title="Hero Images" onSave={() => saveConfig('landing_hero', hero)} loading={loadingKey === 'landing_hero'}>
+              <ImageListField
+                label="Foto Slideshow Hero"
+                htmlFor="hero-slides"
+                value={slidesToText(hero.slides)}
+                help="Format: URL|Alt text, satu slide per baris."
+                onChange={(value) => setHero({ ...hero, slides: textToSlides(value) })}
+                onUpload={(url) => setHero({ ...hero, slides: [...hero.slides, { url, label: `Kegiatan IKMI ${hero.slides.length + 1}` }] })}
+                uploadImage={uploadImage}
+              />
+              <ImageListField
+                label="Logo Marquee Departemen"
+                htmlFor="hero-logos"
+                value={hero.departmentLogos.join('\n')}
+                help="Satu URL logo per baris."
+                onChange={(value) => setHero({ ...hero, departmentLogos: lines(value) })}
+                onUpload={(url) => setHero({ ...hero, departmentLogos: [...hero.departmentLogos, url] })}
+                uploadImage={uploadImage}
+              />
+            </ConfigPanel>
+          </div>
+        ) : null}
+
+        {activeTab === 'LANDING' ? (
+          <div className="grid gap-8 lg:grid-cols-2">
+            <ConfigPanel title="Section Tentang di Landing" onSave={() => saveConfig('landing_sections', landingSections)} loading={loadingKey === 'landing_sections'}>
+              <Field label="Eyebrow" htmlFor="landing-about-eyebrow">
+                <Input id="landing-about-eyebrow" value={landingSections.aboutEyebrow} onChange={(event) => setLandingSections({ ...landingSections, aboutEyebrow: event.target.value })} />
+              </Field>
+              <Field label="URL Gambar" htmlFor="landing-about-image">
+                <Input id="landing-about-image" value={landingSections.aboutImageUrl} onChange={(event) => setLandingSections({ ...landingSections, aboutImageUrl: event.target.value })} />
+              </Field>
+              <UploadField
+                label="Upload Gambar Tentang"
+                onUpload={(url) => setLandingSections({ ...landingSections, aboutImageUrl: url })}
+                uploadImage={uploadImage}
+              />
+              <Field label="Alt Gambar" htmlFor="landing-about-alt">
+                <Input id="landing-about-alt" value={landingSections.aboutImageAlt} onChange={(event) => setLandingSections({ ...landingSections, aboutImageAlt: event.target.value })} />
+              </Field>
+              <Field label="Badge Gambar" htmlFor="landing-about-badge">
+                <Input id="landing-about-badge" value={landingSections.aboutBadgeLabel} onChange={(event) => setLandingSections({ ...landingSections, aboutBadgeLabel: event.target.value })} />
+              </Field>
+              <Field label="Label Link" htmlFor="landing-about-link">
+                <Input id="landing-about-link" value={landingSections.aboutLinkLabel} onChange={(event) => setLandingSections({ ...landingSections, aboutLinkLabel: event.target.value })} />
+              </Field>
+            </ConfigPanel>
+
+            <ConfigPanel title="Section Pengurus" onSave={() => saveConfig('landing_sections', landingSections)} loading={loadingKey === 'landing_sections'}>
+              <Field label="Eyebrow" htmlFor="structure-eyebrow">
+                <Input id="structure-eyebrow" value={landingSections.structureEyebrow} onChange={(event) => setLandingSections({ ...landingSections, structureEyebrow: event.target.value })} />
+              </Field>
+              <Field label="Judul" htmlFor="structure-title">
+                <Input id="structure-title" value={landingSections.structureTitle} onChange={(event) => setLandingSections({ ...landingSections, structureTitle: event.target.value })} />
+              </Field>
+              <Field label="Teks Aksen" htmlFor="structure-accent">
+                <Input id="structure-accent" value={landingSections.structureAccent} onChange={(event) => setLandingSections({ ...landingSections, structureAccent: event.target.value })} />
+              </Field>
+              <Field label="Label Tombol" htmlFor="structure-button">
+                <Input id="structure-button" value={landingSections.structureButtonLabel} onChange={(event) => setLandingSections({ ...landingSections, structureButtonLabel: event.target.value })} />
+              </Field>
+            </ConfigPanel>
+
+            <ConfigPanel title="Section Agenda & Dokumentasi" onSave={() => saveConfig('landing_sections', landingSections)} loading={loadingKey === 'landing_sections'}>
+              <Field label="Eyebrow" htmlFor="agenda-eyebrow">
+                <Input id="agenda-eyebrow" value={landingSections.agendaEyebrow} onChange={(event) => setLandingSections({ ...landingSections, agendaEyebrow: event.target.value })} />
+              </Field>
+              <Field label="Judul" htmlFor="agenda-title">
+                <Input id="agenda-title" value={landingSections.agendaTitle} onChange={(event) => setLandingSections({ ...landingSections, agendaTitle: event.target.value })} />
+              </Field>
+              <Field label="Deskripsi" htmlFor="agenda-description">
+                <Textarea id="agenda-description" value={landingSections.agendaDescription} rows={3} onChange={(event) => setLandingSections({ ...landingSections, agendaDescription: event.target.value })} />
+              </Field>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Status Agenda" htmlFor="agenda-status">
+                  <Input id="agenda-status" value={landingSections.agendaStatusLabel} onChange={(event) => setLandingSections({ ...landingSections, agendaStatusLabel: event.target.value })} />
+                </Field>
+                <Field label="Label Tombol" htmlFor="agenda-button">
+                  <Input id="agenda-button" value={landingSections.agendaButtonLabel} onChange={(event) => setLandingSections({ ...landingSections, agendaButtonLabel: event.target.value })} />
+                </Field>
+              </div>
+              <Field label="Empty Text" htmlFor="agenda-empty">
+                <Input id="agenda-empty" value={landingSections.agendaEmptyText} onChange={(event) => setLandingSections({ ...landingSections, agendaEmptyText: event.target.value })} />
+              </Field>
+              <ImageListField
+                label="Gambar Dokumentasi"
+                htmlFor="gallery-images"
+                value={imageItemsToText(landingSections.galleryImages)}
+                help="Format: URL|Alt text, satu gambar per baris."
+                onChange={(value) => setLandingSections({ ...landingSections, galleryImages: textToImageItems(value) })}
+                onUpload={(url) => setLandingSections({ ...landingSections, galleryImages: [...landingSections.galleryImages, { url, label: `Dokumentasi kegiatan ${landingSections.galleryImages.length + 1}` }] })}
+                uploadImage={uploadImage}
+              />
+              <Field label="Label Placeholder Galeri" htmlFor="gallery-fallback">
+                <Input id="gallery-fallback" value={landingSections.galleryFallbackLabel} onChange={(event) => setLandingSections({ ...landingSections, galleryFallbackLabel: event.target.value })} />
+              </Field>
+            </ConfigPanel>
+
+            <ConfigPanel title="Section Blog & CTA" onSave={() => saveConfig('landing_sections', landingSections)} loading={loadingKey === 'landing_sections'}>
+              <Field label="Eyebrow Blog" htmlFor="blog-eyebrow">
+                <Input id="blog-eyebrow" value={landingSections.blogEyebrow} onChange={(event) => setLandingSections({ ...landingSections, blogEyebrow: event.target.value })} />
+              </Field>
+              <Field label="Judul Blog" htmlFor="blog-title">
+                <Input id="blog-title" value={landingSections.blogTitle} onChange={(event) => setLandingSections({ ...landingSections, blogTitle: event.target.value })} />
+              </Field>
+              <Field label="Label Tombol Blog" htmlFor="blog-button">
+                <Input id="blog-button" value={landingSections.blogButtonLabel} onChange={(event) => setLandingSections({ ...landingSections, blogButtonLabel: event.target.value })} />
+              </Field>
+              <Field label="Empty Text Blog" htmlFor="blog-empty">
+                <Input id="blog-empty" value={landingSections.blogEmptyText} onChange={(event) => setLandingSections({ ...landingSections, blogEmptyText: event.target.value })} />
+              </Field>
+              <Field label="Eyebrow CTA" htmlFor="cta-eyebrow">
+                <Input id="cta-eyebrow" value={landingSections.ctaEyebrow} onChange={(event) => setLandingSections({ ...landingSections, ctaEyebrow: event.target.value })} />
+              </Field>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Label Tombol CTA" htmlFor="cta-button-label">
+                  <Input id="cta-button-label" value={landingSections.ctaButtonLabel} onChange={(event) => setLandingSections({ ...landingSections, ctaButtonLabel: event.target.value })} />
+                </Field>
+                <Field label="URL Tombol CTA" htmlFor="cta-button-href">
+                  <Input id="cta-button-href" value={landingSections.ctaButtonHref} onChange={(event) => setLandingSections({ ...landingSections, ctaButtonHref: event.target.value })} />
+                </Field>
+              </div>
             </ConfigPanel>
           </div>
         ) : null}
@@ -125,6 +344,14 @@ export function WebConfigForm({ configs }: { configs: ConfigValues }) {
               </Field>
               <Field label="Description" htmlFor="landing-about-description">
                 <Textarea id="landing-about-description" value={landingAbout.description} rows={6} onChange={(event) => setLandingAbout({ ...landingAbout, description: event.target.value })} />
+              </Field>
+              <Field label="Badges" htmlFor="landing-about-badges">
+                <Textarea
+                  id="landing-about-badges"
+                  value={landingAbout.badges.join('\n')}
+                  rows={4}
+                  onChange={(event) => setLandingAbout({ ...landingAbout, badges: lines(event.target.value) })}
+                />
               </Field>
             </ConfigPanel>
 
@@ -215,6 +442,63 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
     <div className="space-y-2">
       <label htmlFor={htmlFor} className="text-sm font-semibold text-primary">{label}</label>
       {children}
+    </div>
+  )
+}
+
+function UploadField({
+  label,
+  onUpload,
+  uploadImage,
+}: {
+  label: string
+  onUpload: (url: string) => void
+  uploadImage: (file: File | undefined, onUploaded: (url: string) => void) => Promise<void>
+}) {
+  return (
+    <div className="space-y-2">
+      <span className="text-sm font-semibold text-primary">{label}</span>
+      <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-surface px-4 text-sm font-semibold text-primary ring-1 ring-line transition hover:bg-surface-alt">
+        <Upload className="h-4 w-4" aria-hidden="true" />
+        Upload ke Cloudinary
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="sr-only"
+          onChange={(event) => {
+            void uploadImage(event.target.files?.[0], onUpload)
+            event.target.value = ''
+          }}
+        />
+      </label>
+    </div>
+  )
+}
+
+function ImageListField({
+  label,
+  htmlFor,
+  value,
+  help,
+  onChange,
+  onUpload,
+  uploadImage,
+}: {
+  label: string
+  htmlFor: string
+  value: string
+  help: string
+  onChange: (value: string) => void
+  onUpload: (url: string) => void
+  uploadImage: (file: File | undefined, onUploaded: (url: string) => void) => Promise<void>
+}) {
+  return (
+    <div className="space-y-3">
+      <Field label={label} htmlFor={htmlFor}>
+        <Textarea id={htmlFor} value={value} rows={6} onChange={(event) => onChange(event.target.value)} />
+        <p className="text-xs text-muted">{help}</p>
+      </Field>
+      <UploadField label={`Tambah ${label}`} onUpload={onUpload} uploadImage={uploadImage} />
     </div>
   )
 }

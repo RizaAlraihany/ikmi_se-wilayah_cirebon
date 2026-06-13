@@ -52,6 +52,7 @@ export default async function AdminEditPostPage({ params }: { params: Promise<{ 
                 content: post.content,
                 excerpt: post.excerpt,
                 thumbnailUrl: post.thumbnailUrl,
+                thumbnailPublicId: post.thumbnailPublicId,
                 categoryId: post.categoryId,
                 seoTitle: post.seoTitle,
                 seoDescription: post.seoDescription,

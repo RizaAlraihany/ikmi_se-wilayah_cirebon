@@ -1,7 +1,4 @@
-import { Event, Program, User } from '@prisma/client'
-
-export const reportPolicies = {
-  canManageReport(user: User, eventWithProgram: Event & { program: Program }) {
-    return user.departmentId === eventWithProgram.program.departmentId
-  },
-}
+// Report policies disederhanakan:
+// - LPJ tidak lagi terikat ke departemen (bisa submit via token)
+// - Verifikasi dilakukan oleh Bendahara saja (single-step)
+// Semua permission check dilakukan via can() dari rbac.ts

@@ -3,12 +3,13 @@ import { prisma } from '@/core/database/prisma'
 import { ValidationError, ForbiddenError, NotFoundError } from '@/core/errors/custom-errors'
 import { contentPlanCreateSchema, contentPlanUpdateSchema, type ContentPlanCreateInput, type ContentPlanUpdateInput } from './schemas'
 import { contentPlanQueries } from './queries'
-import { isKomdigi, isSuperAdmin, requireCmsUpdate, requirePermission } from '@/features/cms/access'
+import { isKomdigi, requireCmsUpdate, requirePermission } from '@/features/cms/access'
+import { can, SessionUser } from '@/core/authorization/rbac'
 
 export const contentPlanService = {
   async createPlan(input: ContentPlanCreateInput, userId: string) {
     const validated = contentPlanCreateSchema.parse(input)
-    await requirePermission('post.create', userId)
+    await requirePermission('content_plan.manage', userId)
 
     const author = await prisma.user.findFirst({
       where: { id: validated.authorId, deletedAt: null, isActive: true },
@@ -16,8 +17,9 @@ export const contentPlanService = {
     })
     if (!author) throw new ValidationError('Penulis tidak ditemukan.')
 
-    const actor = await requirePermission('post.create', userId)
-    if (!isSuperAdmin(actor) && author.departmentId !== actor.departmentId) {
+    const actor = await requirePermission('content_plan.manage', userId)
+    const isGlobal = await can('system.manage', actor as SessionUser)
+    if (!isGlobal && author.departmentId !== actor.departmentId) {
       throw new ForbiddenError('Content plan hanya dapat dibuat untuk departemen sendiri.')
     }
 
@@ -56,8 +58,9 @@ export const contentPlanService = {
     const existing = await contentPlanQueries.getPlanById(validated.id)
     if (!existing) throw new NotFoundError('Content plan tidak ditemukan.')
 
-    const actor = await requirePermission('post.update', userId)
-    const canEdit = isSuperAdmin(actor) || isKomdigi(actor) || existing.authorId === userId
+    const actor = await requirePermission('content_plan.manage', userId)
+    const isGlobal = await can('system.manage', actor as SessionUser)
+    const canEdit = isGlobal || isKomdigi(actor) || existing.authorId === userId
     if (!canEdit) {
       throw new ForbiddenError('Tidak memiliki akses mengubah content plan ini.')
     }

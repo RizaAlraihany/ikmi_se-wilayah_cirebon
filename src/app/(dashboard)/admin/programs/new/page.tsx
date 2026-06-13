@@ -1,19 +1,25 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Input, Select } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { createProgramAction } from '@/features/programs/actions'
 import { prisma } from '@/core/database/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/core/auth/auth'
+import { can } from '@/core/authorization/rbac'
+import type { SessionUser } from '@/core/authorization/rbac'
 
 export default async function NewProgramPage() {
   const session = await auth()
   const user = session?.user as { role: string; departmentId: string; } | undefined
   let departments: { id: string, name: string }[] = []
 
-  if (user?.role === 'admin' || user?.role === 'bph') {
+  const canManageSystem = await can('system.manage', session?.user as SessionUser)
+  // Super Admin can manage system, Ketua Umum can approve tier 2 finance or similar. We use system.manage as a proxy for global access, but to be safe we can also allow if they have no department or are global roles, but let's stick to system.manage or if we want BPH access we check a global BPH permission like lpj.verify_bph.
+  const isGlobal = canManageSystem || await can('lpj.verify_bph', session?.user as SessionUser)
+
+  if (isGlobal) {
     departments = await prisma.department.findMany()
   } else if (user?.departmentId) {
     const dept = await prisma.department.findUnique({ where: { id: user.departmentId } })
@@ -38,7 +44,7 @@ export default async function NewProgramPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/admin/programs" className="text-muted-foreground hover:text-primary">
           &larr; Kembali
@@ -50,27 +56,27 @@ export default async function NewProgramPage() {
         <CardContent className="p-6">
           <form action={createProgram} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nama Program</label>
-              <Input name="name" required placeholder="Contoh: Latihan Dasar Kepemimpinan" />
+              <label htmlFor="name" className="text-sm font-semibold text-primary">Nama Program</label>
+              <Input id="name" name="name" required placeholder="Contoh: Latihan Dasar Kepemimpinan" />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Departemen</label>
-              <select name="departmentId" required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background">
+              <label htmlFor="departmentId" className="text-sm font-semibold text-primary">Departemen</label>
+              <Select id="departmentId" name="departmentId" required>
                 {departments.map(d => (
                   <option key={d.id} value={d.id}>{d.name}</option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Rencana Anggaran (Rp)</label>
-              <Input name="budgetPlan" type="number" required placeholder="Contoh: 5000000" />
+              <label htmlFor="budgetPlan" className="text-sm font-semibold text-primary">Rencana Anggaran (Rp)</label>
+              <Input id="budgetPlan" name="budgetPlan" type="number" required placeholder="Contoh: 5000000" />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Deskripsi / Latar Belakang</label>
-              <Textarea name="description" required placeholder="Tuliskan latar belakang dan tujuan program..." rows={4} />
+              <label htmlFor="description" className="text-sm font-semibold text-primary">Deskripsi / Latar Belakang</label>
+              <Textarea id="description" name="description" required placeholder="Tuliskan latar belakang dan tujuan program..." rows={4} />
             </div>
 
             <div className="flex justify-end pt-4">

@@ -11,23 +11,22 @@ export default function RegisterSuccessPage() {
   const waGroupLink = 'https://chat.whatsapp.com/ikmicirebon'
 
   return (
-    <main className="bg-background px-4 py-24 md:px-6 md:py-32 lg:px-8 min-h-screen flex items-center justify-center">
-      <div className="mx-auto max-w-lg text-center space-y-6">
-        <CheckCircle2 className="mx-auto h-20 w-20 text-accent" aria-hidden="true" />
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12 md:px-6 md:py-32 lg:px-8">
+      <div className="mx-auto max-w-lg space-y-4 text-center md:space-y-6">
+        <CheckCircle2 className="mx-auto h-14 w-14 text-accent md:h-20 md:w-20" aria-hidden="true" />
         
-        <h1 className="font-heading text-3xl font-extrabold text-primary md:text-4xl">
+        <h1 className="font-heading text-2xl font-extrabold text-primary md:text-4xl">
           Pendaftaran Berhasil!
         </h1>
         
-        <p className="text-base leading-relaxed text-primary/70">
-          Data Anda sudah kami terima dan akan direview oleh Departemen Kaderisasi. 
-          Sambil menunggu proses verifikasi, silakan bergabung dengan Grup WhatsApp Calon Anggota IKMI Cirebon untuk mendapatkan informasi terbaru.
+        <p className="text-sm leading-6 text-primary/70 md:text-base md:leading-relaxed">
+          Data Anda sudah kami terima. Silakan bergabung dengan Grup WhatsApp Calon Anggota IKMI Cirebon untuk mendapatkan informasi terbaru.
         </p>
 
-        <div className="pt-6">
+        <div className="pt-3 md:pt-6">
           <ButtonLink 
             href={waGroupLink} 
-            className="w-full sm:w-auto"
+            className="min-h-10 w-full text-sm sm:w-auto md:min-h-11"
             aria-label="Gabung Grup WhatsApp Calon Anggota"
             target="_blank"
             rel="noopener noreferrer"
@@ -36,11 +35,11 @@ export default function RegisterSuccessPage() {
           </ButtonLink>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-2 md:pt-4">
           <ButtonLink 
             href="/" 
             variant="secondary"
-            className="w-full sm:w-auto"
+            className="min-h-10 w-full text-sm sm:w-auto md:min-h-11"
           >
             Kembali ke Beranda
           </ButtonLink>

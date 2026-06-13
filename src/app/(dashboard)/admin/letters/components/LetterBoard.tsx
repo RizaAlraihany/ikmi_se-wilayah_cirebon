@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
 type LetterType = 'IN' | 'OUT'
@@ -29,11 +30,12 @@ const filters: { value: FilterValue; label: string }[] = [
   { value: 'OUT', label: 'Surat Keluar' },
 ]
 
-export function LetterBoard({ initialLetters, currentFilter }: { initialLetters: Letter[]; currentFilter?: string }) {
+export function LetterBoard({ initialLetters, currentFilter, currentSearch }: { initialLetters: Letter[]; currentFilter?: string; currentSearch?: string }) {
   const router = useRouter()
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState(currentSearch || '')
 
   async function handleDelete(id: string) {
     setDeletingId(id)
@@ -49,27 +51,48 @@ export function LetterBoard({ initialLetters, currentFilter }: { initialLetters:
   }
 
   function handleFilter(type: FilterValue) {
-    router.push(type ? `/admin/letters?type=${type}` : '/admin/letters')
+    const params = new URLSearchParams()
+    if (type) params.set('type', type)
+    if (search) params.set('q', search)
+    router.push(`/admin/letters?${params.toString()}`)
+  }
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    const params = new URLSearchParams()
+    if (currentFilter) params.set('type', currentFilter)
+    if (search) params.set('q', search)
+    router.push(`/admin/letters?${params.toString()}`)
   }
 
   const pendingLetter = initialLetters.find((letter) => letter.id === pendingDeleteId)
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {filters.map((filter) => {
-          const isActive = (currentFilter || '') === filter.value
-          return (
-            <Button
-              key={filter.label}
-              variant={isActive ? 'primary' : 'secondary'}
-              size="sm"
-              onClick={() => handleFilter(filter.value)}
-            >
-              {filter.label}
-            </Button>
-          )
-        })}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2">
+          {filters.map((filter) => {
+            const isActive = (currentFilter || '') === filter.value
+            return (
+              <Button
+                key={filter.label}
+                variant={isActive ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => handleFilter(filter.value)}
+              >
+                {filter.label}
+              </Button>
+            )
+          })}
+        </div>
+        <form onSubmit={handleSearch} className="flex max-w-sm w-full gap-2">
+          <Input
+            placeholder="Cari surat..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <Button type="submit" variant="secondary">Cari</Button>
+        </form>
       </div>
 
       {error && (
@@ -93,7 +116,7 @@ export function LetterBoard({ initialLetters, currentFilter }: { initialLetters:
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-heading text-base font-bold text-primary">{letter.letterNumber}</p>
-                      <p className="text-sm text-muted">{new Date(letter.date).toLocaleDateString('id-ID')}</p>
+                      <p className="text-sm text-text-secondary">{new Date(letter.date).toLocaleDateString('id-ID')}</p>
                     </div>
                     <Badge tone={letter.type === 'IN' ? 'success' : 'warning'}>
                       {letter.type === 'IN' ? 'Masuk' : 'Keluar'}
@@ -127,7 +150,7 @@ export function LetterBoard({ initialLetters, currentFilter }: { initialLetters:
           <Card className="hidden overflow-hidden md:block">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-background text-xs font-semibold uppercase tracking-wide text-muted">
+                <thead className="bg-surface-alt text-xs font-semibold uppercase tracking-wide text-text-secondary">
                   <tr>
                     <th className="px-5 py-4">No. Surat</th>
                     <th className="px-5 py-4">Tipe</th>
@@ -136,9 +159,9 @@ export function LetterBoard({ initialLetters, currentFilter }: { initialLetters:
                     <th className="px-5 py-4 text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-line">
+                <tbody className="divide-y divide-border">
                   {initialLetters.map((letter) => (
-                    <tr key={letter.id} className="transition-colors hover:bg-background">
+                    <tr key={letter.id} className="transition-colors hover:bg-surface-alt">
                       <td className="whitespace-nowrap px-5 py-4 font-semibold text-primary">
                         {letter.letterNumber}
                       </td>
@@ -148,7 +171,7 @@ export function LetterBoard({ initialLetters, currentFilter }: { initialLetters:
                         </Badge>
                       </td>
                       <td className="px-5 py-4 text-primary/80">{letter.subject}</td>
-                      <td className="whitespace-nowrap px-5 py-4 text-muted">
+                      <td className="whitespace-nowrap px-5 py-4 text-text-secondary">
                         {new Date(letter.date).toLocaleDateString('id-ID')}
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-right">
@@ -187,13 +210,13 @@ export function LetterBoard({ initialLetters, currentFilter }: { initialLetters:
 
       {pendingLetter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-letter-title">
-          <Card className="w-full max-w-md rounded-[20px]">
+          <Card className="w-full max-w-md rounded-2xl border-t-4 border-t-danger">
             <CardContent className="space-y-5 p-6">
               <div>
                 <h2 id="delete-letter-title" className="font-heading text-xl font-bold text-primary">
                   Hapus arsip surat?
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-muted">
+                <p className="mt-2 text-sm leading-6 text-text-secondary">
                   Arsip {pendingLetter.letterNumber} akan dihapus dari daftar persuratan.
                 </p>
               </div>

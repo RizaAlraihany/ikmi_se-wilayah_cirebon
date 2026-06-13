@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { postCreateSchema, postUpdateSchema, type PostCreateInput, type PostUpdateInput } from '@/features/blog/schemas'
-import { createPostAction, updatePostAction } from '@/features/blog/actions'
+import { createPostAction, updatePostAction, uploadBlogCoverAction } from '@/features/blog/actions'
 import { Editor } from '@/components/ui/editor'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Input, Select } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
 type CategoryOption = {
@@ -23,7 +23,8 @@ type InitialPost = {
   slug: string
   content: string
   excerpt: string | null
-  thumbnailUrl: string
+  thumbnailUrl: string | null
+  thumbnailPublicId: string | null
   categoryId: string
   seoTitle: string | null
   seoDescription: string | null
@@ -33,6 +34,7 @@ type InitialPost = {
 export function PostForm({ categories, initialPost }: { categories: CategoryOption[]; initialPost?: InitialPost }) {
   const router = useRouter()
   const [globalError, setGlobalError] = useState<string>('')
+  const [coverUploadMessage, setCoverUploadMessage] = useState<string>('')
   const isEdit = Boolean(initialPost)
 
   const schema = isEdit ? postUpdateSchema : postCreateSchema
@@ -53,6 +55,7 @@ export function PostForm({ categories, initialPost }: { categories: CategoryOpti
       content: initialPost?.content || '',
       excerpt: initialPost?.excerpt || '',
       featuredImage: initialPost?.thumbnailUrl || '',
+      featuredImagePublicId: initialPost?.thumbnailPublicId || '',
       categoryId: initialPost?.categoryId || categories[0]?.id || '',
       seoTitle: initialPost?.seoTitle || '',
       seoDescription: initialPost?.seoDescription || '',
@@ -69,6 +72,24 @@ export function PostForm({ categories, initialPost }: { categories: CategoryOpti
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '')
     setValue('slug', slug, { shouldValidate: true })
+  }
+
+  const uploadCover = async (file: File | undefined) => {
+    setCoverUploadMessage('')
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('file', file)
+    const result = await uploadBlogCoverAction(formData)
+
+    if (result.error) {
+      setCoverUploadMessage(result.error)
+      return
+    }
+
+    setValue('featuredImage', result.url || '', { shouldValidate: true, shouldDirty: true })
+    setValue('featuredImagePublicId', result.publicId || '', { shouldValidate: true, shouldDirty: true })
+    setCoverUploadMessage('Cover berhasil diupload ke Cloudinary.')
   }
 
   const onSubmit = async (data: PostCreateInput | PostUpdateInput) => {
@@ -94,6 +115,7 @@ export function PostForm({ categories, initialPost }: { categories: CategoryOpti
       ) : null}
 
       {initialPost ? <input type="hidden" {...register('id')} /> : null}
+      <input type="hidden" {...register('featuredImagePublicId')} />
 
       <Field label="Judul Artikel" htmlFor="title" error={errors.title?.message}>
         <Input
@@ -117,20 +139,27 @@ export function PostForm({ categories, initialPost }: { categories: CategoryOpti
 
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Kategori" htmlFor="categoryId" error={errors.categoryId?.message}>
-          <select
+          <Select
             id="categoryId"
             {...register('categoryId')}
-            className="h-11 w-full rounded-xl bg-surface px-4 text-sm ring-1 ring-line"
             disabled={isSubmitting}
           >
             {categories.map((category) => (
               <option key={category.id} value={category.id}>{category.name}</option>
             ))}
-          </select>
+          </Select>
         </Field>
 
         <Field label="Featured Image URL" htmlFor="featuredImage" error={errors.featuredImage?.message}>
           <Input id="featuredImage" {...register('featuredImage')} type="url" placeholder="https://res.cloudinary.com/..." disabled={isSubmitting} />
+          <Input
+            id="featuredImageFile"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={isSubmitting}
+            onChange={(event) => void uploadCover(event.target.files?.[0])}
+          />
+          {coverUploadMessage ? <p className="text-xs font-semibold text-muted">{coverUploadMessage}</p> : null}
         </Field>
       </div>
 
@@ -195,7 +224,7 @@ function Field({
         {label}
       </label>
       {children}
-      {error ? <p className="text-sm font-medium text-primary">{error}</p> : null}
+      {error ? <p className="text-sm font-medium text-danger">{error}</p> : null}
     </div>
   )
 }

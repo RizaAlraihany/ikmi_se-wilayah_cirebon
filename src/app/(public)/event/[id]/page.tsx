@@ -62,19 +62,19 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   }
 
   return (
-    <main className="bg-background min-h-screen pb-20">
+    <main className="min-h-screen bg-background pb-12 md:pb-20">
       {/* ─── BREADCRUMB & HEADER ─────────────────────────────────────────── */}
-      <section className="bg-primary px-4 pb-16 pt-24 md:px-6 lg:px-8">
+      <section className="bg-gradient-hero px-4 pb-10 pt-14 md:px-6 md:pb-16 md:pt-20 lg:px-8">
         <div className="mx-auto max-w-[800px]">
           <ButtonLink 
             href="/event" 
             variant="ghost" 
-            className="mb-8 -ml-4 text-surface/70 hover:text-surface hover:bg-surface/10"
+            className="mb-5 min-h-9 px-3 text-xs text-surface/70 hover:bg-surface/10 hover:text-surface md:mb-8 md:-ml-4 md:min-h-11 md:text-sm"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Event
+            <ArrowLeft className="mr-1 h-3.5 w-3.5 md:mr-2 md:h-4 md:w-4" /> Kembali ke Event
           </ButtonLink>
           
-          <div className="space-y-6 text-center md:text-left">
+          <div className="space-y-4 text-center md:space-y-6 md:text-left">
             <div className="flex flex-wrap gap-2 justify-center md:justify-start">
               <Badge tone={getStatusColor(event.status)}>
                 {event.status}
@@ -86,7 +86,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               )}
             </div>
             
-            <h1 className="font-heading text-3xl font-extrabold text-surface sm:text-4xl md:text-5xl leading-tight">
+            <h1 className="font-heading text-2xl font-extrabold leading-tight text-surface sm:text-4xl md:text-5xl">
               {event.title}
             </h1>
           </div>
@@ -94,51 +94,51 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       </section>
 
       {/* ─── CONTENT ─────────────────────────────────────────────────────── */}
-      <section className="px-4 py-12 md:px-6 lg:px-8 -mt-8">
+      <section className="-mt-6 px-4 py-8 md:-mt-8 md:px-6 md:py-12 lg:px-8">
         <div className="mx-auto max-w-[800px]">
-          <div className="bg-surface rounded-3xl p-6 md:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.08)] ring-1 ring-line space-y-10">
+          <div className="space-y-6 rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border md:space-y-10 md:p-10">
             
             {/* Info Cards */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-background-warm border border-line">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary flex-shrink-0">
-                  <CalendarDays className="h-6 w-6" />
+            <div className="grid gap-3 sm:grid-cols-2 md:gap-4">
+              <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-alt p-3 md:gap-4 md:p-4">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary md:h-12 md:w-12">
+                  <CalendarDays className="h-5 w-5 md:h-6 md:w-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase text-muted mb-1">Waktu Pelaksanaan</p>
-                  <p className="text-sm font-semibold text-primary">{dateStr}</p>
-                  <p className="text-xs text-muted mt-0.5">{timeStr}</p>
+                  <p className="mb-1 text-[11px] font-bold uppercase text-text-secondary md:text-xs">Waktu Pelaksanaan</p>
+                  <p className="text-xs font-semibold text-primary md:text-sm">{dateStr}</p>
+                  <p className="mt-0.5 text-[11px] text-text-secondary md:text-xs">{timeStr}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-background-warm border border-line">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent flex-shrink-0">
-                  <MapPin className="h-6 w-6" />
+              <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-alt p-3 md:gap-4 md:p-4">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent md:h-12 md:w-12">
+                  <MapPin className="h-5 w-5 md:h-6 md:w-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase text-muted mb-1">Lokasi</p>
-                  <p className="text-sm font-semibold text-primary">{event.location}</p>
+                  <p className="mb-1 text-[11px] font-bold uppercase text-text-secondary md:text-xs">Lokasi</p>
+                  <p className="text-xs font-semibold text-primary md:text-sm">{event.location}</p>
                 </div>
               </div>
               {event.program?.department && (
-                <div className="flex items-start gap-4 p-4 rounded-2xl bg-background-warm border border-line sm:col-span-2">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-700 flex-shrink-0">
-                    <Users className="h-6 w-6" />
+                <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-alt p-3 sm:col-span-2 md:gap-4 md:p-4">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-success text-success-foreground md:h-12 md:w-12">
+                    <Users className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase text-muted mb-1">Penyelenggara</p>
-                    <p className="text-sm font-semibold text-primary">Departemen {event.program.department.name}</p>
+                    <p className="mb-1 text-[11px] font-bold uppercase text-text-secondary md:text-xs">Penyelenggara</p>
+                    <p className="text-xs font-semibold text-primary md:text-sm">Departemen {event.program.department.name}</p>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Description */}
-            <div className="space-y-4">
-              <h2 className="font-heading text-xl font-bold text-primary border-b border-line pb-2">
+            <div className="space-y-3 md:space-y-4">
+              <h2 className="border-b border-border pb-2 font-heading text-lg font-bold text-primary md:text-xl">
                 Deskripsi Event
               </h2>
               <div 
-                className="prose prose-sm md:prose-base prose-primary max-w-none text-muted leading-relaxed"
+                className="prose prose-sm max-w-none leading-relaxed text-text-secondary md:prose-base"
                 dangerouslySetInnerHTML={{ __html: event.description }}
               />
             </div>

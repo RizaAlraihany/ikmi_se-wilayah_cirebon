@@ -9,6 +9,7 @@ export const letterRepository = {
         type: data.type,
         subject: data.subject,
         fileUrl: data.fileUrl,
+        filePublicId: data.filePublicId || null,
         date: data.date
       }
     })

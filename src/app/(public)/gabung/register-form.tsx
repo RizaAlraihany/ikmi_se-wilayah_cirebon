@@ -40,14 +40,14 @@ export function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
       {globalError ? (
-        <div className="rounded-xl bg-danger px-4 py-3 text-sm font-medium text-primary" role="alert">
+        <div className="rounded-xl bg-danger px-3 py-2.5 text-sm font-medium text-primary md:px-4 md:py-3" role="alert">
           {globalError}
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
         <Field label="Nama Lengkap" htmlFor="fullName" error={errors.fullName?.message} full>
           <Input id="fullName" {...register('fullName')} type="text" placeholder="Sesuai KTP/KTM" disabled={isSubmitting} />
         </Field>
@@ -80,7 +80,7 @@ export function RegisterForm() {
         <input {...register('bot_field')} type="text" className="hidden" autoComplete="off" tabIndex={-1} />
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
+      <Button type="submit" disabled={isSubmitting} className="min-h-10 w-full text-sm md:min-h-11">
         {isSubmitting ? 'Mengirim Data...' : 'Kirim Pendaftaran'}
       </Button>
     </form>
@@ -101,12 +101,12 @@ function Field({
   full?: boolean
 }) {
   return (
-    <div className={full ? 'space-y-2 md:col-span-2' : 'space-y-2'}>
-      <label htmlFor={htmlFor} className="text-sm font-semibold text-primary">
+    <div className={full ? 'space-y-1.5 md:col-span-2 md:space-y-2' : 'space-y-1.5 md:space-y-2'}>
+      <label htmlFor={htmlFor} className="text-xs font-semibold text-primary md:text-sm">
         {label}
       </label>
       {children}
-      {error ? <p className="text-sm font-medium text-primary">{error}</p> : null}
+      {error ? <p className="text-xs font-medium text-primary md:text-sm">{error}</p> : null}
     </div>
   )
 }

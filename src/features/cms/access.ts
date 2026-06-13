@@ -18,9 +18,7 @@ export async function getCmsUser(userId: string) {
   })
 }
 
-export function isSuperAdmin(user: { roleId: string }) {
-  return user.roleId === 'super_admin'
-}
+// isSuperAdmin removed to avoid hardcoded role checks
 
 export function isKomdigi(user: { department?: { code: string; name: string } | null }) {
   return user.department?.code === 'KOMDIGI' || !!user.department?.name.includes('Komunikasi & Digitalisasi')
@@ -36,7 +34,8 @@ export async function requireCmsUser(userId: string) {
 
 export async function requirePermission(permission: string, userId: string) {
   const user = await requireCmsUser(userId)
-  if (!(await can(permission, user)) && !isSuperAdmin(user)) {
+  const isGlobal = await can('system.manage', user)
+  if (!(await can(permission, user)) && !isGlobal) {
     throw new ForbiddenError('Tidak memiliki izin untuk aksi ini.')
   }
   return user
@@ -44,7 +43,8 @@ export async function requirePermission(permission: string, userId: string) {
 
 export async function requireCmsUpdate(userId: string) {
   const user = await requirePermission('cms.update', userId)
-  if (!isSuperAdmin(user) && !isKomdigi(user)) {
+  const isGlobal = await can('system.manage', user)
+  if (!isGlobal && !isKomdigi(user)) {
     throw new ForbiddenError('CMS hanya dapat dikelola oleh Departemen Komdigi.')
   }
   return user
@@ -52,7 +52,8 @@ export async function requireCmsUpdate(userId: string) {
 
 export async function requirePublisher(userId: string) {
   const user = await requirePermission('post.publish', userId)
-  if (!isSuperAdmin(user) && !isKomdigi(user)) {
+  const isGlobal = await can('system.manage', user)
+  if (!isGlobal && !isKomdigi(user)) {
     throw new ForbiddenError('Publish artikel hanya dapat dilakukan oleh Publisher Komdigi.')
   }
   return user

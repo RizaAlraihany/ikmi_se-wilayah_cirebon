@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <main className="grid min-h-screen bg-background px-4 py-8 md:grid-cols-[1fr_0.95fr] md:px-8">
-      <section className="hidden items-center justify-center rounded-[28px] bg-primary p-10 text-surface md:flex">
+      <section className="hidden items-center justify-center rounded-2xl bg-primary p-10 text-surface md:flex">
         <div className="max-w-lg space-y-6">
           <Image src="/ikmi-logo.png" alt="Logo IKMI Cirebon" width={72} height={72} className="rounded-full" priority />
           <div className="space-y-3">

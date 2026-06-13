@@ -5,19 +5,19 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 
 type ButtonSize = 'sm' | 'md' | 'icon'
 
 const variants: Record<ButtonVariant, string> = {
-  primary: 'bg-accent text-surface shadow-elevated hover:bg-secondary',
-  secondary: 'bg-surface text-primary shadow-elevated ring-1 ring-line hover:bg-background',
+  primary: 'bg-accent text-surface shadow-card hover:bg-secondary',
+  secondary: 'bg-surface text-primary shadow-soft ring-1 ring-border hover:bg-surface-alt',
   ghost: 'bg-transparent text-primary hover:bg-primary/5',
-  danger: 'bg-danger text-primary hover:bg-danger/80',
-  outline: 'bg-surface text-primary shadow-elevated ring-1 ring-line hover:bg-background',
-  default: 'bg-accent text-surface shadow-elevated hover:bg-secondary',
-  destructive: 'bg-danger text-primary hover:bg-danger/80',
+  danger: 'bg-danger text-danger-foreground hover:bg-danger/80',
+  outline: 'bg-surface text-primary shadow-soft ring-1 ring-border hover:bg-surface-alt',
+  default: 'bg-accent text-surface shadow-card hover:bg-secondary',
+  destructive: 'bg-danger text-danger-foreground hover:bg-danger/80',
 }
 
 const sizes: Record<ButtonSize, string> = {
-  sm: 'h-9 px-4 text-sm',
-  md: 'h-11 px-5 text-sm',
-  icon: 'h-10 w-10 p-0',
+  sm: 'min-h-11 px-4 text-sm',
+  md: 'min-h-11 px-5 text-sm',
+  icon: 'h-11 w-11 p-0',
 }
 
 type SharedProps = {

@@ -6,12 +6,11 @@ export const notificationStatusSchema = z.enum(['all', 'unread', 'read', 'archiv
 export const notificationModuleSchema = z.enum([
   'all',
   'system',
-  'workflow',
-  'membership',
   'finance',
   'lpj',
   'cms',
   'letters',
+  'announcement',
 ])
 
 export const createNotificationSchema = z.object({
@@ -34,12 +33,11 @@ export const bulkNotificationSchema = z.object({
 
 export const notificationPreferenceSchema = z.object({
   system: z.boolean().default(true),
-  workflow: z.boolean().default(true),
-  membership: z.boolean().default(true),
   finance: z.boolean().default(true),
   lpj: z.boolean().default(true),
   cms: z.boolean().default(true),
   letters: z.boolean().default(true),
+  announcement: z.boolean().default(true),
 })
 
 export type NotificationStatus = z.infer<typeof notificationStatusSchema>
@@ -51,10 +49,9 @@ export type NotificationPreferenceInput = z.infer<typeof notificationPreferenceS
 export const notificationModuleToTypes: Record<NotificationModule, NotificationType[] | undefined> = {
   all: undefined,
   system: [NotificationType.SYSTEM],
-  workflow: [NotificationType.SYSTEM, NotificationType.OTHER],
-  membership: [NotificationType.REGISTRATION],
   finance: [NotificationType.FINANCE],
   lpj: [NotificationType.LPJ],
   cms: [NotificationType.POST],
   letters: [NotificationType.SYSTEM, NotificationType.OTHER],
+  announcement: [NotificationType.ANNOUNCEMENT],
 }

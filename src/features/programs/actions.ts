@@ -7,8 +7,9 @@ import { auth } from '@/core/auth/auth'
 import { can } from '@/core/authorization/rbac'
 import type { SessionUser } from '@/core/authorization/rbac'
 
-function isDepartmentOwner(user: SessionUser, departmentId: string) {
-  return user.roleId === 'super_admin' || user.departmentId === departmentId
+async function isDepartmentOwner(user: SessionUser, departmentId: string) {
+  const isGlobal = await can('system.manage', user) || await can('lpj.verify_bph', user)
+  return isGlobal || user.departmentId === departmentId
 }
 
 function getSessionUser(user: { id?: string; roleId: string; departmentId: string | null; positionId: string | null }): SessionUser {
@@ -32,7 +33,8 @@ export async function createProgramAction(data: { name: string; departmentId: st
     const hasAccess = await can('program.create', user)
     if (!hasAccess) throw new Error('Forbidden: Cannot create program')
 
-    if (!isDepartmentOwner(user, data.departmentId)) {
+    const isOwner = await isDepartmentOwner(user, data.departmentId)
+    if (!isOwner) {
       throw new Error('Forbidden: Cannot create program for other department')
     }
 
@@ -80,7 +82,8 @@ export async function updateProgramAction(id: string, data: { name?: string; bud
     const existing = await prisma.program.findUnique({ where: { id } })
     if (!existing) throw new Error('Program not found')
 
-    if (!isDepartmentOwner(user, existing.departmentId)) {
+    const isOwner = await isDepartmentOwner(user, existing.departmentId)
+    if (!isOwner) {
       throw new Error('Forbidden: Cannot update program for other department')
     }
 
@@ -124,7 +127,8 @@ export async function deleteProgramAction(id: string) {
     const existing = await prisma.program.findUnique({ where: { id } })
     if (!existing) throw new Error('Program not found')
 
-    if (!isDepartmentOwner(user, existing.departmentId)) {
+    const isOwner = await isDepartmentOwner(user, existing.departmentId)
+    if (!isOwner) {
       throw new Error('Forbidden: Cannot delete program for other department')
     }
 
@@ -166,7 +170,8 @@ export async function createActivityAction(data: { programId: string; name: stri
     const existing = await prisma.program.findUnique({ where: { id: data.programId } })
     if (!existing) throw new Error('Program not found')
 
-    if (!isDepartmentOwner(user, existing.departmentId)) {
+    const isOwner = await isDepartmentOwner(user, existing.departmentId)
+    if (!isOwner) {
       throw new Error('Forbidden: Cannot manage activities for other department')
     }
 
@@ -213,7 +218,8 @@ export async function updateActivityAction(id: string, data: { name?: string; de
     const existing = await prisma.activity.findUnique({ where: { id }, include: { program: true } })
     if (!existing) throw new Error('Activity not found')
 
-    if (!isDepartmentOwner(user, existing.program.departmentId)) {
+    const isOwner = await isDepartmentOwner(user, existing.program.departmentId)
+    if (!isOwner) {
       throw new Error('Forbidden: Cannot manage activities for other department')
     }
 
@@ -256,7 +262,8 @@ export async function deleteActivityAction(id: string) {
     const existing = await prisma.activity.findUnique({ where: { id }, include: { program: true } })
     if (!existing) throw new Error('Activity not found')
 
-    if (!isDepartmentOwner(user, existing.program.departmentId)) {
+    const isOwner = await isDepartmentOwner(user, existing.program.departmentId)
+    if (!isOwner) {
       throw new Error('Forbidden: Cannot manage activities for other department')
     }
 

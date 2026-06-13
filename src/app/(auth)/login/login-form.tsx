@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { loginSchema, type LoginInput } from '@/features/auth/schemas'
 import { loginAction } from '@/features/auth/actions'
+import { loginSchema, type LoginInput } from '@/features/auth/schemas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 

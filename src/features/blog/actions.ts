@@ -6,6 +6,8 @@ import { postCreateSchema, postUpdateSchema, type PostCreateInput, type PostUpda
 import { revalidatePath } from 'next/cache'
 import type { Session } from 'next-auth'
 import { rateLimit } from '@/core/security/rate-limiter'
+import { validateImage } from '@/core/storage/file-validator'
+import { cloudinaryFolders, storageService } from '@/core/storage/storage-service'
 
 function revalidateCmsPaths(slug?: string) {
   revalidatePath('/admin/cms/posts')
@@ -21,8 +23,9 @@ function sessionUser(session: Session | null) {
   if (!session?.user?.id) return null
   return {
     id: session.user.id,
-    roleId: session.user.roleId,
+    roleId: session.user.roleId as string,
     departmentId: session.user.departmentId,
+    positionId: (session.user as { positionId?: string | null }).positionId || null,
   }
 }
 
@@ -59,6 +62,29 @@ export async function updatePostAction(data: PostUpdateInput) {
     return { success: true }
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return { error: 'Data tidak valid' }
+    if (error instanceof Error) return { error: error.message || 'Terjadi kesalahan' }
+    return { error: 'Terjadi kesalahan' }
+  }
+}
+
+export async function uploadBlogCoverAction(formData: FormData) {
+  try {
+    const session = await auth()
+    const user = sessionUser(session)
+    if (!user) return { error: 'Akses ditolak.' }
+    await rateLimit(`cms:post:cover:${user.id}`, 30, 3600)
+
+    const file = formData.get('file')
+    if (!(file instanceof File) || file.size === 0) {
+      return { error: 'File cover wajib dipilih.' }
+    }
+
+    const validation = validateImage(file)
+    if (!validation.valid) return { error: validation.error || 'File tidak valid.' }
+
+    const uploaded = await storageService.uploadImage(file, cloudinaryFolders.blog)
+    return { success: true, url: uploaded.secureUrl, publicId: uploaded.publicId }
+  } catch (error) {
     if (error instanceof Error) return { error: error.message || 'Terjadi kesalahan' }
     return { error: 'Terjadi kesalahan' }
   }

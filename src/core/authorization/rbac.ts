@@ -1,4 +1,5 @@
 import { prisma } from '../database/prisma'
+import { isSuperAdminRole } from '../auth/roles'
 
 export interface SessionUser {
   id: string
@@ -10,6 +11,7 @@ export interface SessionUser {
 import { permissionCache } from '../cache/permission-cache'
 
 const CACHE_TTL_SECONDS = 5 * 60 // 5 minutes
+const CACHE_NAMESPACE = 'rbac:v2'
 
 /**
  * Checks if the user has the required permission.
@@ -20,12 +22,11 @@ export async function can(permissionName: string, user: SessionUser | null | und
     return false
   }
 
-  // Super Admin bypass
-  if (user.roleId === 'super_admin') {
+  if (isSuperAdminRole(user.roleId)) {
     return true
   }
 
-  const cacheKey = `${user.roleId}:${permissionName}`
+  const cacheKey = `${CACHE_NAMESPACE}:${user.roleId}:${permissionName}`
   const cached = await permissionCache.get(cacheKey)
   if (cached !== null) {
     return cached

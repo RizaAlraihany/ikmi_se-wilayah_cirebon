@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { MapPin, CalendarDays, ArrowRight, Target } from 'lucide-react'
 import { ButtonLink } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { prisma } from '@/core/database/prisma'
 
 export const metadata = {
@@ -14,7 +15,7 @@ export default async function KegiatanPage() {
   const events = await prisma.event.findMany({
     orderBy: { startDate: 'asc' },
     take: 10,
-    where: { status: { in: ['UPCOMING', 'ONGOING'] }, deletedAt: null }
+    where: { status: { in: ['UPCOMING', 'ONGOING'] }, deletedAt: null },
   })
 
   const programKerja = await prisma.program.findMany({
@@ -24,7 +25,6 @@ export default async function KegiatanPage() {
     where: { deletedAt: null },
   })
 
-  // Format Status for Programs
   const getStatusText = (status: string) => {
     switch (status) {
       case 'PLANNED': return 'Perencanaan'
@@ -35,43 +35,40 @@ export default async function KegiatanPage() {
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusTone = (status: string): 'accent' | 'primary' | 'success' | 'warning' | 'danger' | 'surface' => {
     switch (status) {
-      case 'PLANNED': return 'bg-amber-100 text-amber-700'
-      case 'ONGOING': return 'bg-green-100 text-green-700'
-      case 'COMPLETED': return 'bg-blue-100 text-blue-700'
-      case 'CANCELLED': return 'bg-red-100 text-red-700'
-      default: return 'bg-gray-100 text-gray-700'
+      case 'PLANNED': return 'warning'
+      case 'ONGOING': return 'success'
+      case 'COMPLETED': return 'accent'
+      case 'CANCELLED': return 'danger'
+      default: return 'surface'
     }
   }
 
   return (
-    <main className="bg-background min-h-screen">
-      {/* ─── HEADER ──────────────────────────────────────────────────────── */}
-      <section className="bg-primary px-4 py-20 text-center md:px-6 md:py-28 lg:px-8">
+    <main className="min-h-screen bg-background">
+      <section className="bg-gradient-hero px-4 py-10 text-center md:px-6 md:py-16 lg:px-8">
         <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-bold uppercase tracking-widest text-accent mb-4 flex items-center justify-center gap-2">
-            <CalendarDays className="h-4 w-4" /> Jejak Langkah
+          <p className="mb-3 flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-surface/80 md:mb-4 md:gap-2 md:text-sm">
+            <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4" /> Jejak Langkah
           </p>
-          <h1 className="font-heading text-4xl font-extrabold text-surface sm:text-5xl md:text-6xl">
+          <h1 className="font-heading text-3xl font-extrabold text-surface sm:text-5xl md:text-6xl">
             Event & Program Kerja
           </h1>
-          <p className="mt-6 text-base leading-relaxed text-surface/80 md:text-lg">
-            Aksi nyata IKMI Cirebon dalam mengembangkan potensi anggota dan memberikan dampak 
-            langsung kepada masyarakat.
+          <p className="mt-4 text-sm leading-6 text-surface/80 md:mt-6 md:text-lg md:leading-7">
+            Aksi nyata IKMI Cirebon dalam mengembangkan potensi anggota dan memberikan dampak langsung kepada masyarakat.
           </p>
         </div>
       </section>
 
-      {/* ─── EVENT / AGENDA ──────────────────────────────────────────────── */}
-      <section className="px-4 py-16 md:px-6 md:py-24 lg:px-8">
+      <section className="px-4 py-8 md:px-6 md:py-16 lg:px-8">
         <div className="mx-auto max-w-[1200px]">
-          <div className="mb-12 flex items-center gap-4">
-            <div className="h-10 w-2 bg-accent rounded-full" />
-            <h2 className="font-heading text-3xl font-extrabold text-primary">Agenda Terdekat</h2>
+          <div className="mb-5 flex items-center gap-3 md:mb-8 md:gap-4">
+            <div className="h-8 w-1.5 rounded-full bg-accent md:h-10 md:w-2" />
+            <h2 className="font-heading text-xl font-extrabold text-primary md:text-3xl">Agenda Terdekat</h2>
           </div>
-          
-          <div className="grid gap-6 md:grid-cols-2">
+
+          <div className="grid gap-4 md:grid-cols-2">
             {events.length > 0 ? (
               events.map((agenda) => {
                 const startDate = new Date(agenda.startDate)
@@ -81,26 +78,26 @@ export default async function KegiatanPage() {
                 return (
                   <div
                     key={agenda.id}
-                    className="flex flex-col sm:flex-row gap-5 rounded-2xl bg-surface p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)] ring-1 ring-line transition-shadow hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)]"
+                    className="flex flex-row gap-3 rounded-2xl bg-surface p-3 shadow-card ring-1 ring-border transition-shadow hover:shadow-soft md:gap-5 md:p-5"
                   >
-                    <div className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-2xl bg-primary/8 text-center">
-                      <span className="text-xs font-bold uppercase text-muted">
+                    <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl bg-surface-alt text-center md:h-20 md:w-20 md:rounded-2xl">
+                      <span className="text-[10px] font-bold uppercase text-text-secondary md:text-xs">
                         {month}
                       </span>
-                      <span className="font-heading text-2xl font-extrabold text-primary">
+                      <span className="font-heading text-lg font-extrabold text-primary md:text-2xl">
                         {day}
                       </span>
                     </div>
-                    <div className="space-y-2 min-w-0 flex-1">
-                      <Link href={`/event/${agenda.id}`} className="hover:text-accent transition-colors">
-                        <p className="font-heading text-xl font-bold text-primary leading-snug">
+                    <div className="min-w-0 flex-1 space-y-1.5 md:space-y-2">
+                      <Link href={`/event/${agenda.id}`} className="transition-colors hover:text-accent">
+                        <p className="font-heading text-sm font-bold leading-snug text-primary md:text-xl">
                           {agenda.title}
                         </p>
                       </Link>
-                      <p className="text-sm text-muted line-clamp-2">
+                      <p className="line-clamp-2 text-xs leading-5 text-text-secondary md:text-sm">
                         {agenda.description.replace(/<[^>]+>/g, '')}
                       </p>
-                      <p className="flex items-center gap-1.5 text-xs font-medium text-accent pt-2 border-t border-line">
+                      <p className="flex items-center gap-1.5 border-t border-border pt-2 text-xs font-medium text-accent">
                         <MapPin className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
                         {agenda.location}
                       </p>
@@ -109,61 +106,56 @@ export default async function KegiatanPage() {
                 )
               })
             ) : (
-              <p className="text-muted text-sm italic col-span-2">Belum ada agenda terdekat.</p>
+              <p className="col-span-2 text-sm italic text-text-secondary">Belum ada agenda terdekat.</p>
             )}
           </div>
         </div>
       </section>
 
-      {/* ─── PROGRAM KERJA ───────────────────────────────────────────────── */}
-      <section className="bg-background-warm px-4 py-16 md:px-6 md:py-24 lg:px-8">
+      <section className="bg-surface-alt px-4 py-8 md:px-6 md:py-16 lg:px-8">
         <div className="mx-auto max-w-[1200px]">
-          <div className="mb-12 flex items-center gap-4">
-            <div className="h-10 w-2 bg-primary rounded-full" />
-            <h2 className="font-heading text-3xl font-extrabold text-primary">Program Kerja Unggulan</h2>
+          <div className="mb-5 flex items-center gap-3 md:mb-8 md:gap-4">
+            <div className="h-8 w-1.5 rounded-full bg-primary md:h-10 md:w-2" />
+            <h2 className="font-heading text-xl font-extrabold text-primary md:text-3xl">Program Kerja Unggulan</h2>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {programKerja.length > 0 ? (
               programKerja.map((proker) => (
-                <div key={proker.id} className="bg-surface rounded-2xl p-6 ring-1 ring-line flex flex-col justify-between hover:shadow-md transition-shadow">
-                  <div className="space-y-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/5 text-primary">
-                      <Target className="h-6 w-6" />
+                <div key={proker.id} className="flex flex-col justify-between rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border transition-shadow hover:shadow-soft md:p-5">
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/5 text-primary md:h-12 md:w-12">
+                      <Target className="h-5 w-5 md:h-6 md:w-6" />
                     </div>
-                    <h3 className="font-heading text-lg font-bold text-primary">{proker.name}</h3>
-                    <p className="text-sm text-muted">Dept. {proker.department.name}</p>
+                    <h3 className="font-heading text-base font-bold text-primary md:text-lg">{proker.name}</h3>
+                    <p className="text-xs text-text-secondary md:text-sm">Dept. {proker.department.name}</p>
                   </div>
-                  <div className="mt-6 pt-4 border-t border-line flex justify-between items-center">
-                    <span className="text-xs font-bold uppercase tracking-wide text-primary/60">Status</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(proker.status)}`}>
+                  <div className="mt-4 flex items-center justify-between border-t border-border pt-3 md:mt-6 md:pt-4">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-primary/60 md:text-xs">Status</span>
+                    <Badge tone={getStatusTone(proker.status)}>
                       {getStatusText(proker.status)}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-muted text-sm italic col-span-4">Belum ada program kerja terdaftar.</p>
+              <p className="col-span-4 text-sm italic text-text-secondary">Belum ada program kerja terdaftar.</p>
             )}
           </div>
         </div>
       </section>
 
-      {/* ─── CTA KONVERSI ────────────────────────────────────────────────── */}
-      <section className="bg-primary px-4 py-20 md:px-6 md:py-28 lg:px-8 text-center">
+      <section className="bg-primary px-4 py-10 text-center md:px-6 md:py-16 lg:px-8">
         <div className="mx-auto max-w-[800px]">
-          <h2 className="font-heading text-3xl font-extrabold text-surface md:text-5xl">
+          <h2 className="font-heading text-2xl font-extrabold text-surface md:text-5xl">
             Mari Berkontribusi Nyata
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-surface/80 md:text-lg">
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-surface/80 md:mt-6 md:text-lg md:leading-7">
             Bergabunglah bersama kami dan jadilah bagian dari setiap program kerja dan agenda aksi nyata IKMI Cirebon.
           </p>
-          <ButtonLink 
-            href="/gabung" 
-            className="mt-10 bg-surface !text-primary hover:bg-surface/90 px-8 py-3 text-base"
-          >
+          <ButtonLink href="/gabung" className="mt-6 min-h-10 bg-surface px-6 text-sm !text-primary hover:bg-surface/90 md:mt-10 md:min-h-11 md:px-8 md:text-base">
             Gabung Bersama IKMI
-            <ArrowRight className="ml-2 h-5 w-5" />
+            <ArrowRight className="ml-1 h-4 w-4 md:ml-2 md:h-5 md:w-5" />
           </ButtonLink>
         </div>
       </section>

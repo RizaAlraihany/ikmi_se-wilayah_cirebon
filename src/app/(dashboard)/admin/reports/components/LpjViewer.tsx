@@ -19,7 +19,7 @@ export function LpjViewer({ url, title }: { url: string; title: string }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="lpj-preview-title">
-      <Card className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[20px]">
+      <Card className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl">
         <div className="flex items-center justify-between gap-4 border-b border-line px-5 py-4">
           <h3 id="lpj-preview-title" className="truncate font-heading text-lg font-bold text-primary">
             Preview LPJ: {title}

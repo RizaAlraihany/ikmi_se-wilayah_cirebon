@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
-import { createLetterAction } from '@/features/letters/actions'
+import { createLetterAction, uploadLetterDocumentAction } from '@/features/letters/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input, Select } from '@/components/ui/input'
@@ -20,11 +20,28 @@ export function LetterForm() {
   async function handleSubmit(formData: FormData) {
     setIsSubmitting(true)
     setError('')
+    const file = formData.get('file')
+    if (!(file instanceof File) || file.size === 0) {
+      setError('Dokumen surat wajib dipilih.')
+      setIsSubmitting(false)
+      return
+    }
+
+    const uploadData = new FormData()
+    uploadData.append('file', file)
+    const upload = await uploadLetterDocumentAction(uploadData)
+
+    if (upload.error || !upload.url) {
+      setError(upload.error || 'Upload dokumen gagal.')
+      setIsSubmitting(false)
+      return
+    }
 
     const result = await createLetterAction({
       type: getFormString(formData, 'type'),
       subject: getFormString(formData, 'subject'),
-      fileUrl: getFormString(formData, 'fileUrl'),
+      fileUrl: upload.url,
+      filePublicId: upload.publicId,
       date: getFormString(formData, 'date'),
     })
 
@@ -45,15 +62,15 @@ export function LetterForm() {
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 p-4" role="dialog" aria-modal="true" aria-labelledby="letter-modal-title">
-          <Card className="w-full max-w-lg rounded-[20px]">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-primary/45 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="letter-modal-title">
+          <Card className="w-full max-w-lg rounded-t-2xl border-t-4 border-t-accent sm:rounded-2xl">
             <form action={handleSubmit}>
               <CardContent className="space-y-5 p-6">
                 <div>
                   <h2 id="letter-modal-title" className="font-heading text-xl font-bold text-primary">
                     Arsip Surat Baru
                   </h2>
-                  <p className="mt-1 text-sm text-muted">Tambahkan tautan dokumen surat untuk arsip internal.</p>
+                  <p className="mt-1 text-sm text-text-secondary">Tambahkan tautan dokumen surat untuk arsip internal.</p>
                 </div>
 
                 {error && (
@@ -81,19 +98,19 @@ export function LetterForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="fileUrl" className="text-sm font-semibold text-primary">URL Dokumen PDF</label>
+                  <label htmlFor="file" className="text-sm font-semibold text-primary">Dokumen PDF</label>
                   <Input
-                    id="fileUrl"
-                    name="fileUrl"
-                    type="url"
+                    id="file"
+                    name="file"
+                    type="file"
+                    accept="application/pdf"
                     required
                     disabled={isSubmitting}
-                    placeholder="https://example.com/surat.pdf"
                   />
-                  <p className="text-xs text-muted">Gunakan tautan PDF yang dapat diakses pengurus.</p>
+                  <p className="text-xs text-text-secondary">File akan diupload ke Cloudinary dan disimpan sebagai URL.</p>
                 </div>
 
-                <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+                <div className="flex flex-col-reverse gap-3 border-t border-border pt-4 sm:flex-row sm:justify-end">
                   <Button type="button" variant="secondary" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
                     Batal
                   </Button>

@@ -36,7 +36,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   </Badge>
                   <CardTitle className="text-2xl">{event.title}</CardTitle>
                 </div>
-                <Badge tone="surface">{event.program.name}</Badge>
+                <Badge tone="surface">{event.program?.name ?? '-'}</Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -85,7 +85,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 <div className="p-3 border rounded-lg bg-muted/20">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-semibold">Status LPJ</span>
-                    <Badge tone={event.report.status === 'VERIFIED_BPH' ? 'success' : 'warning'}>{event.report.status}</Badge>
+                    <Badge tone={event.report.status === 'VERIFIED' ? 'success' : 'warning'}>{event.report.status}</Badge>
                   </div>
                   <Link href={`/admin/reports/${event.report.id}`} className="text-sm text-primary hover:underline">
                     Lihat Detail Laporan

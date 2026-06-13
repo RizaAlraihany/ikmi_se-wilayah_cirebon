@@ -2,26 +2,26 @@ import {
   BookOpen,
   CheckCircle2,
   FileText,
-  MessageSquareWarning,
+  Mail,
+  Megaphone,
   Newspaper,
   TrendingUp,
   Users,
   WalletCards,
 } from 'lucide-react'
 import { auth } from '@/core/auth/auth'
+import { can } from '@/core/authorization/rbac'
+import type { SessionUser } from '@/core/authorization/rbac'
 import { userQueries } from '@/features/users/queries'
 import { postQueries } from '@/features/blog/queries'
 import { registrationQueries } from '@/features/registration/queries'
 import { financeQueries } from '@/features/finance/queries'
-import { complaintQueries } from '@/features/complaints/queries'
 import { eventQueries } from '@/features/events/queries'
 import { reportQueries } from '@/features/reports/queries'
 import { letterQueries } from '@/features/letters/queries'
-import { programQueries } from '@/features/programs/queries'
+import { contentPlanQueries } from '@/features/content-plan/queries'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { EmptyState } from '@/components/ui/empty-state'
-import { Mail, CalendarDays } from 'lucide-react'
 
 type RoleDashboard = {
   title: string
@@ -32,95 +32,186 @@ type RoleDashboard = {
 const roleDashboards: Record<string, RoleDashboard> = {
   super_admin: {
     title: 'Command Center Organisasi',
-    subtitle: 'Pantau seluruh modul, approval, publikasi, dan operasional lintas departemen.',
-    focus: ['Semua widget', 'Governance', 'Audit readiness'],
+    subtitle: 'Pantau anggota, program aktif, kas terkini, LPJ, dan publikasi lintas modul.',
+    focus: ['Overview', 'User & Role', 'LPJ Token', 'Read Access'],
   },
-  bph_sekum: {
-    title: 'Dashboard Ketua/Sekum',
-    subtitle: 'Fokus pada KPI strategis, administrasi organisasi, LPJ, dan approval operasional.',
-    focus: ['Strategic KPI', 'Approval center', 'LPJ'],
+  admin_komdigi: {
+    title: 'Dashboard Komdigi',
+    subtitle: 'Kelola CMS website, content plan, request pamflet, dan queue karya tulis.',
+    focus: ['CMS', 'Content Plan', 'Karya Tulis', 'Pamflet'],
   },
-  bph_bendum: {
+  admin_sekretaris: {
+    title: 'Dashboard Sekretaris',
+    subtitle: 'Kelola kalender kegiatan, pengumuman, persuratan, pengurus, dan pendaftar baru.',
+    focus: ['Kalender', 'Pengumuman', 'Persuratan', 'Pendaftar'],
+  },
+  admin_bendahara: {
     title: 'Dashboard Bendahara',
-    subtitle: 'Prioritaskan approval dana, cashflow, dan status pencairan organisasi.',
-    focus: ['Finance approval', 'Cashflow', 'Audit keuangan'],
+    subtitle: 'Pantau buku kas, laporan keuangan, LPJ pending, dan token submission.',
+    focus: ['Buku Kas', 'Laporan', 'LPJ', 'Token'],
   },
-  kadep_komdigi: {
-    title: 'Dashboard Komdigi',
-    subtitle: 'Pantau publikasi, draft artikel, agenda, dan kesiapan kanal digital IKMI.',
-    focus: ['Blog analytics', 'Agenda', 'Web config'],
+  user: {
+    title: 'Dashboard Anggota',
+    subtitle: 'Akses kalender, pengumuman, transparansi keuangan, request pamflet, dan submit LPJ token.',
+    focus: ['Kalender', 'Pengumuman', 'Keuangan', 'Profil'],
   },
-  staff_komdigi: {
-    title: 'Dashboard Komdigi',
-    subtitle: 'Kelola draft artikel, publikasi, dan kalender konten organisasi.',
-    focus: ['Draft artikel', 'Publikasi', 'Agenda'],
-  },
-  kadep_kaderisasi: {
-    title: 'Dashboard Kaderisasi',
-    subtitle: 'Pantau pendaftaran, statistik anggota, dan tindak lanjut calon kader.',
-    focus: ['Registration', 'Member stats', 'Follow up'],
-  },
-  staff_kaderisasi: {
-    title: 'Dashboard Kaderisasi',
-    subtitle: 'Kelola data pendaftar dan progres kaderisasi yang masuk.',
-    focus: ['Registration', 'Member stats', 'Follow up'],
-  },
-  kadep_advokasi: {
-    title: 'Dashboard Advokasi',
-    subtitle: 'Pantau aduan baru, tindak lanjut, dan penyelesaian isu mahasiswa.',
-    focus: ['Aduan baru', 'Tracking aduan', 'Resolution'],
-  },
-  staff_advokasi: {
-    title: 'Dashboard Advokasi',
-    subtitle: 'Tindak lanjuti aduan mahasiswa secara rapi dan terukur.',
-    focus: ['Aduan baru', 'Tracking aduan', 'Resolution'],
-  },
+}
+
+const roleGroups = {
+  superAdmin: ['super_admin'],
+  komdigi: ['super_admin', 'admin_komdigi'],
+  sekretaris: ['super_admin', 'admin_sekretaris'],
+  bendahara: ['super_admin', 'admin_bendahara'],
+  user: ['super_admin', 'admin_komdigi', 'admin_sekretaris', 'admin_bendahara', 'user'],
 }
 
 export default async function AdminDashboardPage() {
   const session = await auth()
   const currentUser = session?.user.id ? await userQueries.getUserById(session.user.id) : null
-  const roleId = currentUser?.roleId ?? session?.user.roleId ?? 'staff_komdigi'
-  const dashboard = roleDashboards[roleId] ?? roleDashboards.staff_komdigi
+  const roleId = currentUser?.roleId ?? session?.user.roleId ?? 'user'
+  const dashboard = roleDashboards[roleId] ?? roleDashboards.user
+  const departmentLabel = currentUser?.department?.name
+  const canManageSystem = await can('system.manage', session?.user as SessionUser)
 
-  const [users, posts, registrations, financeRequests, complaints, events, reports, letters, programs] = await Promise.all([
-    userQueries.getPaginatedUsers(1, 1),
-    postQueries.getPaginatedPosts(1, 1),
-    registrationQueries.getPaginatedRegistrations(1, 1),
-    financeQueries.getRequests(undefined, 0, 10),
-    complaintQueries.getUnreadCount(),
-    eventQueries.getEvents(undefined, 0, 10),
-    reportQueries.getReports(undefined, 0, 10),
-    letterQueries.getLetters(),
-    programQueries.getPrograms(),
-  ])
+  const [users, posts, registrations, financeSummary, events, pendingReports, letters, contentPlanCounts] =
+    await Promise.all([
+      userQueries.getPaginatedUsers(1, 1),
+      postQueries.getPaginatedPosts(1, 1),
+      registrationQueries.getPaginatedRegistrations(1, 1),
+      financeQueries.getSummary(),
+      eventQueries.getEvents(undefined, 0, 10),
+      reportQueries.getPendingCount(),
+      letterQueries.getLetters(),
+      contentPlanQueries.getStatusCounts(),
+    ])
+
+  const plannedContent = contentPlanCounts.reduce((total, item) => total + item._count.id, 0)
 
   const allKpis = [
-    { key: 'users', icon: Users, label: 'Anggota Aktif', value: users.meta.total, trend: '+12%', roles: ['super_admin', 'bph_sekum', 'kadep_kaderisasi', 'staff_kaderisasi'] },
-    { key: 'programs', icon: CalendarDays, label: 'Program', value: programs.length, trend: 'Aktif', roles: ['super_admin', 'bph_sekum'] },
-    { key: 'events', icon: CheckCircle2, label: 'Agenda', value: events.length, trend: '+6%', roles: ['super_admin', 'bph_sekum', 'kadep_komdigi', 'staff_komdigi'] },
-    { key: 'finance', icon: WalletCards, label: 'Approval Dana', value: financeRequests.length, trend: 'Prioritas', roles: ['super_admin', 'bph_bendum'] },
-    { key: 'reports', icon: FileText, label: 'LPJ', value: reports.length, trend: 'Review', roles: ['super_admin', 'bph_sekum'] },
-    { key: 'letters', icon: Mail, label: 'Persuratan', value: letters.length, trend: 'Arsip', roles: ['super_admin', 'bph_sekum'] },
-    { key: 'registrations', icon: BookOpen, label: 'Pendaftar', value: registrations.meta.total, trend: '+18%', roles: ['super_admin', 'kadep_kaderisasi', 'staff_kaderisasi'] },
-    { key: 'complaints', icon: MessageSquareWarning, label: 'Aduan Baru', value: complaints, trend: 'Butuh respons', roles: ['super_admin', 'kadep_advokasi', 'staff_advokasi'] },
-    { key: 'posts', icon: Newspaper, label: 'Publikasi', value: posts.meta.total, trend: '+8%', roles: ['super_admin', 'kadep_komdigi', 'staff_komdigi'] },
+    {
+      key: 'users',
+      icon: Users,
+      label: 'Anggota Aktif',
+      value: users.meta.total,
+      trend: 'Aktif',
+      roles: roleGroups.superAdmin,
+    },
+    {
+      key: 'events',
+      icon: CheckCircle2,
+      label: 'Kalender',
+      value: events.length,
+      trend: '7 hari ke depan',
+      roles: [...roleGroups.sekretaris, ...roleGroups.user],
+    },
+    {
+      key: 'balance',
+      icon: WalletCards,
+      label: 'Saldo Kas',
+      value: `Rp ${financeSummary.balance.toLocaleString('id-ID')}`,
+      trend: 'Terkini',
+      roles: roleGroups.bendahara,
+    },
+    {
+      key: 'reports',
+      icon: FileText,
+      label: 'LPJ Pending',
+      value: pendingReports,
+      trend: 'Review',
+      roles: roleGroups.bendahara,
+    },
+    {
+      key: 'letters',
+      icon: Mail,
+      label: 'Persuratan',
+      value: letters.length,
+      trend: 'Arsip',
+      roles: roleGroups.sekretaris,
+    },
+    {
+      key: 'registrations',
+      icon: BookOpen,
+      label: 'Pendaftar',
+      value: registrations.meta.total,
+      trend: 'Arsip',
+      roles: roleGroups.sekretaris,
+    },
+    {
+      key: 'posts',
+      icon: Newspaper,
+      label: 'Publikasi',
+      value: posts.meta.total,
+      trend: 'CMS',
+      roles: roleGroups.komdigi,
+    },
+    {
+      key: 'content-plan',
+      icon: FileText,
+      label: 'Content Plan',
+      value: plannedContent,
+      trend: 'Mingguan',
+      roles: roleGroups.komdigi,
+    },
   ]
 
-  const visibleKpis = allKpis.filter((kpi) => roleId === 'super_admin' || kpi.roles.includes(roleId))
-  const displayKpis = visibleKpis.length > 0 ? visibleKpis : allKpis.slice(0, 4)
+  const visibleKpis = allKpis.filter((kpi) => canManageSystem || kpi.roles.includes(roleId))
+  const displayKpis = visibleKpis.length > 0 ? (canManageSystem ? visibleKpis : visibleKpis.slice(0, 4)) : allKpis.slice(0, 4)
+
+  // Sections per role
+  const dashboardSections = [
+    {
+      title: 'Komdigi',
+      roles: roleGroups.komdigi,
+      items: [
+        ['Artikel', posts.meta.total],
+        ['Content plan', plannedContent],
+      ],
+    },
+    {
+      title: 'Sekretaris',
+      roles: roleGroups.sekretaris,
+      items: [
+        ['Pendaftar', registrations.meta.total],
+        ['Surat arsip', letters.length],
+      ],
+    },
+    {
+      title: 'Bendahara',
+      roles: roleGroups.bendahara,
+      items: [
+        ['Saldo kas', `Rp ${financeSummary.balance.toLocaleString('id-ID')}`],
+        ['LPJ pending', pendingReports],
+      ],
+    },
+    {
+      title: 'Kegiatan',
+      roles: roleGroups.user,
+      items: [
+        ['Kalender', events.length],
+        ['Anggota aktif', users.meta.total],
+      ],
+    },
+  ]
+
+  const visibleSections = dashboardSections.filter(
+    (section) => canManageSystem || section.roles.includes(roleId)
+  )
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[28px] bg-primary p-6 text-surface shadow-elevated md:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-6">
+      {/* Hero section */}
+      <section className="rounded-2xl bg-gradient-card p-5 text-surface shadow-card md:p-8">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl space-y-4">
             <Badge tone="surface" className="w-fit">
               {currentUser?.role?.name ?? 'Dashboard'}
+              {departmentLabel ? ` - ${departmentLabel}` : ''}
             </Badge>
             <div className="space-y-2">
-              <h1 className="font-heading text-3xl font-extrabold md:text-4xl">{dashboard.title}</h1>
-              <p className="text-surface/78">{dashboard.subtitle}</p>
+              <h1 className="font-heading text-3xl font-extrabold leading-tight md:text-4xl">
+                {dashboard.title}
+              </h1>
+              <p className="text-sm leading-7 text-surface/78 md:text-base">{dashboard.subtitle}</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -133,12 +224,13 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
+      {/* KPI Cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {displayKpis.map((kpi) => (
-          <Card key={kpi.key}>
+          <Card key={kpi.key} className="overflow-hidden">
             <CardContent className="space-y-4 p-5">
               <div className="flex items-center justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent/10 text-accent">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-card text-surface">
                   <kpi.icon className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <Badge tone="success">
@@ -146,52 +238,93 @@ export default async function AdminDashboardPage() {
                   {kpi.trend}
                 </Badge>
               </div>
-              <div>
-                <p className="font-heading text-3xl font-extrabold text-primary">{kpi.value}</p>
-                <p className="text-sm font-medium text-muted">{kpi.label}</p>
+              <div className="min-w-0">
+                <p className="break-words font-heading text-2xl font-extrabold leading-tight text-primary md:text-3xl">
+                  {kpi.value}
+                </p>
+                <p className="text-sm font-medium text-text-secondary">{kpi.label}</p>
               </div>
             </CardContent>
           </Card>
         ))}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      {/* Sections per role */}
+      {visibleSections.length > 0 ? (
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {visibleSections.map((section) => (
+            <Card key={section.title}>
+              <CardContent className="space-y-4 p-5">
+                <h2 className="font-heading text-lg font-bold text-primary">{section.title}</h2>
+                <div className="space-y-3">
+                  {section.items.map(([label, value]) => (
+                    <div
+                      key={String(label)}
+                      className="flex items-center justify-between gap-3 rounded-xl bg-surface-alt px-4 py-3"
+                    >
+                      <span className="min-w-0 text-sm font-medium text-text-secondary">{label}</span>
+                      <span className="min-w-0 text-right font-heading text-lg font-extrabold text-primary">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      ) : null}
+
+      {/* Ruang tindak lanjut */}
+      <section>
         <Card>
-          <CardContent className="p-6">
-            <div className="mb-6 flex items-center justify-between">
+          <CardContent className="p-5 md:p-6">
+            <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="font-heading text-xl font-bold text-primary">Approval Center</h2>
-                <p className="text-sm text-muted">Pekerjaan yang perlu perhatian pengurus.</p>
+                <h2 className="font-heading text-xl font-bold text-primary">Ruang Tindak Lanjut</h2>
+                <p className="text-sm text-text-secondary">Pekerjaan yang perlu perhatian sesuai role aktif.</p>
               </div>
               <Badge tone="warning">Live</Badge>
             </div>
             <div className="space-y-3">
               {[
-                ['Finance request', `${financeRequests.length} item menunggu review`],
-                ['LPJ kegiatan', `${reports.length} dokumen aktif`],
-                ['Persuratan', `${letters.length} arsip surat`],
-              ].map(([title, description]) => (
-                <div key={title} className="flex items-center justify-between rounded-2xl bg-background p-4">
-                  <div>
-                    <p className="font-semibold text-primary">{title}</p>
-                    <p className="text-sm text-muted">{description}</p>
-                  </div>
-                  <Badge tone="surface">Review</Badge>
+                roleGroups.komdigi.includes(roleId) || canManageSystem
+                  ? ['Content plan Komdigi', `${plannedContent} item terjadwal`]
+                  : null,
+                roleGroups.sekretaris.includes(roleId) || canManageSystem
+                  ? ['Pendaftar baru', `${registrations.meta.total} data arsip`]
+                  : null,
+                roleGroups.bendahara.includes(roleId) || canManageSystem
+                  ? ['LPJ kegiatan', `${pendingReports} pending verifikasi`]
+                  : null,
+              ]
+                .filter(Boolean)
+                .map((item) => {
+                  const [title, description] = item as [string, string]
+                  return (
+                    <div
+                      key={title}
+                      className="flex items-center justify-between gap-3 rounded-2xl bg-surface-alt p-4"
+                    >
+                      <div>
+                        <p className="font-semibold text-primary">{title}</p>
+                        <p className="text-sm text-text-secondary">{description}</p>
+                      </div>
+                      <Badge tone="surface">Review</Badge>
+                    </div>
+                  )
+                })}
+              {[
+                roleGroups.komdigi.includes(roleId) || canManageSystem,
+                roleGroups.sekretaris.includes(roleId) || canManageSystem,
+                roleGroups.bendahara.includes(roleId) || canManageSystem,
+              ].every((v) => !v) ? (
+                <div className="flex items-center gap-3 rounded-2xl bg-surface-alt p-4">
+                  <Megaphone className="h-5 w-5 text-accent" aria-hidden="true" />
+                  <p className="text-sm font-semibold text-primary">
+                    Gunakan navigasi untuk mengakses fitur sesuai role Anda.
+                  </p>
                 </div>
-              ))}
+              ) : null}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <EmptyState
-              icon={CheckCircle2}
-              title="Ruang kerja terkendali"
-              description="Gunakan navigasi modul untuk melihat detail, memfilter data, dan menindaklanjuti pekerjaan sesuai role."
-              actionHref="/admin/notifications"
-              actionLabel="Lihat notifikasi"
-            />
           </CardContent>
         </Card>
       </section>

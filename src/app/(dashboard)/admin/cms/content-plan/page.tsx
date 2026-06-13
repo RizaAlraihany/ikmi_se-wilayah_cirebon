@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { Input, Select } from '@/components/ui/input'
 import { contentPlanQueries } from '@/features/content-plan/queries'
 import { createContentPlanAction, updateContentPlanStatusAction } from '@/features/content-plan/actions'
 import { prisma } from '@/core/database/prisma'
@@ -94,11 +94,11 @@ export default async function ContentPlanPage({
             <Input name="title" placeholder="Judul konten" aria-label="Judul konten" required />
             <Input name="platform" placeholder="Website / Instagram" aria-label="Platform" required />
             <Input name="publishDate" type="datetime-local" aria-label="Jadwal publish" required />
-            <select name="authorId" className="h-11 rounded-xl bg-surface px-4 text-sm ring-1 ring-line" aria-label="Assigned writer">
+            <Select name="authorId" aria-label="Assigned writer">
               {authors.map((author) => (
                 <option key={author.id} value={author.id}>{author.name}</option>
               ))}
-            </select>
+            </Select>
             <input type="hidden" name="status" value={ContentPlanStatus.PLANNED} />
             <Button type="submit">Tambah</Button>
           </form>

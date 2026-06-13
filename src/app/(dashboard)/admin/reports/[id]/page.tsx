@@ -23,8 +23,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
     notFound()
   }
 
-  const canVerifyDept = await can('lpj.verify_department', user)
-  const canVerifyBph = await can('lpj.verify_bph', user)
+  const canVerify = await can('lpj.verify', user)
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -39,12 +38,12 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
         <CardHeader className="pb-4">
           <div className="flex justify-between items-start">
             <div>
-              <Badge tone={report.status === 'VERIFIED_BPH' ? 'success' : report.status === 'REJECTED' ? 'danger' : 'warning'} className="mb-2">
+              <Badge tone={report.status === 'VERIFIED' ? 'success' : report.status === 'REJECTED' ? 'danger' : 'warning'} className="mb-2">
                 {report.status}
               </Badge>
-              <CardTitle className="text-2xl">{report.event.title}</CardTitle>
+              <CardTitle className="text-2xl">{report.event?.title ?? 'Event Tidak Diketahui'}</CardTitle>
             </div>
-            <Badge tone="surface">{report.event.program.name}</Badge>
+            <Badge tone="surface">{report.event?.program?.name ?? '-'}</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -54,7 +53,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
               <div>
                 <p className="text-xs text-muted-foreground">Dilaksanakan</p>
                 <p className="text-sm font-semibold">
-                  {new Date(report.event.startDate).toLocaleDateString('id-ID')}
+                  {report.event?.startDate ? new Date(report.event.startDate).toLocaleDateString('id-ID') : '-'}
                 </p>
               </div>
             </div>
@@ -62,7 +61,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
               <MapPin className="w-5 h-5 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">Lokasi</p>
-                <p className="text-sm font-semibold">{report.event.location}</p>
+                <p className="text-sm font-semibold">{report.event?.location ?? '-'}</p>
               </div>
             </div>
           </div>
@@ -82,11 +81,10 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
 
           <div className="pt-4 border-t">
             <h4 className="font-semibold mb-4">Verifikasi LPJ</h4>
-            <ReportActions 
-              reportId={report.id} 
-              status={report.status} 
-              canVerifyDept={canVerifyDept && report.event.program.departmentId === user?.departmentId} 
-              canVerifyBph={canVerifyBph} 
+            <ReportActions
+              reportId={report.id}
+              status={report.status}
+              canVerify={canVerify}
             />
           </div>
         </CardContent>

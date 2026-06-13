@@ -5,13 +5,13 @@ import { PostCreateInput, PostUpdateInput, postCreateSchema, postUpdateSchema } 
 import { prisma } from '@/core/database/prisma'
 import { ValidationError, ForbiddenError, NotFoundError } from '@/core/errors/custom-errors'
 import { eventBus } from '@/core/events'
-import { isKomdigi, isSuperAdmin, requirePermission, requirePublisher } from '@/features/cms/access'
+import { isKomdigi, requirePermission, requirePublisher } from '@/features/cms/access'
+import { can, SessionUser } from '@/core/authorization/rbac'
 
 type TxClient = Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>
-type SessionUser = { id: string; departmentId: string | null; roleId: string }
 
-function canManagePost(user: SessionUser, post: { authorId: string; author: { departmentId: string | null } }, komdigi: boolean) {
-  if (isSuperAdmin(user)) return true
+function canManagePost(user: SessionUser, post: { authorId: string; author: { departmentId: string | null } }, komdigi: boolean, isGlobal: boolean) {
+  if (isGlobal) return true
   if (komdigi && post.author.departmentId === user.departmentId) return true
   return post.authorId === user.id
 }
@@ -46,6 +46,7 @@ export const blogService = {
           content: validated.content,
           excerpt: validated.excerpt,
           thumbnailUrl: validated.featuredImage || '',
+          thumbnailPublicId: validated.featuredImagePublicId || null,
           seoTitle: validated.seoTitle,
           seoDescription: validated.seoDescription,
           seoKeywords: validated.seoKeywords,
@@ -83,12 +84,13 @@ export const blogService = {
 
     const actor = await requirePermission('post.update', user.id)
     const komdigi = isKomdigi(actor)
+    const isGlobal = await can('system.manage', user as SessionUser)
 
-    if (!canManagePost(user, post, komdigi)) {
+    if (!canManagePost(user, post, komdigi, isGlobal)) {
       throw new ForbiddenError('Anda tidak memiliki akses untuk mengubah artikel ini.')
     }
 
-    if (post.status === PostStatus.PUBLISHED && !komdigi && !isSuperAdmin(user)) {
+    if (post.status === PostStatus.PUBLISHED && !komdigi && !isGlobal) {
       throw new ForbiddenError('Artikel terbit hanya dapat diubah oleh editor Komdigi.')
     }
 
@@ -113,6 +115,7 @@ export const blogService = {
           content: validated.content,
           excerpt: validated.excerpt,
           thumbnailUrl: validated.featuredImage !== undefined ? validated.featuredImage : undefined,
+          thumbnailPublicId: validated.featuredImagePublicId !== undefined ? validated.featuredImagePublicId || null : undefined,
           categoryId: validated.categoryId,
           seoTitle: validated.seoTitle,
           seoDescription: validated.seoDescription,
@@ -141,7 +144,8 @@ export const blogService = {
     if (!post) throw new NotFoundError('Post tidak ditemukan.')
 
     const actor = await requirePermission('post.submit', user.id)
-    if (!canManagePost(user, post, isKomdigi(actor))) {
+    const isGlobal = await can('system.manage', user as SessionUser)
+    if (!canManagePost(user, post, isKomdigi(actor), isGlobal)) {
       throw new ForbiddenError('Anda tidak memiliki akses untuk submit artikel ini.')
     }
 
@@ -185,7 +189,8 @@ export const blogService = {
     const post = await postQueries.getPostOwnershipById(postId)
     if (!post) throw new NotFoundError('Post tidak ditemukan.')
 
-    if (!isSuperAdmin(reviewer) && post.author.departmentId !== reviewer.departmentId) {
+    const isGlobal = await can('system.manage', reviewer as SessionUser)
+    if (!isGlobal && post.author.departmentId !== reviewer.departmentId) {
       throw new ForbiddenError('Editor hanya dapat review artikel departemennya.')
     }
 
@@ -232,7 +237,8 @@ export const blogService = {
     const post = await postQueries.getPostOwnershipById(postId)
     if (!post) throw new NotFoundError('Post tidak ditemukan.')
 
-    if (!isSuperAdmin(publisher) && post.author.departmentId !== publisher.departmentId) {
+    const isGlobal = await can('system.manage', publisher as SessionUser)
+    if (!isGlobal && post.author.departmentId !== publisher.departmentId) {
       throw new ForbiddenError('Publisher hanya dapat publish artikel departemennya.')
     }
 
@@ -279,7 +285,8 @@ export const blogService = {
     const post = await postQueries.getPostOwnershipById(postId)
     if (!post) throw new NotFoundError('Post tidak ditemukan.')
 
-    if (!isSuperAdmin(actor) && post.author.departmentId !== actor.departmentId) {
+    const isGlobal = await can('system.manage', actor as SessionUser)
+    if (!isGlobal && post.author.departmentId !== actor.departmentId) {
       throw new ForbiddenError('Publisher hanya dapat archive artikel departemennya.')
     }
 
@@ -325,7 +332,8 @@ export const blogService = {
     if (!post) throw new NotFoundError('Post tidak ditemukan.')
 
     const actor = await requirePermission('post.delete', user.id)
-    if (!canManagePost(user, post, isKomdigi(actor))) {
+    const isGlobal = await can('system.manage', user as SessionUser)
+    if (!canManagePost(user, post, isKomdigi(actor), isGlobal)) {
       throw new ForbiddenError('Anda tidak memiliki akses untuk menghapus artikel ini.')
     }
 

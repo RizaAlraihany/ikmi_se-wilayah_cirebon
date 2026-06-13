@@ -2,19 +2,25 @@
 
 import { cn } from '@/lib/utils'
 
-type SelectProps = {
+type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
   value?: string
   onValueChange?: (value: string) => void
   children: React.ReactNode
-  className?: string
 }
 
-export function Select({ value, onValueChange, children, className }: SelectProps) {
+export function Select({ value, onValueChange, children, className, onChange, ...props }: SelectProps) {
   return (
     <select
       value={value}
-      onChange={(event) => onValueChange?.(event.target.value)}
-      className={cn('h-11 w-full rounded-xl bg-surface px-4 text-sm ring-1 ring-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent', className)}
+      onChange={(event) => {
+        onChange?.(event)
+        onValueChange?.(event.target.value)
+      }}
+      className={cn(
+        'h-11 w-full cursor-pointer rounded-xl border border-border bg-surface px-4 text-sm text-primary shadow-sm transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:bg-surface-alt disabled:opacity-70',
+        className,
+      )}
+      {...props}
     >
       {children}
     </select>

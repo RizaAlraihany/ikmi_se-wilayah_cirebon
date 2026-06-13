@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Input, Select } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { createEventAction } from '@/features/events/actions'
 import { programQueries } from '@/features/programs/queries'
@@ -29,7 +29,7 @@ export default async function NewEventPage({ searchParams }: { searchParams: Pro
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/admin/events" className="text-muted-foreground hover:text-primary">
           &larr; Kembali
@@ -41,38 +41,38 @@ export default async function NewEventPage({ searchParams }: { searchParams: Pro
         <CardContent className="p-6">
           <form action={createEvent} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Pilih Program Terkait</label>
-              <select name="programId" required defaultValue={sp.programId} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <label htmlFor="programId" className="text-sm font-semibold text-primary">Pilih Program Terkait</label>
+              <Select id="programId" name="programId" required defaultValue={sp.programId}>
                 {programs.map((p: { id: string, name: string }) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Judul Event</label>
-              <Input name="title" required placeholder="Contoh: Seminar Nasional" />
+              <label htmlFor="title" className="text-sm font-semibold text-primary">Judul Event</label>
+              <Input id="title" name="title" required placeholder="Contoh: Seminar Nasional" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Tanggal Mulai</label>
-                <Input name="startDate" type="datetime-local" required />
+                <label htmlFor="startDate" className="text-sm font-semibold text-primary">Tanggal Mulai</label>
+                <Input id="startDate" name="startDate" type="datetime-local" required />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Tanggal Selesai</label>
-                <Input name="endDate" type="datetime-local" required />
+                <label htmlFor="endDate" className="text-sm font-semibold text-primary">Tanggal Selesai</label>
+                <Input id="endDate" name="endDate" type="datetime-local" required />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Lokasi</label>
-              <Input name="location" required placeholder="Contoh: Aula Kampus" />
+              <label htmlFor="location" className="text-sm font-semibold text-primary">Lokasi</label>
+              <Input id="location" name="location" required placeholder="Contoh: Aula Kampus" />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Deskripsi Kegiatan</label>
-              <Textarea name="description" required placeholder="Detail kegiatan..." rows={4} />
+              <label htmlFor="description" className="text-sm font-semibold text-primary">Deskripsi Kegiatan</label>
+              <Textarea id="description" name="description" required placeholder="Detail kegiatan..." rows={4} />
             </div>
 
             <div className="flex justify-end pt-4">

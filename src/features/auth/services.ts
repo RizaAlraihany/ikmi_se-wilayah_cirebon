@@ -23,6 +23,21 @@ export const authService = {
     ])
   },
 
+  async logLoginEventByEmail(email: string) {
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+        isActive: true,
+        deletedAt: null,
+      },
+      select: { id: true },
+    })
+
+    if (user) {
+      await authService.logLoginEvent(user.id)
+    }
+  },
+
   /**
    * Logs a logout event.
    */

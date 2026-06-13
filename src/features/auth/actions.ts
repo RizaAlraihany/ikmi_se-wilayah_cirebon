@@ -5,6 +5,7 @@ import { authService } from './services'
 import { LoginInput, loginSchema } from './schemas'
 import { AuthError } from 'next-auth'
 import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 import { rateLimit, RateLimitError } from '@/core/security/rate-limiter'
 
 export async function loginAction(data: LoginInput) {
@@ -21,13 +22,8 @@ export async function loginAction(data: LoginInput) {
       redirect: false
     })
 
-    // Log the successful login event
-    const session = await auth()
-    if (session?.user?.id) {
-      await authService.logLoginEvent(session.user.id)
-    }
+    await authService.logLoginEventByEmail(parsed.email).catch(() => undefined)
 
-    return { success: true }
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
@@ -49,6 +45,8 @@ export async function loginAction(data: LoginInput) {
 
     return { error: 'Kredensial tidak valid.' }
   }
+
+  redirect('/admin')
 }
 
 export async function logoutAction() {

@@ -2,28 +2,21 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { verifyDepartmentReportAction, verifyBphReportAction, rejectReportAction } from '@/features/reports/actions'
+import { verifyReportAction, rejectReportAction } from '@/features/reports/actions'
 import { CheckCircle2, XCircle } from 'lucide-react'
 
 interface Props {
   reportId: string
   status: string
-  canVerifyDept: boolean
-  canVerifyBph: boolean
+  canVerify: boolean
 }
 
-export function ReportActions({ reportId, status, canVerifyDept, canVerifyBph }: Props) {
+export function ReportActions({ reportId, status, canVerify }: Props) {
   const [loading, setLoading] = useState(false)
 
-  const handleVerifyDept = async () => {
+  const handleVerify = async () => {
     setLoading(true)
-    await verifyDepartmentReportAction(reportId)
-    setLoading(false)
-  }
-
-  const handleVerifyBph = async () => {
-    setLoading(true)
-    await verifyBphReportAction(reportId)
+    await verifyReportAction(reportId)
     setLoading(false)
   }
 
@@ -34,25 +27,18 @@ export function ReportActions({ reportId, status, canVerifyDept, canVerifyBph }:
     setLoading(false)
   }
 
-  if (status === 'REJECTED' || status === 'VERIFIED_BPH') return null
+  if (status === 'REJECTED' || status === 'VERIFIED') return null
 
   return (
     <div className="flex gap-2">
-      {status === 'SUBMITTED' && canVerifyDept && (
-        <Button size="sm" onClick={handleVerifyDept} disabled={loading} className="bg-primary text-primary-foreground hover:bg-primary/90">
+      {status === 'SUBMITTED' && canVerify && (
+        <Button size="sm" onClick={handleVerify} disabled={loading} className="bg-success text-success-foreground hover:bg-success/90">
           <CheckCircle2 className="w-4 h-4 mr-1" />
-          Verifikasi (Kadep)
-        </Button>
-      )}
-      
-      {status === 'VERIFIED_DEPARTMENT' && canVerifyBph && (
-        <Button size="sm" onClick={handleVerifyBph} disabled={loading} className="bg-success text-success-foreground hover:bg-success/90">
-          <CheckCircle2 className="w-4 h-4 mr-1" />
-          Verifikasi Final (BPH)
+          Verifikasi LPJ
         </Button>
       )}
 
-      {(canVerifyDept || canVerifyBph) && (
+      {canVerify && (
         <Button size="sm" variant="secondary" onClick={handleReject} disabled={loading} className="text-danger hover:text-danger hover:bg-danger/10">
           <XCircle className="w-4 h-4 mr-1" />
           Tolak LPJ

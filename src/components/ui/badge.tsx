@@ -5,10 +5,10 @@ type BadgeTone = 'primary' | 'accent' | 'success' | 'warning' | 'danger' | 'surf
 const tones: Record<BadgeTone, string> = {
   primary: 'bg-primary text-surface',
   accent: 'bg-accent text-surface',
-  success: 'bg-success text-primary',
-  warning: 'bg-warning text-primary',
-  danger: 'bg-danger text-primary',
-  surface: 'bg-surface text-primary ring-1 ring-line',
+  success: 'bg-success-surface text-success-foreground',
+  warning: 'bg-warning-surface text-warning-foreground',
+  danger: 'bg-danger-surface text-danger-foreground',
+  surface: 'bg-surface text-primary ring-1 ring-border',
 }
 
 export function Badge({
@@ -29,7 +29,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold',
+        'inline-flex min-h-7 items-center rounded-full px-3 py-1 text-xs font-semibold',
         tones[resolvedTone],
         className,
       )}

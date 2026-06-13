@@ -1,4 +1,4 @@
-import { can } from '@/core/authorization/rbac'
+import { can, SessionUser } from '@/core/authorization/rbac'
 import { ForbiddenError, NotFoundError, ValidationError } from '@/core/errors/custom-errors'
 import { eventQueries } from './queries'
 import { eventPolicies } from './policies'
@@ -20,10 +20,11 @@ export const eventService = {
     const userObj = await prisma.user.findUnique({ where: { id: userId }, include: { role: true } })
     if (!userObj) throw new NotFoundError('User tidak ditemukan')
 
-    const hasPermission = await can('event.create', userObj)
+    const hasPermission = await can('event.create', userObj as SessionUser)
     const isOwner = eventPolicies.canManageEvent(userObj, program)
+    const isGlobal = await can('system.manage', userObj as SessionUser)
     
-    if (!hasPermission || (!isOwner && userObj.role.name !== 'Super Admin')) {
+    if (!hasPermission || (!isOwner && !isGlobal)) {
       throw new ForbiddenError('Tidak memiliki izin untuk membuat event di program ini')
     }
 
@@ -66,10 +67,11 @@ export const eventService = {
     const userObj = await prisma.user.findUnique({ where: { id: userId }, include: { role: true } })
     if (!userObj) throw new NotFoundError('User tidak ditemukan')
 
-    const hasPermission = await can('event.update', userObj)
+    const hasPermission = await can('event.update', userObj as SessionUser)
     const isOwner = eventPolicies.canManageEvent(userObj, event.program)
+    const isGlobal = await can('system.manage', userObj as SessionUser)
 
-    if (!hasPermission || (!isOwner && userObj.role.name !== 'Super Admin')) {
+    if (!hasPermission || (!isOwner && !isGlobal)) {
       throw new ForbiddenError('Tidak memiliki izin untuk mengubah event ini')
     }
 
@@ -100,10 +102,11 @@ export const eventService = {
     const userObj = await prisma.user.findUnique({ where: { id: userId }, include: { role: true } })
     if (!userObj) throw new NotFoundError('User tidak ditemukan')
 
-    const hasPermission = await can('event.delete', userObj)
+    const hasPermission = await can('event.delete', userObj as SessionUser)
     const isOwner = eventPolicies.canManageEvent(userObj, event.program)
+    const isGlobal = await can('system.manage', userObj as SessionUser)
 
-    if (!hasPermission || (!isOwner && userObj.role.name !== 'Super Admin')) {
+    if (!hasPermission || (!isOwner && !isGlobal)) {
       throw new ForbiddenError('Tidak memiliki izin untuk menghapus event ini')
     }
 

@@ -1,18 +1,25 @@
 'use server'
 
 import { auth } from '@/core/auth/auth'
-import { financeService } from './services'
-import { FinanceRequestCreateInput } from './schemas'
 import { revalidatePath } from 'next/cache'
+import { financeRepository } from './repository'
+import { financeTransactionCreateSchema, FinanceTransactionCreateInput } from './schemas'
 
-export async function createFinanceRequestAction(data: FinanceRequestCreateInput) {
+export async function createTransactionAction(input: FinanceTransactionCreateInput) {
   try {
     const session = await auth()
-    if (!session?.user?.id || !session?.user?.departmentId) {
-      return { error: 'Akses ditolak atau sesi habis.' }
-    }
+    if (!session?.user?.id) return { error: 'Akses ditolak atau sesi habis.' }
 
-    await financeService.createRequest(data, session.user.id, session.user.departmentId)
+    const validated = financeTransactionCreateSchema.parse(input)
+
+    await financeRepository.create({
+      ...validated,
+      proofUrl: validated.proofUrl || null,
+      proofPublicId: validated.proofPublicId || null,
+      createdBy: session.user.id,
+    })
+
+    revalidatePath('/admin/finance')
     revalidatePath('/dashboard/finance')
     return { success: true }
   } catch (error) {
@@ -22,41 +29,14 @@ export async function createFinanceRequestAction(data: FinanceRequestCreateInput
   }
 }
 
-export async function approveTier1Action(id: string) {
+export async function deleteTransactionAction(id: string) {
   try {
     const session = await auth()
     if (!session?.user?.id) return { error: 'Akses ditolak.' }
 
-    await financeService.approveTier1(id, session.user.id)
-    revalidatePath('/dashboard/finance')
-    return { success: true }
-  } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
-  }
-}
+    await financeRepository.softDelete(id, session.user.id)
 
-export async function approveTier2Action(id: string) {
-  try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-
-    await financeService.approveTier2(id, session.user.id)
-    revalidatePath('/dashboard/finance')
-    return { success: true }
-  } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
-  }
-}
-
-export async function rejectRequestAction(id: string) {
-  try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-
-    await financeService.rejectRequest(id, session.user.id)
-    revalidatePath('/dashboard/finance')
+    revalidatePath('/admin/finance')
     return { success: true }
   } catch (error) {
     if (error instanceof Error) return { error: error.message }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { submitReportAction } from '@/features/reports/actions'
+import { submitReportAction, uploadReportDocumentAction } from '@/features/reports/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input, Select } from '@/components/ui/input'
@@ -26,15 +26,33 @@ export function LpjForm({ events }: { events: { id: string; title: string }[] })
 
     const formData = new FormData(event.currentTarget)
     const eventId = getFormString(formData, 'eventId')
-    const documentUrl = getFormString(formData, 'documentUrl')
+    const file = formData.get('documentFile')
 
-    if (!eventId || !documentUrl) {
-      setError('Event dan URL Dokumen wajib diisi.')
+    if (!eventId || !(file instanceof File) || file.size === 0) {
+      setError('Event dan dokumen LPJ wajib diisi.')
       setLoading(false)
       return
     }
 
-    const result = await submitReportAction({ eventId, documentUrl })
+    const uploadData = new FormData()
+    uploadData.append('file', file)
+    const upload = await uploadReportDocumentAction(uploadData)
+
+    if (upload.error || !upload.url) {
+      setError(upload.error || 'Upload dokumen gagal.')
+      setLoading(false)
+      return
+    }
+
+    const selectedEvent = events.find((e) => e.id === eventId)
+    const eventTitle = selectedEvent?.title || 'LPJ Event'
+
+    const result = await submitReportAction({
+      title: `LPJ: ${eventTitle}`,
+      eventId,
+      documentUrl: upload.url,
+      documentPublicId: upload.publicId,
+    })
 
     if (result?.error) {
       setError(result.error)
@@ -75,15 +93,16 @@ export function LpjForm({ events }: { events: { id: string; title: string }[] })
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="documentUrl" className="text-sm font-semibold text-primary">URL Dokumen PDF</label>
+            <label htmlFor="documentFile" className="text-sm font-semibold text-primary">Dokumen PDF</label>
             <Input
-              type="url"
-              id="documentUrl"
-              name="documentUrl"
-              placeholder="https://storage.example.com/lpj.pdf"
+              type="file"
+              id="documentFile"
+              name="documentFile"
+              accept="application/pdf"
+              required
               disabled={loading}
             />
-            <p className="text-xs text-muted">Format dokumen PDF, maksimum 10MB.</p>
+            <p className="text-xs text-muted">File akan diupload ke Cloudinary. Format PDF, maksimum 10MB.</p>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
