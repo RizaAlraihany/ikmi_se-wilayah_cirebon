@@ -117,12 +117,19 @@ function BottomNavItem({ item }: { item: DashboardNavItem }) {
       href={item.href}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-xs font-semibold transition',
-        active ? 'bg-primary text-surface shadow-card' : 'text-primary/70 hover:bg-primary/5 hover:text-accent',
+        'group flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-bold transition',
+        active ? 'text-primary' : 'text-primary/62 hover:bg-primary/5 hover:text-accent',
       )}
     >
-      <Icon className="h-5 w-5" aria-hidden="true" />
-      <span className="max-w-full truncate">{item.label}</span>
+      <span
+        className={cn(
+          'flex h-7 w-9 items-center justify-center rounded-full transition',
+          active ? 'bg-primary text-surface shadow-card' : 'bg-transparent text-current group-hover:bg-accent/10',
+        )}
+      >
+        <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+      </span>
+      <span className="max-w-full truncate leading-none">{item.label}</span>
     </Link>
   )
 }
@@ -182,10 +189,13 @@ export function DashboardMobileDrawer({ groups }: { groups: DashboardNavGroup[] 
 export function DashboardBottomNav({ items }: { items: DashboardNavItem[] }) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-glass px-2 py-2 shadow-soft backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface/92 px-2 pb-2 pt-1.5 shadow-float backdrop-blur-xl lg:hidden"
       aria-label="Navigasi mobile"
     >
-      <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+      <div
+        className="mx-auto grid max-w-md gap-1"
+        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+      >
         {items.map((item) => (
           <BottomNavItem key={item.href} item={item} />
         ))}

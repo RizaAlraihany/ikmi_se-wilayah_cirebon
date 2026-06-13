@@ -61,7 +61,9 @@ const navGroups = [
 const mobileNavItems = [
   { href: '/admin', label: 'Dashboard', icon: 'dashboard', permission: null },
   { href: '/admin/events', label: 'Kalender', icon: 'calendar', permission: 'calendar.view' },
-  { href: '/admin/announcements', label: 'Pengumuman', icon: 'megaphone', permission: 'announcement.view' },
+  { href: '/admin/letters', label: 'Surat', icon: 'mail', permission: 'letter.view' },
+  { href: '/admin/users', label: 'User', icon: 'users', permission: 'user.view' },
+  { href: '/admin/announcements', label: 'Info', icon: 'megaphone', permission: 'announcement.view' },
   { href: '/admin/cms/posts', label: 'Artikel', icon: 'newspaper', permission: 'post.view' },
   { href: '/dashboard/profile', label: 'Profil', icon: 'profile', permission: null },
 ] satisfies PermissionNavItem[]
@@ -112,7 +114,7 @@ export default async function DashboardLayout({
   const authorizedMobileNavItems = await Promise.all(
     mobileNavItems.map(async (item) => ((await hasNavAccess(item, sessionUser)) ? stripPermission(item) : null)),
   )
-  const activeMobileNavItems = authorizedMobileNavItems.filter(Boolean) as DashboardNavItem[]
+  const activeMobileNavItems = (authorizedMobileNavItems.filter(Boolean) as DashboardNavItem[]).slice(0, 5)
 
   const canManageSystem = await can('system.manage', sessionUser)
   const showMobileMenuToggle = canManageSystem

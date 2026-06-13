@@ -1,5 +1,7 @@
 import {
+  ArrowRight,
   BookOpen,
+  CalendarDays,
   CheckCircle2,
   FileText,
   Mail,
@@ -9,6 +11,7 @@ import {
   Users,
   WalletCards,
 } from 'lucide-react'
+import Link from 'next/link'
 import { auth } from '@/core/auth/auth'
 import { can } from '@/core/authorization/rbac'
 import type { SessionUser } from '@/core/authorization/rbac'
@@ -196,6 +199,51 @@ export default async function AdminDashboardPage() {
   const visibleSections = dashboardSections.filter(
     (section) => canManageSystem || section.roles.includes(roleId)
   )
+  const secretaryQuickActions = [
+    {
+      title: 'Kalender Kegiatan',
+      description: 'Lihat dan kelola agenda organisasi.',
+      href: '/admin/events',
+      icon: CalendarDays,
+      metric: `${events.length} agenda`,
+    },
+    {
+      title: 'Persuratan',
+      description: 'Arsip surat masuk dan keluar.',
+      href: '/admin/letters',
+      icon: Mail,
+      metric: `${letters.length} surat`,
+    },
+    {
+      title: 'Manajemen User',
+      description: 'Kelola akses dan data pengguna.',
+      href: '/admin/users',
+      icon: Users,
+      metric: `${users.meta.total} user`,
+    },
+    {
+      title: 'Pengumuman',
+      description: 'Buat info dan blast WA anggota.',
+      href: '/admin/announcements',
+      icon: Megaphone,
+      metric: 'WA blast',
+    },
+    {
+      title: 'Pengurus',
+      description: 'Rapikan struktur dan status pengurus.',
+      href: '/admin/management',
+      icon: Users,
+      metric: 'Struktur',
+    },
+    {
+      title: 'Anggota Baru',
+      description: 'Pantau arsip pendaftar public.',
+      href: '/admin/registrations',
+      icon: BookOpen,
+      metric: `${registrations.meta.total} data`,
+    },
+  ]
+  const showSecretaryMobileMenu = canManageSystem || roleId === 'admin_sekretaris'
 
   return (
     <div className="space-y-6">
@@ -223,6 +271,68 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
       </section>
+
+      {showSecretaryMobileMenu ? (
+        <section className="space-y-3 lg:hidden" aria-labelledby="sekretaris-mobile-menu">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Menu Sekretaris</p>
+              <h2 id="sekretaris-mobile-menu" className="font-heading text-xl font-extrabold text-primary">
+                Akses cepat harian
+              </h2>
+            </div>
+            <Badge tone="surface">Mobile</Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {secretaryQuickActions.map((item, index) => {
+              const Icon = item.icon
+              const featured = index === 0
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={
+                    featured
+                      ? 'group rounded-2xl bg-gradient-card p-4 text-surface shadow-card ring-1 ring-primary/10 transition active:scale-[0.99]'
+                      : 'group rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border transition active:scale-[0.99]'
+                  }
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div
+                      className={
+                        featured
+                          ? 'flex h-11 w-11 items-center justify-center rounded-2xl bg-surface/14 text-surface ring-1 ring-surface/16'
+                          : 'flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/8 text-primary'
+                      }
+                    >
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <ArrowRight
+                      className={
+                        featured
+                          ? 'h-4 w-4 text-surface/70 transition group-hover:translate-x-0.5'
+                          : 'h-4 w-4 text-text-muted transition group-hover:translate-x-0.5 group-hover:text-accent'
+                      }
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div className="mt-4 space-y-1">
+                    <p className={featured ? 'font-heading text-base font-extrabold text-surface' : 'font-heading text-sm font-extrabold text-primary'}>
+                      {item.title}
+                    </p>
+                    <p className={featured ? 'text-xs leading-5 text-surface/72' : 'line-clamp-2 text-xs leading-5 text-text-secondary'}>
+                      {item.description}
+                    </p>
+                    <p className={featured ? 'text-xs font-bold text-surface/86' : 'text-xs font-bold text-accent'}>
+                      {item.metric}
+                    </p>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+      ) : null}
 
       {/* KPI Cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
