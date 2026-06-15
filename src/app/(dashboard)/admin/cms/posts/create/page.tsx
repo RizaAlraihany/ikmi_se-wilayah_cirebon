@@ -2,10 +2,16 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { PostForm } from './post-form'
 import { Card, CardContent } from '@/components/ui/card'
+import { auth } from '@/core/auth/auth'
 import { categoryQueries } from '@/features/categories/queries'
+import { userQueries } from '@/features/users/queries'
 
 export default async function AdminCreatePostPage() {
-  const categories = await categoryQueries.getAllCategories()
+  const [session, categories, authors] = await Promise.all([
+    auth(),
+    categoryQueries.getAllCategories(),
+    userQueries.getAuthorOptions(),
+  ])
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -21,7 +27,15 @@ export default async function AdminCreatePostPage() {
 
       <Card>
         <CardContent className="p-6">
-          <PostForm categories={categories.map((category) => ({ id: category.id, name: category.name }))} />
+          <PostForm
+            categories={categories.map((category) => ({ id: category.id, name: category.name }))}
+            authors={authors.map((author) => ({
+              id: author.id,
+              name: author.name,
+              meta: author.department?.name || author.role?.name || undefined,
+            }))}
+            currentUserId={session?.user?.id}
+          />
         </CardContent>
       </Card>
     </div>

@@ -92,16 +92,18 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
 
   // Hooks harus dipanggil SEBELUM early return (Rules of Hooks)
   const goTo = useCallback(
-    (index: number) => {
+    (index: number, options?: { scrollCard?: boolean }) => {
       if (total === 0) return
       const next = (index + total) % total
       setActiveIndex(next)
-      // Mobile: scroll ke card
-      cardRefs.current[next]?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center',
-      })
+      if (options?.scrollCard) {
+        // Mobile: center the card only for direct user navigation.
+        cardRefs.current[next]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center',
+        })
+      }
     },
     [total]
   )
@@ -204,7 +206,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
               key={member.id}
               type="button"
               className="overflow-hidden rounded-2xl bg-white p-0"
-              onClick={isClickable ? () => goTo(index) : undefined}
+              onClick={isClickable ? () => goTo(index, { scrollCard: true }) : undefined}
               disabled={isHidden}
               style={{
                 position: 'absolute',
@@ -235,7 +237,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
       >
         <button
           type="button"
-          onClick={() => goTo(activeIndex - 1)}
+          onClick={() => goTo(activeIndex - 1, { scrollCard: true })}
           aria-label="Pengurus sebelumnya"
           className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-primary shadow-sm transition hover:bg-surface-alt"
         >
@@ -254,7 +256,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
         </div>
         <button
           type="button"
-          onClick={() => goTo(activeIndex + 1)}
+          onClick={() => goTo(activeIndex + 1, { scrollCard: true })}
           aria-label="Pengurus berikutnya"
           className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-primary shadow-sm transition hover:bg-surface-alt"
         >
@@ -289,7 +291,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
         <div className="mt-1.5 flex items-center justify-between px-1 sm:px-6">
           <button
             type="button"
-            onClick={() => goTo(activeIndex - 1)}
+            onClick={() => goTo(activeIndex - 1, { scrollCard: true })}
             disabled={activeIndex === 0}
             aria-label="Pengurus sebelumnya"
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-border bg-white text-text-primary shadow-sm transition-all duration-150 hover:bg-surface-alt disabled:opacity-40"
@@ -311,7 +313,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
 
           <button
             type="button"
-            onClick={() => goTo(activeIndex + 1)}
+            onClick={() => goTo(activeIndex + 1, { scrollCard: true })}
             disabled={activeIndex >= kabinet.length - 1}
             aria-label="Pengurus berikutnya"
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-border bg-white text-text-primary shadow-sm transition-all duration-150 hover:bg-surface-alt disabled:opacity-40"

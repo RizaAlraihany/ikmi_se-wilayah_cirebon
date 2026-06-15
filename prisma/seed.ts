@@ -128,6 +128,7 @@ const rolePermissionMap: Record<string, string[]> = {
     'post.create',
     'post.update',
     'post.delete',
+    'post.submit',
     'post.publish',
     'cms.view',
     'cms.update',

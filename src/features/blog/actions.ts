@@ -37,9 +37,9 @@ export async function createPostAction(data: PostCreateInput) {
     await rateLimit(`cms:post:create:${user.id}`, 30, 3600)
 
     const parsed = postCreateSchema.parse(data)
-    await blogService.createPost(parsed, user.id, user.departmentId)
+    const post = await blogService.createPost(parsed, user)
 
-    revalidateCmsPaths(parsed.slug)
+    revalidateCmsPaths(post.slug)
     return { success: true }
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return { error: 'Data tidak valid' }
@@ -56,9 +56,9 @@ export async function updatePostAction(data: PostUpdateInput) {
     await rateLimit(`cms:post:update:${user.id}`, 120, 3600)
 
     const parsed = postUpdateSchema.parse(data)
-    await blogService.updatePost(parsed, user)
+    const post = await blogService.updatePost(parsed, user)
 
-    revalidateCmsPaths(parsed.slug)
+    revalidateCmsPaths(post.slug)
     return { success: true }
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return { error: 'Data tidak valid' }

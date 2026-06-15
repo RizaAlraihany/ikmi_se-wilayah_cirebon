@@ -46,6 +46,30 @@ export const userQueries = {
     })
   },
 
+  async getAuthorOptions() {
+    return prisma.user.findMany({
+      where: {
+        deletedAt: null,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        department: {
+          select: {
+            name: true,
+          },
+        },
+        role: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    })
+  },
+
   async getRoles() {
     return prisma.role.findMany({ orderBy: { name: 'asc' } })
   },

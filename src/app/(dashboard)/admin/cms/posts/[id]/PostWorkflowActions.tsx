@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Archive, Check, Send, UploadCloud } from 'lucide-react'
+import { Archive, Check, Send, Trash2, UploadCloud } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { approvePostAction, archivePostAction, publishPostAction, submitPostForReviewAction } from '@/features/blog/actions'
+import { approvePostAction, archivePostAction, deletePostAction, publishPostAction, submitPostForReviewAction } from '@/features/blog/actions'
 
-type WorkflowAction = 'submit' | 'approve' | 'publish' | 'archive'
+type WorkflowAction = 'submit' | 'approve' | 'publish' | 'archive' | 'delete'
 
 export function PostWorkflowActions({ postId, status }: { postId: string; status: string }) {
   const router = useRouter()
@@ -14,6 +14,10 @@ export function PostWorkflowActions({ postId, status }: { postId: string; status
   const [pending, setPending] = useState<WorkflowAction | null>(null)
 
   async function run(action: WorkflowAction) {
+    if (action === 'delete' && !window.confirm('Hapus artikel ini? Artikel akan disembunyikan dari CMS dan website publik.')) {
+      return
+    }
+
     setPending(action)
     setMessage('')
     const result =
@@ -23,10 +27,23 @@ export function PostWorkflowActions({ postId, status }: { postId: string; status
           ? await approvePostAction(postId)
           : action === 'publish'
             ? await publishPostAction(postId)
-            : await archivePostAction(postId)
+            : action === 'archive'
+              ? await archivePostAction(postId)
+              : await deletePostAction(postId)
 
     setPending(null)
-    setMessage(result.error || 'Workflow berhasil diperbarui.')
+    if (result.error) {
+      setMessage(result.error)
+      return
+    }
+
+    if (action === 'delete') {
+      router.push('/admin/cms/posts')
+      router.refresh()
+      return
+    }
+
+    setMessage('Workflow berhasil diperbarui.')
     router.refresh()
   }
 
@@ -58,6 +75,10 @@ export function PostWorkflowActions({ postId, status }: { postId: string; status
             Archive
           </Button>
         ) : null}
+        <Button type="button" variant="danger" size="sm" onClick={() => run('delete')} disabled={pending === 'delete'}>
+          <Trash2 className="h-4 w-4" aria-hidden="true" />
+          Delete
+        </Button>
       </div>
     </div>
   )

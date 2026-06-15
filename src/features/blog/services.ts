@@ -1,5 +1,4 @@
-import { PostStatus } from '@prisma/client'
-import { postRepository } from './repository'
+import { PostStatus, Prisma } from '@prisma/client'
 import { postQueries } from './queries'
 import { PostCreateInput, PostUpdateInput, postCreateSchema, postUpdateSchema } from './schemas'
 import { prisma } from '@/core/database/prisma'
@@ -12,62 +11,108 @@ type TxClient = Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$trans
 
 function canManagePost(user: SessionUser, post: { authorId: string; author: { departmentId: string | null } }, komdigi: boolean, isGlobal: boolean) {
   if (isGlobal) return true
-  if (komdigi && post.author.departmentId === user.departmentId) return true
+  if (komdigi) return true
   return post.authorId === user.id
 }
 
+async function resolveUniqueSlug(slug: string, currentPostId?: string) {
+  const matchingPosts = await prisma.post.findMany({
+    where: {
+      OR: [
+        { slug },
+        { slug: { startsWith: `${slug}-` } },
+      ],
+    },
+    select: {
+      id: true,
+      slug: true,
+    },
+  })
+  const usedSlugs = new Set(
+    matchingPosts
+      .filter((post) => post.id !== currentPostId)
+      .map((post) => post.slug),
+  )
+
+  if (!usedSlugs.has(slug)) return slug
+
+  let suffix = 2
+  let nextSlug = `${slug}-${suffix}`
+  while (usedSlugs.has(nextSlug)) {
+    suffix += 1
+    nextSlug = `${slug}-${suffix}`
+  }
+
+  return nextSlug
+}
+
+function isUniqueConstraintError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
+}
+
 export const blogService = {
-  async createPost(data: PostCreateInput, authorId: string, departmentId: string | null) {
+  async createPost(data: PostCreateInput, actor: SessionUser) {
     const validated = postCreateSchema.parse(data)
-    await requirePermission('post.create', authorId)
+    const actorRecord = await requirePermission('post.create', actor.id)
+    const actorIsKomdigi = isKomdigi(actorRecord)
+    const isGlobal = await can('system.manage', actorRecord as SessionUser)
+    const authorId = validated.authorId || actor.id
 
-    if (!departmentId) {
-      throw new ForbiddenError('Hanya pengguna dengan departemen yang dapat membuat artikel.')
+    if (!isGlobal && !actorIsKomdigi && authorId !== actor.id) {
+      throw new ForbiddenError('Anda hanya dapat membuat artikel atas nama akun sendiri.')
     }
 
-    const [existingSlug, category] = await Promise.all([
-      postRepository.findBySlug(validated.slug),
+    const [uniqueSlug, category, author] = await Promise.all([
+      resolveUniqueSlug(validated.slug),
       prisma.category.findFirst({ where: { id: validated.categoryId, deletedAt: null } }),
+      prisma.user.findFirst({ where: { id: authorId, deletedAt: null, isActive: true } }),
     ])
-
-    if (existingSlug) {
-      throw new ValidationError('Slug sudah digunakan. Silakan pilih judul lain.')
-    }
 
     if (!category) {
       throw new ValidationError('Kategori tidak ditemukan.')
     }
 
+    if (!author) {
+      throw new ValidationError('Author tidak ditemukan atau tidak aktif.')
+    }
+
     const newPost = await prisma.$transaction(async (tx: TxClient) => {
-      const newPost = await tx.post.create({
-        data: {
-          title: validated.title,
-          slug: validated.slug,
-          content: validated.content,
-          excerpt: validated.excerpt,
-          thumbnailUrl: validated.featuredImage || '',
-          thumbnailPublicId: validated.featuredImagePublicId || null,
-          seoTitle: validated.seoTitle,
-          seoDescription: validated.seoDescription,
-          seoKeywords: validated.seoKeywords,
-          authorId,
-          categoryId: category.id,
-          status: PostStatus.DRAFT,
-          createdBy: authorId,
-        },
-      })
+      try {
+        const newPost = await tx.post.create({
+          data: {
+            title: validated.title,
+            slug: uniqueSlug,
+            content: validated.content,
+            excerpt: validated.excerpt,
+            thumbnailUrl: validated.featuredImage || '',
+            thumbnailPublicId: validated.featuredImagePublicId || null,
+            seoTitle: validated.seoTitle,
+            seoDescription: validated.seoDescription,
+            seoKeywords: validated.seoKeywords,
+            authorId,
+            categoryId: category.id,
+            status: PostStatus.DRAFT,
+            createdBy: actor.id,
+          },
+        })
 
-      await tx.auditLog.create({
-        data: {
-          action: 'CREATE',
-          entity: 'Post',
-          entityId: newPost.id,
-          userId: authorId,
-          newData: JSON.stringify(newPost),
-        },
-      })
+        await tx.auditLog.create({
+          data: {
+            action: 'CREATE',
+            entity: 'Post',
+            entityId: newPost.id,
+            userId: actor.id,
+            newData: JSON.stringify(newPost),
+          },
+        })
 
-      return newPost
+        return newPost
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          throw new ValidationError('Slug sudah digunakan. Silakan ubah slug artikel.')
+        }
+        throw error
+      }
     })
 
     await eventBus.emit('post.created', { postId: newPost.id, authorId })
@@ -94,48 +139,59 @@ export const blogService = {
       throw new ForbiddenError('Artikel terbit hanya dapat diubah oleh editor Komdigi.')
     }
 
-    if (validated.slug && validated.slug !== post.slug) {
-      const existingSlug = await postRepository.findBySlug(validated.slug)
-      if (existingSlug) {
-        throw new ValidationError('Slug sudah digunakan. Silakan pilih judul lain.')
-      }
-    }
+    const nextSlug = validated.slug ? await resolveUniqueSlug(validated.slug, post.id) : undefined
 
     if (validated.categoryId) {
       const category = await prisma.category.findFirst({ where: { id: validated.categoryId, deletedAt: null } })
       if (!category) throw new ValidationError('Kategori tidak ditemukan.')
     }
 
+    if (validated.authorId) {
+      const author = await prisma.user.findFirst({ where: { id: validated.authorId, deletedAt: null, isActive: true } })
+      if (!author) throw new ValidationError('Author tidak ditemukan atau tidak aktif.')
+      if (!isGlobal && !komdigi && validated.authorId !== user.id) {
+        throw new ForbiddenError('Anda hanya dapat mengatur author ke akun sendiri.')
+      }
+    }
+
     return prisma.$transaction(async (tx: TxClient) => {
-      const updatedPost = await tx.post.update({
-        where: { id: validated.id },
-        data: {
-          title: validated.title,
-          slug: validated.slug,
-          content: validated.content,
-          excerpt: validated.excerpt,
-          thumbnailUrl: validated.featuredImage !== undefined ? validated.featuredImage : undefined,
-          thumbnailPublicId: validated.featuredImagePublicId !== undefined ? validated.featuredImagePublicId || null : undefined,
-          categoryId: validated.categoryId,
-          seoTitle: validated.seoTitle,
-          seoDescription: validated.seoDescription,
-          seoKeywords: validated.seoKeywords,
-          updatedBy: user.id,
-        },
-      })
+      try {
+        const updatedPost = await tx.post.update({
+          where: { id: validated.id },
+          data: {
+            title: validated.title,
+            slug: nextSlug,
+            content: validated.content,
+            excerpt: validated.excerpt,
+            thumbnailUrl: validated.featuredImage !== undefined ? validated.featuredImage : undefined,
+            thumbnailPublicId: validated.featuredImagePublicId !== undefined ? validated.featuredImagePublicId || null : undefined,
+            categoryId: validated.categoryId,
+            authorId: validated.authorId,
+            seoTitle: validated.seoTitle,
+            seoDescription: validated.seoDescription,
+            seoKeywords: validated.seoKeywords,
+            updatedBy: user.id,
+          },
+        })
 
-      await tx.auditLog.create({
-        data: {
-          action: 'UPDATE',
-          entity: 'Post',
-          entityId: updatedPost.id,
-          userId: user.id,
-          oldData: JSON.stringify(post),
-          newData: JSON.stringify(updatedPost),
-        },
-      })
+        await tx.auditLog.create({
+          data: {
+            action: 'UPDATE',
+            entity: 'Post',
+            entityId: updatedPost.id,
+            userId: user.id,
+            oldData: JSON.stringify(post),
+            newData: JSON.stringify(updatedPost),
+          },
+        })
 
-      return updatedPost
+        return updatedPost
+      } catch (error) {
+        if (isUniqueConstraintError(error)) {
+          throw new ValidationError('Slug sudah digunakan. Silakan ubah slug artikel.')
+        }
+        throw error
+      }
     })
   },
 
@@ -143,7 +199,9 @@ export const blogService = {
     const post = await postQueries.getPostOwnershipById(postId)
     if (!post) throw new NotFoundError('Post tidak ditemukan.')
 
-    const actor = await requirePermission('post.submit', user.id)
+    const actor = (await can('post.submit', user))
+      ? await requirePermission('post.submit', user.id)
+      : await requirePermission('post.publish', user.id)
     const isGlobal = await can('system.manage', user as SessionUser)
     if (!canManagePost(user, post, isKomdigi(actor), isGlobal)) {
       throw new ForbiddenError('Anda tidak memiliki akses untuk submit artikel ini.')
@@ -190,7 +248,7 @@ export const blogService = {
     if (!post) throw new NotFoundError('Post tidak ditemukan.')
 
     const isGlobal = await can('system.manage', reviewer as SessionUser)
-    if (!isGlobal && post.author.departmentId !== reviewer.departmentId) {
+    if (!isGlobal && !isKomdigi(reviewer) && post.author.departmentId !== reviewer.departmentId) {
       throw new ForbiddenError('Editor hanya dapat review artikel departemennya.')
     }
 
@@ -238,7 +296,7 @@ export const blogService = {
     if (!post) throw new NotFoundError('Post tidak ditemukan.')
 
     const isGlobal = await can('system.manage', publisher as SessionUser)
-    if (!isGlobal && post.author.departmentId !== publisher.departmentId) {
+    if (!isGlobal && !isKomdigi(publisher) && post.author.departmentId !== publisher.departmentId) {
       throw new ForbiddenError('Publisher hanya dapat publish artikel departemennya.')
     }
 
@@ -286,7 +344,7 @@ export const blogService = {
     if (!post) throw new NotFoundError('Post tidak ditemukan.')
 
     const isGlobal = await can('system.manage', actor as SessionUser)
-    if (!isGlobal && post.author.departmentId !== actor.departmentId) {
+    if (!isGlobal && !isKomdigi(actor) && post.author.departmentId !== actor.departmentId) {
       throw new ForbiddenError('Publisher hanya dapat archive artikel departemennya.')
     }
 

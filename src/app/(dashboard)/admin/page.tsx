@@ -91,7 +91,10 @@ export default async function AdminDashboardPage() {
       contentPlanQueries.getStatusCounts(),
     ])
 
-  const plannedContent = contentPlanCounts.reduce((total, item) => total + item._count.id, 0)
+  const plannedContent = contentPlanCounts.reduce(
+    (total: number, item: { _count: { id: number } }) => total + item._count.id,
+    0,
+  )
 
   const allKpis = [
     {

@@ -4,16 +4,20 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { auth } from '@/core/auth/auth'
 import { categoryQueries } from '@/features/categories/queries'
 import { postQueries } from '@/features/blog/queries'
+import { userQueries } from '@/features/users/queries'
 import { PostForm } from '../create/post-form'
 import { PostWorkflowActions } from './PostWorkflowActions'
 
 export default async function AdminEditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [post, categories] = await Promise.all([
+  const [session, post, categories, authors] = await Promise.all([
+    auth(),
     postQueries.getPostForEdit(id),
     categoryQueries.getAllCategories(),
+    userQueries.getAuthorOptions(),
   ])
 
   if (!post) notFound()
@@ -45,6 +49,12 @@ export default async function AdminEditPostPage({ params }: { params: Promise<{ 
           <CardContent className="p-6">
             <PostForm
               categories={categories.map((category) => ({ id: category.id, name: category.name }))}
+              authors={authors.map((author) => ({
+                id: author.id,
+                name: author.name,
+                meta: author.department?.name || author.role?.name || undefined,
+              }))}
+              currentUserId={session?.user?.id}
               initialPost={{
                 id: post.id,
                 title: post.title,
@@ -54,6 +64,7 @@ export default async function AdminEditPostPage({ params }: { params: Promise<{ 
                 thumbnailUrl: post.thumbnailUrl,
                 thumbnailPublicId: post.thumbnailPublicId,
                 categoryId: post.categoryId,
+                authorId: post.authorId,
                 seoTitle: post.seoTitle,
                 seoDescription: post.seoDescription,
                 seoKeywords: post.seoKeywords,

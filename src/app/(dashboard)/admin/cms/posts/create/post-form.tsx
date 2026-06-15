@@ -18,6 +18,12 @@ type CategoryOption = {
   name: string
 }
 
+type AuthorOption = {
+  id: string
+  name: string
+  meta?: string
+}
+
 type InitialPost = {
   id: string
   title: string
@@ -27,12 +33,23 @@ type InitialPost = {
   thumbnailUrl: string | null
   thumbnailPublicId: string | null
   categoryId: string
+  authorId: string
   seoTitle: string | null
   seoDescription: string | null
   seoKeywords: string | null
 }
 
-export function PostForm({ categories, initialPost }: { categories: CategoryOption[]; initialPost?: InitialPost }) {
+export function PostForm({
+  categories,
+  authors,
+  currentUserId,
+  initialPost,
+}: {
+  categories: CategoryOption[]
+  authors: AuthorOption[]
+  currentUserId?: string
+  initialPost?: InitialPost
+}) {
   const router = useRouter()
   const [globalError, setGlobalError] = useState<string>('')
   const [coverUploadMessage, setCoverUploadMessage] = useState<string>('')
@@ -58,6 +75,7 @@ export function PostForm({ categories, initialPost }: { categories: CategoryOpti
       featuredImage: initialPost?.thumbnailUrl || '',
       featuredImagePublicId: initialPost?.thumbnailPublicId || '',
       categoryId: initialPost?.categoryId || categories[0]?.id || '',
+      authorId: initialPost?.authorId || currentUserId || authors[0]?.id || '',
       seoTitle: initialPost?.seoTitle || '',
       seoDescription: initialPost?.seoDescription || '',
       seoKeywords: initialPost?.seoKeywords || '',
@@ -155,6 +173,27 @@ export function PostForm({ categories, initialPost }: { categories: CategoryOpti
           />
         </Field>
 
+        <Field label="Author / Penulis" htmlFor="authorId" error={errors.authorId?.message}>
+          <Controller
+            name="authorId"
+            control={control}
+            render={({ field }) => (
+              <ListboxSelect
+                id="authorId"
+                value={field.value ?? currentUserId ?? authors[0]?.id ?? ''}
+                onValueChange={field.onChange}
+                disabled={isSubmitting || authors.length === 0}
+                options={authors.map((author) => ({
+                  value: author.id,
+                  label: author.meta ? `${author.name} - ${author.meta}` : author.name,
+                }))}
+              />
+            )}
+          />
+        </Field>
+      </div>
+
+      <div>
         <Field label="Featured Image URL" htmlFor="featuredImage" error={errors.featuredImage?.message}>
           <Input id="featuredImage" {...register('featuredImage')} type="url" placeholder="https://res.cloudinary.com/..." disabled={isSubmitting} />
           <Input
@@ -204,7 +243,7 @@ export function PostForm({ categories, initialPost }: { categories: CategoryOpti
         <Button type="button" variant="secondary" onClick={() => router.back()} disabled={isSubmitting}>
           Batal
         </Button>
-        <Button type="submit" disabled={isSubmitting || categories.length === 0}>
+        <Button type="submit" disabled={isSubmitting || categories.length === 0 || authors.length === 0}>
           {isSubmitting ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan Draf'}
         </Button>
       </div>
