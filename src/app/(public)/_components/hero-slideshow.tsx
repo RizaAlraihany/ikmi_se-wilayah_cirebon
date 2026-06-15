@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { ChevronDown } from "lucide-react";
 
 type HeroSlide = {
@@ -141,14 +140,11 @@ export function HeroSlideshow({
                 key={`${logo}-${index}`}
                 className="flex flex-1 justify-center px-2"
               >
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={logo}
                   alt={`Logo Departemen ${index + 1}`}
-                  width={120}
-                  height={40}
-                  unoptimized
                   className="h-7 w-auto object-contain opacity-75 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0 md:h-10"
-                  style={{ width: "auto" }}
                 />
               </div>
             ))}
