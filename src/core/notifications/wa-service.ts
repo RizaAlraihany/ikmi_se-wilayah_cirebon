@@ -119,12 +119,16 @@ class FonnteProvider implements WAProvider {
 
 class NoopWAProvider implements WAProvider {
   async sendMessage(msg: WAMessage): Promise<WAResult> {
-    console.log(`[WA Noop] Send to ${msg.to}: ${msg.message.slice(0, 80)}...`)
+    if (process.env.WA_DEBUG === 'true') {
+      console.log(`[WA Noop] Send to ${msg.to}: ${msg.message.slice(0, 80)}...`)
+    }
     return { success: true, provider: 'noop' }
   }
 
   async sendBulk(messages: WAMessage[]): Promise<WAResult[]> {
-    console.log(`[WA Noop] Bulk send to ${messages.length} recipients`)
+    if (process.env.WA_DEBUG === 'true') {
+      console.log(`[WA Noop] Bulk send to ${messages.length} recipients`)
+    }
     return messages.map(() => ({ success: true, provider: 'noop' }))
   }
 }
@@ -134,7 +138,6 @@ class NoopWAProvider implements WAProvider {
 function createWAProvider(): WAProvider {
   const token = process.env.FONNTE_TOKEN
   if (!token) {
-    console.warn('[WAService] FONNTE_TOKEN not set — using noop provider. WA messages will NOT be sent.')
     return new NoopWAProvider()
   }
   return new FonnteProvider(token)

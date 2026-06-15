@@ -5,7 +5,11 @@ import { Card, CardContent } from '@/components/ui/card'
 
 export const metadata: Metadata = {
   title: 'Login - Sistem Informasi Terpadu IKMI',
-  description: 'Login ke dashboard sistem informasi terpadu BEM IKMI Cirebon',
+  description: 'Login ke dashboard sistem informasi terpadu IKMI Cirebon',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default function LoginPage() {
@@ -17,7 +21,7 @@ export default function LoginPage() {
           <div className="space-y-3">
             <h1 className="font-heading text-4xl font-extrabold leading-tight">Sistem Terpadu Pengurus IKMI</h1>
             <p className="text-surface/78">
-              Ruang kerja internal untuk mengelola publikasi, kaderisasi, keuangan, persuratan, LPJ, dan audit organisasi.
+              Ruang kerja internal untuk mengelola publikasi, keuangan, persuratan, LPJ, dan audit organisasi.
             </p>
           </div>
         </div>
