@@ -148,6 +148,7 @@ export function HeroSlideshow({
                   height={40}
                   unoptimized
                   className="h-7 w-auto object-contain opacity-75 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0 md:h-10"
+                  style={{ width: "auto" }}
                 />
               </div>
             ))}
