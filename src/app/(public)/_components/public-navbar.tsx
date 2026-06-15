@@ -78,10 +78,10 @@ export function PublicNavbar() {
             <Image
               src="/ikmi-logo.png"
               alt="Logo IKMI Cirebon"
-              width={36}
-              height={36}
+              width={31}
+              height={40}
               priority
-              className="h-9 w-9 md:h-10 md:w-10"
+              className="h-9 w-auto object-contain md:h-10"
             />
             <div className="leading-none">
               <p

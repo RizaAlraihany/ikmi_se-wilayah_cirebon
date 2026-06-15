@@ -1,8 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Phone, QrCode, Facebook, Instagram, Youtube } from 'lucide-react'
-import { webConfigQueries } from '@/features/web-config/queries'
-import { defaultWebConfig } from '@/features/web-config/default-config'
+import { ExternalLink, Facebook, Instagram, MapPin, Music2, Youtube } from 'lucide-react'
 
 const footerNav = [
   { label: 'Tentang Kami', href: '/tentang-kami' },
@@ -11,24 +9,16 @@ const footerNav = [
   { label: 'Blog', href: '/blog' },
 ]
 
-async function getContactInfo() {
-  const config = await webConfigQueries.getWebConfigByKey('contact_info')
-  if (!config) return defaultWebConfig.contact_info
-  try {
-    return { ...defaultWebConfig.contact_info, ...JSON.parse(config.valueJson) }
-  } catch {
-    return defaultWebConfig.contact_info
-  }
-}
+const socialLinks = [
+  { icon: Facebook, label: 'Facebook', href: 'https://www.facebook.com/ikmi.crb' },
+  { icon: Instagram, label: 'Instagram', href: 'https://www.instagram.com/ikmi_crb' },
+  { icon: Music2, label: 'TikTok', href: 'https://www.tiktok.com/@ikmi.crb' },
+  { icon: Youtube, label: 'YouTube', href: 'https://www.youtube.com/@ikmisewilayahcirebon' },
+]
 
-export async function PublicFooter() {
-  const contact = await getContactInfo()
-  const sosmed = [
-    { icon: Instagram, label: 'Instagram', href: contact.instagram },
-    { icon: Facebook, label: 'TikTok', href: contact.tiktok },
-    { icon: Youtube, label: 'YouTube', href: contact.youtube },
-  ].filter((item) => item.href)
+const secretariatMapUrl = 'https://maps.app.goo.gl/uo87mJg9WpV5t6udA'
 
+export function PublicFooter() {
   return (
     <footer
       className="px-4 py-8 md:px-6 md:py-12 lg:px-8"
@@ -46,16 +36,16 @@ export async function PublicFooter() {
         />
       </div>
 
-      <div className="mx-auto grid max-w-[1200px] gap-7 md:grid-cols-2 md:gap-10 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-[1200px] gap-7 md:grid-cols-3 md:gap-10">
         {/* Kolom 1: Identitas */}
         <div className="space-y-3 md:space-y-4">
           <div className="flex items-center gap-3">
             <Image
               src="/ikmi-logo.png"
               alt="Logo IKMI Cirebon"
-              width={34}
-              height={34}
-              className="h-[34px] w-[34px] rounded-full md:h-9 md:w-9"
+              width={31}
+              height={40}
+              className="h-9 w-auto object-contain md:h-10"
             />
             <p className="font-heading text-sm font-extrabold text-surface">
               IKMI Cirebon
@@ -84,31 +74,13 @@ export async function PublicFooter() {
           </nav>
         </div>
 
-        {/* Kolom 3: Kontak */}
-        <div className="space-y-3 md:space-y-4">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-surface/50 md:text-xs">
-            Kontak
-          </p>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-semibold text-surface">Komdigi IKMI</p>
-                <p className="text-[11px] text-surface/60 md:text-xs">{contact.whatsapp}</p>
-                <p className="text-[11px] text-surface/60 md:text-xs">{contact.email}</p>
-                <p className="text-[11px] text-surface/60 md:text-xs">{contact.address}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Kolom 4: Sosmed + QR */}
+        {/* Kolom 3: Sosial + Sekretariat */}
         <div className="space-y-3 md:space-y-4">
           <p className="text-[11px] font-bold uppercase tracking-widest text-surface/50 md:text-xs">
             Sosial Media
           </p>
           <div className="flex gap-2.5 md:gap-3">
-            {sosmed.map((s) => (
+            {socialLinks.map((s) => (
               <a
                 key={s.label}
                 href={s.href}
@@ -121,16 +93,20 @@ export async function PublicFooter() {
               </a>
             ))}
           </div>
-          {/* QR placeholder */}
-          <div className="mt-1 flex flex-col items-start gap-2 md:mt-2">
-            <div
-              className="flex h-14 w-14 items-center justify-center rounded-xl bg-surface/10 md:h-16 md:w-16"
-              aria-label="QR Code pendaftaran anggota"
-            >
-              <QrCode className="h-7 w-7 text-surface/50 md:h-8 md:w-8" aria-hidden="true" />
-            </div>
-            <p className="text-[11px] text-surface/50 md:text-xs">Scan untuk daftar</p>
-          </div>
+          <a
+            href={secretariatMapUrl}
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-surface/82 transition-colors hover:bg-white/18 hover:text-surface md:text-sm"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Buka lokasi sekretariat IKMI Cirebon di Google Maps"
+          >
+            <MapPin className="h-4 w-4 text-accent" aria-hidden="true" />
+            Sekretariat IKMI
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
+          <p className="max-w-xs text-[11px] leading-5 text-surface/50 md:text-xs">
+            Buka titik lokasi sekretariat melalui Google Maps.
+          </p>
         </div>
       </div>
 
