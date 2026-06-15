@@ -23,11 +23,14 @@ export default auth((req) => {
   const isApiRoute = req.nextUrl.pathname.startsWith('/api')
   const hostname = (req.headers.get('host') ?? req.nextUrl.hostname).split(':')[0].toLowerCase()
   const publicToDashboardHost = new Map([
+    ['ikmicirebon.web.id', 'dashboard.ikmicirebon.web.id'],
+    ['www.ikmicirebon.web.id', 'dashboard.ikmicirebon.web.id'],
     ['ikmicirebon.or.id', 'dashboard.ikmicirebon.or.id'],
     ['www.ikmicirebon.or.id', 'dashboard.ikmicirebon.or.id'],
     ['ikmicirebon.vercel.app', 'dashboard-ikmicirebon.vercel.app'],
   ])
   const dashboardHosts = new Set([
+    'dashboard.ikmicirebon.web.id',
     'dashboard.ikmicirebon.or.id',
     'dashboard-ikmicirebon.vercel.app',
   ])
