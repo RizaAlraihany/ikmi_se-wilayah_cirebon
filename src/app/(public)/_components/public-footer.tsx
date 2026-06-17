@@ -21,8 +21,7 @@ const secretariatMapUrl = 'https://maps.app.goo.gl/uo87mJg9WpV5t6udA'
 export function PublicFooter() {
   return (
     <footer
-      className="px-4 py-8 md:px-6 md:py-12 lg:px-8"
-      style={{ background: 'linear-gradient(180deg, #001769 0%, #012580 100%)' }}
+      className="public-footer relative overflow-hidden px-4 py-8 md:px-6 md:py-12 lg:px-8"
       aria-label="Footer"
     >
       {/* Divider gradient */}
@@ -48,7 +47,7 @@ export function PublicFooter() {
               className="h-9 w-auto object-contain md:h-10"
             />
             <p className="font-heading text-sm font-extrabold text-surface">
-              IKMI Cirebon
+              IKMI Se-Wilayah Cirebon
             </p>
           </div>
           <p className="text-xs leading-6 text-surface/60 md:text-sm md:leading-relaxed">

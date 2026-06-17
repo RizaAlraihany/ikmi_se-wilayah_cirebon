@@ -20,6 +20,7 @@ type ListboxSelectProps = {
   disabled?: boolean
   'aria-label'?: string
   className?: string
+  triggerClassName?: string
   menuClassName?: string
 }
 
@@ -33,6 +34,7 @@ export function ListboxSelect({
   disabled = false,
   'aria-label': ariaLabel,
   className,
+  triggerClassName,
   menuClassName,
 }: ListboxSelectProps) {
   const generatedId = useId()
@@ -92,6 +94,7 @@ export function ListboxSelect({
           'flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 text-left text-sm font-semibold text-primary shadow-sm transition',
           'hover:border-accent/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20',
           'disabled:cursor-not-allowed disabled:bg-surface-alt disabled:opacity-70',
+          triggerClassName,
         )}
       >
         <span className="truncate">{selectedOption?.label ?? 'Pilih opsi'}</span>

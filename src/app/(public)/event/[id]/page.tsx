@@ -64,7 +64,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   return (
     <main className="min-h-screen bg-background pb-12 md:pb-20">
       {/* ─── BREADCRUMB & HEADER ─────────────────────────────────────────── */}
-      <section className="bg-gradient-hero px-4 pb-10 pt-14 md:px-6 md:pb-16 md:pt-20 lg:px-8">
+      <section className="public-hero px-4 pb-16 pt-12 md:px-6 md:pb-20 md:pt-[4.5rem] lg:px-8">
         <div className="mx-auto max-w-[800px]">
           <ButtonLink 
             href="/event" 
@@ -94,13 +94,13 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       </section>
 
       {/* ─── CONTENT ─────────────────────────────────────────────────────── */}
-      <section className="-mt-6 px-4 py-8 md:-mt-8 md:px-6 md:py-12 lg:px-8">
+      <section className="-mt-7 px-4 pb-8 pt-2 md:-mt-10 md:px-6 md:pb-12 md:pt-3 lg:px-8">
         <div className="mx-auto max-w-[800px]">
-          <div className="space-y-6 rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border md:space-y-10 md:p-10">
+          <div className="space-y-6 rounded-2xl bg-surface p-4 shadow-soft ring-1 ring-border/70 md:space-y-8 md:p-8">
             
             {/* Info Cards */}
             <div className="grid gap-3 sm:grid-cols-2 md:gap-4">
-              <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-alt p-3 md:gap-4 md:p-4">
+              <div className="flex items-start gap-3 rounded-2xl bg-surface-alt p-3 ring-1 ring-border/70 md:gap-4 md:p-4">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary md:h-12 md:w-12">
                   <CalendarDays className="h-5 w-5 md:h-6 md:w-6" />
                 </div>
@@ -110,7 +110,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   <p className="mt-0.5 text-[11px] text-text-secondary md:text-xs">{timeStr}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-alt p-3 md:gap-4 md:p-4">
+              <div className="flex items-start gap-3 rounded-2xl bg-surface-alt p-3 ring-1 ring-border/70 md:gap-4 md:p-4">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent md:h-12 md:w-12">
                   <MapPin className="h-5 w-5 md:h-6 md:w-6" />
                 </div>
@@ -120,7 +120,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 </div>
               </div>
               {event.program?.department && (
-                <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-alt p-3 sm:col-span-2 md:gap-4 md:p-4">
+                <div className="flex items-start gap-3 rounded-2xl bg-surface-alt p-3 ring-1 ring-border/70 sm:col-span-2 md:gap-4 md:p-4">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-success text-success-foreground md:h-12 md:w-12">
                     <Users className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
@@ -134,7 +134,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
             {/* Description */}
             <div className="space-y-3 md:space-y-4">
-              <h2 className="border-b border-border pb-2 font-heading text-lg font-bold text-primary md:text-xl">
+              <h2 className="font-heading text-lg font-bold text-primary md:text-xl">
                 Deskripsi Event
               </h2>
               <div 

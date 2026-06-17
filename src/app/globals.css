@@ -301,6 +301,62 @@ textarea {
   background-image: var(--gradient-card);
 }
 
+.public-hero,
+.public-cta,
+.public-footer,
+.public-section-alt,
+.public-section-from-alt {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.public-hero,
+.public-cta,
+.public-footer {
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 36%, transparent) 0, transparent 34%),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--secondary) 52%, transparent) 0, transparent 36%),
+    linear-gradient(140deg, var(--primary) 0%, var(--secondary) 58%, var(--primary) 100%);
+}
+
+.public-hero::before,
+.public-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 32%),
+    linear-gradient(90deg, rgba(0, 114, 198, 0.18) 0%, transparent 56%);
+  pointer-events: none;
+}
+
+
+
+.public-section-alt {
+  background:
+    linear-gradient(180deg, rgba(248, 249, 250, 0.92) 0%, var(--surface-alt) 18%, var(--surface-alt) 100%);
+}
+
+.public-section-from-alt {
+  background:
+    linear-gradient(180deg, var(--surface-alt) 0%, var(--background) 18%, var(--background) 100%);
+}
+
+.public-hero > *,
+.public-cta > *,
+.public-section-alt > *,
+.public-section-from-alt > * {
+  position: relative;
+  z-index: 1;
+}
+
+.soft-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 23, 105, 0.16) 50%, transparent 100%);
+}
+
 .bg-primary\/8 {
   background-color: color-mix(in srgb, var(--primary) 8%, transparent);
 }

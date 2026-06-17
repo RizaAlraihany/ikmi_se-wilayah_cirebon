@@ -98,6 +98,8 @@ export function HeroSlideshow({
         <div className="mx-auto w-full max-w-[1200px]">{children}</div>
       </div>
 
+
+
       {activeSlides.length > 1 ? (
         <div
           className="absolute bottom-24 right-4 z-[3] flex flex-col gap-1.5 md:bottom-28 md:right-6"

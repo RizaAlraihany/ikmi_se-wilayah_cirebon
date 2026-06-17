@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 
 const navLinks = [
   { label: 'Beranda', href: '/' },
-  { label: 'Tentang Kami', href: '/tentang-kami' },
+  { label: 'Tentang', href: '/tentang-kami' },
   { label: 'Event', href: '/event' },
   { label: 'Struktur', href: '/struktur' },
   { label: 'Blog', href: '/blog' },
