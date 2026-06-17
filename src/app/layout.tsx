@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { IKMI_LOGO_URL } from "@/core/brand/assets";
 import { siteUrl } from "@/core/seo/site";
 import "./globals.css";
 
@@ -28,7 +29,7 @@ const structuredData = {
         "Ikatan Keluarga Mahasiswa Indramayu Se-Wilayah Cirebon",
       ],
       url: siteUrl,
-      logo: `${siteUrl}/ikmi-logo.png`,
+      logo: IKMI_LOGO_URL,
       description:
         "Ikatan Keluarga Mahasiswa Indramayu Se-Wilayah Cirebon adalah organisasi mahasiswa daerah Indramayu di wilayah Cirebon.",
       sameAs: ["https://instagram.com/ikmicirebon"],
@@ -71,6 +72,23 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  icons: {
+    icon: [
+      {
+        url: IKMI_LOGO_URL,
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+    shortcut: [IKMI_LOGO_URL],
+    apple: [
+      {
+        url: IKMI_LOGO_URL,
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+  },
   openGraph: {
     type: "website",
     locale: "id_ID",
@@ -81,7 +99,7 @@ export const metadata: Metadata = {
       "Website resmi IKMI Cirebon, organisasi Ikatan Keluarga Mahasiswa Indramayu Se-Wilayah Cirebon.",
     images: [
       {
-        url: "/ikmi-logo.png",
+        url: IKMI_LOGO_URL,
         width: 512,
         height: 512,
         alt: "Logo IKMI Cirebon",
@@ -93,7 +111,7 @@ export const metadata: Metadata = {
     title: "IKMI Cirebon",
     description:
       "Website resmi Ikatan Keluarga Mahasiswa Indramayu Se-Wilayah Cirebon.",
-    images: ["/ikmi-logo.png"],
+    images: [IKMI_LOGO_URL],
   },
   robots: {
     index: true,

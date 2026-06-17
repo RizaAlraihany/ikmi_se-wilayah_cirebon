@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { ButtonLink } from '@/components/ui/button'
+import { IKMI_LOGO_URL } from '@/core/brand/assets'
 import { cn } from '@/lib/utils'
 
 const navLinks = [
@@ -76,7 +77,7 @@ export function PublicNavbar() {
             aria-label="Beranda IKMI Cirebon"
           >
             <Image
-              src="/ikmi-logo.png"
+              src={IKMI_LOGO_URL}
               alt="Logo IKMI Cirebon"
               width={31}
               height={40}

@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ExternalLink, Facebook, Instagram, MapPin, Music2, Youtube } from 'lucide-react'
+import { IKMI_LOGO_URL } from '@/core/brand/assets'
 
 const footerNav = [
   { label: 'Tentang Kami', href: '/tentang-kami' },
@@ -40,7 +41,7 @@ export function PublicFooter() {
         <div className="space-y-3 md:space-y-4">
           <div className="flex items-center gap-3">
             <Image
-              src="/ikmi-logo.png"
+              src={IKMI_LOGO_URL}
               alt="Logo IKMI Cirebon"
               width={31}
               height={40}

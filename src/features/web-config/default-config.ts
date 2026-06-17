@@ -1,3 +1,5 @@
+import { IKMI_LOGO_URL } from '@/core/brand/assets'
+
 export const defaultWebConfig = {
   landing_hero: {
     title: 'Membangun Daerah, Berkarya untuk Negeri.',
@@ -46,7 +48,7 @@ export const defaultWebConfig = {
   },
   landing_sections: {
     aboutEyebrow: 'Tentang IKMI',
-    aboutImageUrl: '/ikmi-logo.png',
+    aboutImageUrl: IKMI_LOGO_URL,
     aboutImageAlt: 'Logo IKMI Cirebon',
     aboutBadgeLabel: 'Est. 2020',
     aboutLinkLabel: 'Baca Sejarah Lengkap IKMI',
@@ -106,7 +108,7 @@ export const defaultWebConfig = {
   seo_config: {
     metaTitle: 'IKMI Cirebon | Ikatan Keluarga Mahasiswa Indramayu Se-Wilayah Cirebon',
     metaDescription: 'Website resmi IKMI Cirebon, Ikatan Keluarga Mahasiswa Indramayu Se-Wilayah Cirebon. Wadah organisasi mahasiswa Indramayu di wilayah Cirebon.',
-    ogImage: '/ikmi-logo.png',
+    ogImage: IKMI_LOGO_URL,
     keywords: 'ikmi cirebon, ikmi sewilayah cirebon, ikatan keluarga mahasiswa indramayu, ikatan keluarga mahasiswa indramayu sewilayah cirebon, organisasi ikmi sewilayah cirebon, mahasiswa Indramayu Cirebon, organisasi mahasiswa daerah Indramayu'
   }
 }
