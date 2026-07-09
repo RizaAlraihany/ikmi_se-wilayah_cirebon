@@ -37,8 +37,8 @@ export const eventQueries = {
       where: {
         status: 'UPCOMING',
         startDate: {
-          gte: new Date(new Date(tomorrow).setHours(0,0,0,0)),
-          lte: new Date(new Date(tomorrow).setHours(23,59,59,999))
+          gte: new Date(new Date(tomorrow).setHours(0, 0, 0, 0)),
+          lte: new Date(new Date(tomorrow).setHours(23, 59, 59, 999))
         }
       }
     })
@@ -52,5 +52,36 @@ export const eventQueries = {
         report: null
       }
     })
-  }
+  },
+
+  /**
+   * Ambil semua event yang sudah melewati endDate tapi statusnya masih aktif.
+   * Digunakan oleh cron job untuk auto-complete ke COMPLETED.
+   */
+  async getExpiredActiveEvents(now: Date) {
+    return prisma.event.findMany({
+      where: {
+        deletedAt: null,
+        endDate: { lt: now },
+        status: { in: ['UPCOMING', 'ONGOING'] },
+      },
+      select: { id: true, title: true, programId: true },
+    })
+  },
+
+  /**
+   * Ambil semua event yang sudah dimulai tapi belum melewati endDate,
+   * dan statusnya masih UPCOMING. Digunakan untuk auto set ke ONGOING.
+   */
+  async getOngoingActiveEvents(now: Date) {
+    return prisma.event.findMany({
+      where: {
+        deletedAt: null,
+        startDate: { lte: now },
+        endDate: { gte: now },
+        status: 'UPCOMING',
+      },
+      select: { id: true, title: true, programId: true },
+    })
+  },
 }
