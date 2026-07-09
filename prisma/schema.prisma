@@ -1,0 +1,690 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Enums
+// -----------------------------------------------------------------------------
+
+enum PostStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentPlanStatus {
+  PLANNED
+  IN_PROGRESS
+  READY
+  PUBLISHED
+}
+
+enum RegStatus {
+  PENDING
+  PROCESSED
+}
+
+enum FinanceStatus {
+  PENDING
+  APPROVED_TIER1
+  COMPLETED
+  REJECTED
+}
+
+enum LPJStatus {
+  SUBMITTED
+  VERIFIED
+  REJECTED
+}
+
+enum LPJTokenStatus {
+  ACTIVE
+  USED
+  EXPIRED
+}
+
+enum ProgramStatus {
+  PLANNED
+  ONGOING
+  COMPLETED
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationType {
+  REGISTRATION
+  FINANCE
+  POST
+  LPJ
+  ANNOUNCEMENT
+  SYSTEM
+  OTHER
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+  LOGIN
+  LOGOUT
+  PUBLISH
+  ARCHIVE
+  VERIFY
+}
+
+enum LetterType {
+  IN
+  OUT
+}
+
+enum KaryaTulisStatus {
+  PENDING
+  REVISION
+  APPROVED
+  PUBLISHED
+}
+
+// -----------------------------------------------------------------------------
+// Models
+// -----------------------------------------------------------------------------
+
+model User {
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  passwordHash    String    @map("password_hash")
+  isActive        Boolean   @default(true) @map("is_active")
+  lastLoginAt     DateTime? @map("last_login_at")
+  roleId          String    @map("role_id")
+  departmentId    String?   @map("department_id")
+  positionId      String?   @map("position_id")
+  photoUrl        String?   @map("photo_url")
+  photoPublicId   String?   @map("photo_public_id")
+  whatsappNumber  String?   @map("whatsapp_number")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  role          Role           @relation(fields: [roleId], references: [id])
+  department    Department?    @relation(fields: [departmentId], references: [id])
+  position      Position?      @relation(fields: [positionId], references: [id])
+  posts         Post[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+  contentPlans  ContentPlan[]
+  mediaAssets   MediaAsset[]
+  karyaTulis    KaryaTulis[]
+  lpjTokensGenerated LPJToken[] @relation("GeneratedBy")
+  lpjSubmissions     LPJSubmission[]
+
+  @@index([roleId])
+  @@index([departmentId])
+  @@index([positionId])
+  @@map("users")
+}
+
+model Role {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  permissions RolePermission[]
+  users       User[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id     String @id @default(cuid())
+  name   String
+  module String
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id")
+  permissionId String @map("permission_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Department {
+  id   String @id @default(cuid())
+  name String
+  code String
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  users     User[]
+  programs  Program[]
+  positions Position[]
+
+  @@map("departments")
+}
+
+model Position {
+  id           String  @id @default(cuid())
+  name         String
+  departmentId String? @map("department_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  department Department? @relation(fields: [departmentId], references: [id])
+  users      User[]
+
+  @@index([departmentId])
+  @@map("positions")
+}
+
+model Category {
+  id          String @id @default(cuid())
+  name        String @unique
+  slug        String @unique
+  description String @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  posts Post[]
+
+  @@map("categories")
+}
+
+model Post {
+  id                String     @id @default(cuid())
+  title             String
+  slug              String     @unique
+  content           String     @db.Text
+  excerpt           String?    @db.Text
+  thumbnailUrl      String?    @map("thumbnail_url")
+  thumbnailPublicId String?    @map("thumbnail_public_id")
+  seoTitle          String?    @map("seo_title")
+  seoDescription    String?    @map("seo_description") @db.Text
+  seoKeywords       String?    @map("seo_keywords") @db.Text
+  status            PostStatus
+  authorId          String     @map("author_id")
+  categoryId        String     @map("category_id")
+  reviewedBy        String?    @map("reviewed_by")
+  reviewedAt        DateTime?  @map("reviewed_at")
+  publishedBy       String?    @map("published_by")
+  publishedAt       DateTime?  @map("published_at")
+  archivedAt        DateTime?  @map("archived_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  author   User     @relation(fields: [authorId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@index([status])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([publishedAt])
+  @@map("posts")
+}
+
+model ContentPlan {
+  id          String            @id @default(cuid())
+  title       String
+  platform    String
+  publishDate DateTime          @map("publish_date")
+  status      ContentPlanStatus
+  authorId    String            @map("author_id")
+  notes       String?           @db.Text
+
+  // Jika item ini berasal dari request pamflet user
+  pamfletRequestId String? @map("pamflet_request_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+  @@index([status])
+  @@map("content_plans")
+}
+
+// Karya Tulis Queue (submission dari User, dikelola Komdigi)
+model KaryaTulis {
+  id           String           @id @default(cuid())
+  title        String
+  content      String           @db.Text
+  fileUrl      String?          @map("file_url")
+  filePublicId String?          @map("file_public_id")
+  status       KaryaTulisStatus @default(PENDING)
+  submittedBy  String           @map("submitted_by")
+  reviewNotes  String?          @map("review_notes") @db.Text
+  reviewedBy   String?          @map("reviewed_by")
+  reviewedAt   DateTime?        @map("reviewed_at")
+  publishedAt  DateTime?        @map("published_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  submitter User @relation(fields: [submittedBy], references: [id])
+
+  @@index([status])
+  @@index([submittedBy])
+  @@map("karya_tulis")
+}
+
+// Request Pamflet dari User → otomatis masuk sebagai item Content Plan Komdigi
+model PamfletRequest {
+  id           String  @id @default(cuid())
+  activityName String  @map("activity_name")
+  description  String  @db.Text
+  deadline     DateTime
+  requestedBy  String  @map("requested_by")
+  notes        String? @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  @@index([requestedBy])
+  @@map("pamflet_requests")
+}
+
+model MediaAsset {
+  id         String @id @default(cuid())
+  publicId   String @unique @map("public_id")
+  url        String
+  secureUrl  String @map("secure_url")
+  filename   String
+  mimeType   String @map("mime_type")
+  size       Int
+  width      Int?
+  height     Int?
+  folder     String
+  uploadedBy String @map("uploaded_by")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  uploader User @relation(fields: [uploadedBy], references: [id])
+
+  @@index([uploadedBy])
+  @@index([mimeType])
+  @@index([createdAt])
+  @@map("media_assets")
+}
+
+model Program {
+  id           String        @id @default(cuid())
+  name         String
+  departmentId String        @map("department_id")
+  budgetPlan   Decimal       @map("budget_plan")
+  description  String        @db.Text
+  status       ProgramStatus
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  department Department @relation(fields: [departmentId], references: [id])
+  events     Event[]
+  activities Activity[]
+
+  @@index([departmentId])
+  @@index([status])
+  @@map("programs")
+}
+
+model Activity {
+  id          String        @id @default(cuid())
+  programId   String        @map("program_id")
+  name        String
+  description String?       @db.Text
+  status      ProgramStatus
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  program Program @relation(fields: [programId], references: [id])
+
+  @@index([programId])
+  @@index([status])
+  @@map("activities")
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  programId   String?     @map("program_id")
+  title       String
+  description String      @db.Text
+  location    String
+  startDate   DateTime    @map("start_date")
+  endDate     DateTime    @map("end_date")
+  status      EventStatus
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  program Program? @relation(fields: [programId], references: [id])
+  report  Report?
+
+  @@index([programId])
+  @@index([startDate])
+  @@index([status])
+  @@map("events")
+}
+
+model Report {
+  id               String    @id @default(cuid())
+  eventId          String?   @unique @map("event_id")
+  title            String
+  documentUrl      String    @map("document_url")
+  documentPublicId String?   @map("document_public_id")
+  status           LPJStatus
+  submittedBy      String    @map("submitted_by")
+  verifiedBy       String?   @map("verified_by")
+  verifiedAt       DateTime? @map("verified_at")
+  verifyNotes      String?   @map("verify_notes") @db.Text
+
+  // Jika report ini disubmit via LPJ Token
+  lpjTokenId String? @map("lpj_token_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  event    Event?    @relation(fields: [eventId], references: [id])
+  lpjToken LPJToken? @relation(fields: [lpjTokenId], references: [id])
+
+  @@index([status])
+  @@map("reports")
+}
+
+// LPJ Token — token sekali pakai untuk User submit LPJ
+model LPJToken {
+  id            String         @id @default(cuid())
+  token         String         @unique
+  activityName  String         @map("activity_name")
+  description   String?        @db.Text
+  expiredAt     DateTime       @map("expired_at")
+  status        LPJTokenStatus @default(ACTIVE)
+  generatedBy   String         @map("generated_by")
+  usedBy        String?        @map("used_by")
+  usedAt        DateTime?      @map("used_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  generator    User            @relation("GeneratedBy", fields: [generatedBy], references: [id])
+  submissions  LPJSubmission[]
+  reports      Report[]
+
+  @@index([status])
+  @@index([expiredAt])
+  @@map("lpj_tokens")
+}
+
+// LPJ Submission — record submission via token
+model LPJSubmission {
+  id           String    @id @default(cuid())
+  lpjTokenId   String    @map("lpj_token_id")
+  submittedBy  String    @map("submitted_by")
+  documentUrl  String    @map("document_url")
+  documentPublicId String? @map("document_public_id")
+  notes        String?   @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  lpjToken  LPJToken @relation(fields: [lpjTokenId], references: [id])
+  submitter User     @relation(fields: [submittedBy], references: [id])
+
+  @@index([lpjTokenId])
+  @@index([submittedBy])
+  @@map("lpj_submissions")
+}
+
+// Registrasi dari web publik — tanpa approval flow
+model Registration {
+  id       String    @id @default(cuid())
+  fullName String    @map("full_name")
+  campus   String
+  major    String
+  semester String
+  address  String    @db.Text
+  whatsapp String
+  reasons  String    @db.Text
+  status   RegStatus @default(PENDING)
+  notes    String?   @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  @@index([status])
+  @@index([campus])
+  @@map("registrations")
+}
+
+// Pengumuman dari Sekretaris — bisa di-blast ke WA semua user
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  publishedAt DateTime? @map("published_at")
+  isWaBlasted Boolean  @default(false) @map("is_wa_blasted")
+  blastSentAt DateTime? @map("blast_sent_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([publishedAt])
+  @@map("announcements")
+}
+
+model Letter {
+  id           String     @id @default(cuid())
+  letterNumber String     @unique @map("letter_number")
+  type         LetterType
+  subject      String
+  sender       String?
+  recipient    String?
+  fileUrl      String     @map("file_url")
+  filePublicId String?    @map("file_public_id")
+  date         DateTime
+  notes        String?    @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  @@index([type])
+  @@map("letters")
+}
+
+model DocumentArchive {
+  id           String   @id @default(cuid())
+  title        String
+  category     String
+  description  String?  @db.Text
+  fileUrl      String   @map("file_url")
+  filePublicId String?  @map("file_public_id")
+  archivedAt   DateTime @map("archived_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  @@index([category])
+  @@index([archivedAt])
+  @@map("document_archives")
+}
+
+// Buku Kas — transaksi keuangan (Bendahara)
+model FinanceTransaction {
+  id          String   @id @default(cuid())
+  type        String   // "INCOME" | "EXPENSE"
+  amount      Decimal
+  description String
+  category    String
+  date        DateTime
+  proofUrl    String?  @map("proof_url")
+  proofPublicId String? @map("proof_public_id")
+  createdBy   String?  @map("created_by")
+  updatedBy   String?  @map("updated_by")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([type])
+  @@index([date])
+  @@map("finance_transactions")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  actionUrl String           @map("action_url")
+  readAt    DateTime?        @map("read_at")
+  userId    String           @map("user_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id       String      @id @default(cuid())
+  action   AuditAction
+  entity   String
+  entityId String      @map("entity_id")
+  oldData  String?     @map("old_data") @db.Text
+  newData  String?     @map("new_data") @db.Text
+  userId   String      @map("user_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+model WebConfig {
+  id        String @id @default(cuid())
+  key       String @unique
+  valueJson String @map("value_json") @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  @@map("web_configs")
+}

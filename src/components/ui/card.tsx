@@ -1,0 +1,41 @@
+import { cn } from '@/lib/utils'
+
+export function Card({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn('rounded-2xl bg-surface shadow-card ring-1 ring-border', className)}
+      {...props}
+    />
+  )
+}
+
+export function CardHeader({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('space-y-1 p-6', className)} {...props} />
+}
+
+export function CardTitle({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <h3 className={cn('font-heading text-lg font-bold text-primary', className)} {...props} />
+}
+
+export function CardDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+  return <p className={cn('text-sm text-text-secondary', className)} {...props} />
+}
+
+export function CardContent({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('p-6 pt-0', className)} {...props} />
+}

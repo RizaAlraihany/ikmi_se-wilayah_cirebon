@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://ikmi_user:ikmi_password@db:5432/ikmi_db?schema=public
+      - NEXTAUTH_URL=http://localhost:3000
+      - AUTH_SECRET=my_super_secret_for_docker
+      - CRON_SECRET=secret_cron_token_ikmi
+      - NODE_ENV=production
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - ikmi_network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ikmi_user
+      POSTGRES_PASSWORD: ikmi_password
+      POSTGRES_DB: ikmi_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ikmi_user -d ikmi_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ikmi_network
+
+volumes:
+  postgres_data:
+
+networks:
+  ikmi_network:
+    driver: bridge
