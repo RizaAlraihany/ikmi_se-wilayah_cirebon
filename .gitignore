@@ -15,10 +15,18 @@
 
 # next.js
 /.next/
+/.next-*/
 /out/
 
 # production
 /build
+
+# Database backups must live in private external storage, never in Git.
+/backups/
+*.dump
+*.backup
+*.sql.gz
+restore-test-*.json
 
 # misc
 .DS_Store
@@ -30,8 +38,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# Real environment files stay local. The sanitized example is intentionally commit-eligible.
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -45,3 +54,13 @@ next-env.d.ts
 # Hanya digunakan secara lokal untuk seeding database
 prisma/master-data.generated.ts
 prisma/seed.ts
+
+# ============================================
+# LOCAL CODEX / DEVELOPMENT FILES
+# Tidak di-commit, hanya untuk workspace lokal
+# ============================================
+
+/AGENTS.md
+/CLAUDE.md
+/.codex/
+/docs/
