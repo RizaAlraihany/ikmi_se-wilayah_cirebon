@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Montserrat, Poppins } from "next/font/google";
 import { IKMI_LOGO_URL } from "@/core/brand/assets";
 import { siteUrl } from "@/core/seo/site";
 import "./globals.css";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const montserrat = Montserrat({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: ["600", "700"],
+  display: "swap",
 });
 
-const inter = Inter({
+const poppins = Poppins({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const structuredData = {
@@ -135,14 +137,19 @@ export default function RootLayout({
     <html
       lang="id"
       data-scroll-behavior="smooth"
-      className={`${plusJakartaSans.variable} ${inter.variable} h-full antialiased`}
+      className={`${montserrat.variable} ${poppins.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body suppressHydrationWarning className="min-h-full flex flex-col">
+        <a href="#main-content" className="skip-link">
+          Langsung ke konten utama
+        </a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
-        {children}
+        <div id="main-content" tabIndex={-1} className="flex min-h-full flex-1 flex-col focus:outline-none">
+          {children}
+        </div>
       </body>
     </html>
   );

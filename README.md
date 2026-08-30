@@ -320,15 +320,19 @@ Strategi ini memastikan aplikasi tetap berfungsi meski Redis mengalami gangguan,
 
 ---
 
-### 6. Alur Registrasi Anggota Baru (Tanpa Login)
+### 6. Registrasi Anggota Baru
+
+> Halaman publik `/gabung` menjadi entry point calon anggota tanpa membuat
+> akun dashboard. CTA `Gabung Bersama Kami` tersedia terpisah dari menu utama
+> pada navbar desktop dan drawer mobile.
 
 ```
-Calon Anggota isi form di ikmicirebon.web.id/gabung
-    â”‚  (nama, kampus, jurusan, semester, alamat, nomor WA, alasan)
+Formulir bergabung publik
+    â”‚  (identitas, pendidikan, domisili, minat, dan persetujuan)
     â–¼
 Rate Limiter cek (anti-spam per IP)
     â”‚
-    â””â”€ Jika lolos â†’ simpan ke tabel registrations (status: PENDING)
+    â””â”€ Jika lolos â†’ simpan ke tabel registrations (status: NEW)
           â”‚
           â””â”€ waService.sendMessage() via Fonnte API
                â”‚  Kirim link invite grup WhatsApp ke nomor WA calon anggota
@@ -371,7 +375,7 @@ Portal terbuka tanpa login. Menampilkan wajah publik organisasi.
 | Struktur Pengurus | `/struktur` | Kabinet Sri Nawikasa beserta foto dan jabatan |
 | Agenda & Event | `/event` | Kalender kegiatan publik yang aktif |
 | Blog / Ruang Gagasan | `/blog` | Artikel, opini, berita dari departemen |
-| Daftar Anggota | `/gabung` | Form pendaftaran Open Recruitment anggota baru |
+| FAQ | `/#faq` | Pertanyaan umum mengenai organisasi, agenda, publikasi, dan kontak resmi |
 
 Setiap halaman publik memiliki **sitemap dinamis** (`/sitemap.xml`) dan **robots.txt** yang teroptimasi untuk SEO.
 
@@ -600,6 +604,11 @@ cp .env.example .env
 # Edit .env dengan kredensial Anda
 ```
 
+`IKMI_NEXT_DIST_DIR` bersifat opsional dan hanya dipakai untuk menjalankan build
+validasi di direktori terpisah ketika server development sedang aktif. Variabel
+ini hanya dibaca di server/build; biarkan tidak diatur untuk build produksi
+normal.
+
 ### 3. Setup Database
 
 **Opsi A â€” Docker (Rekomendasi untuk development):**
@@ -657,9 +666,19 @@ npm run test:coverage
 | `CLOUDINARY_API_SECRET` | API Secret Cloudinary | âœ… |
 | `UPSTASH_REDIS_REST_URL` | REST URL Upstash Redis | â¬œ (fallback ke memory) |
 | `UPSTASH_REDIS_REST_TOKEN` | Token Upstash Redis | â¬œ (fallback ke memory) |
-| `FONNTE_TOKEN` | API token Fonnte untuk WhatsApp blast | â¬œ (fallback ke log-only) |
+| `FONNTE_TOKEN` | Token server-only Fonnte; jika kosong, Request tetap sukses tetapi delivery dicatat `FAILED` | â¬œ (wajib untuk pengiriman live) |
+| `ADMIN_KOMDIGI_WA_RECIPIENTS` | JSON trusted recipients berisi `name`, `number`, dan `active`; mendukung beberapa penerima | â¬œ (wajib untuk pengiriman live) |
+| `ADMIN_KOMDIGI_WA_NUMBERS` | Fallback legacy nomor dipisah koma; gunakan JSON recipients untuk konfigurasi baru | â¬œ |
 | `WA_DEBUG` | Set `true` untuk log WA tanpa kirim aktual | â¬œ |
 | `NODE_ENV` | `development` atau `production` | âœ… |
+| `BLOGGER_IMPORT_API_KEY` | API key server-only, dibatasi untuk Blogger API dan hanya dipakai saat import arsip | â¬œ |
+| `BLOGGER_IMPORT_BLOG_ID` | ID blog Blogger sumber untuk import arsip satu kali | â¬œ |
+| `ALLOW_EXPORT_SEED` | Harus bernilai `true` hanya saat seed ekspor satu kali pada database kosong | â¬œ |
+| `IMPORT_SEED_ADMIN_PASSWORD` | Password awal server-only untuk tiga akun admin hasil seed ekspor | â¬œ |
+
+Setelah import Blogger selesai dan seluruh publikasi sudah diverifikasi, hapus atau revoke `BLOGGER_IMPORT_API_KEY`. Jangan gunakan variabel `NEXT_PUBLIC_` untuk key ini.
+
+Seeder ekspor dijalankan melalui `npm run db:seed:export` hanya pada database kosong setelah `ALLOW_EXPORT_SEED=true` dan `IMPORT_SEED_ADMIN_PASSWORD` diatur pada environment proses. Seeder tidak membawa hash password akun lama dan hanya membuat tiga role dashboard sesuai PRD.
 
 ---
 

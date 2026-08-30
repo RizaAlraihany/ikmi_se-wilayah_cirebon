@@ -14,10 +14,17 @@ export class RateLimitError extends Error {
  * @param limit Batas maksimal permintaan dalam window tersebut
  * @param windowSeconds Durasi window dalam detik
  */
-export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<void> {
+export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<number> {
   const current = await cache.increment(`ratelimit:${key}`, windowSeconds)
   if (current > limit) {
     logger.warn('Rate limit exceeded', { key, limit, windowSeconds, current })
     throw new RateLimitError()
   }
+
+  return current
+}
+
+/** Clears a successful-login identifier throttle without weakening IP limits. */
+export async function resetRateLimit(key: string): Promise<void> {
+  await cache.del(`ratelimit:${key}`)
 }

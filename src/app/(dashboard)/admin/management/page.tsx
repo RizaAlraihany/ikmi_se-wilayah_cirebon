@@ -8,10 +8,10 @@ import { EmptyState } from '@/components/ui/empty-state'
 export default async function ManagementPage() {
   const pengurus = await managementQueries.getPengurus(0, 100)
 
-  // Kelompokkan per departemen
+  // Kelompokkan per unit organisasi.
   const grouped = pengurus.reduce<Record<string, typeof pengurus>>(
     (acc, user) => {
-      const key = user.department?.name ?? 'BPH / Tanpa Departemen'
+      const key = user.department?.name ?? 'BPH / Tanpa Unit Organisasi'
       if (!acc[key]) acc[key] = []
       acc[key].push(user)
       return acc
@@ -25,7 +25,7 @@ export default async function ManagementPage() {
         <div>
           <h1 className="font-heading text-3xl font-extrabold text-primary">Manajemen Pengurus</h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Data seluruh pengurus organisasi — BPH dan semua departemen (aktif & demisioner).
+            Data seluruh pengurus organisasi — BPH dan seluruh unit organisasi (aktif & demisioner).
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-xl bg-surface-alt px-4 py-2 text-sm font-semibold text-primary">

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { submitReportAction, uploadReportDocumentAction } from '@/features/reports/actions'
+import { submitReportAction } from '@/features/reports/actions'
 import { Button } from '@/components/ui/button'
 import { CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -37,25 +37,7 @@ export function LpjForm({ events }: { events: { id: string; title: string }[] })
       return
     }
 
-    const uploadData = new FormData()
-    uploadData.append('file', file)
-    const upload = await uploadReportDocumentAction(uploadData)
-
-    if (upload.error || !upload.url) {
-      setError(upload.error || 'Upload dokumen gagal.')
-      setLoading(false)
-      return
-    }
-
-    const selectedEvent = events.find((e) => e.id === eventId)
-    const eventTitle = selectedEvent?.title || 'LPJ Event'
-
-    const result = await submitReportAction({
-      title: `LPJ: ${eventTitle}`,
-      eventId,
-      documentUrl: upload.url,
-      documentPublicId: upload.publicId,
-    })
+    const result = await submitReportAction(formData)
 
     if (result?.error) {
       setError(result.error)

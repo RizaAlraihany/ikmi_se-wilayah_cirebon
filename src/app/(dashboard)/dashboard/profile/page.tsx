@@ -54,7 +54,7 @@ export default async function DashboardProfilePage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Badge tone="accent">{user.role.name}</Badge>
+              <Badge tone="accent">{user.role?.name ?? 'Akses dashboard'}</Badge>
               {user.department ? <Badge tone="surface">{user.department.name}</Badge> : null}
             </div>
 

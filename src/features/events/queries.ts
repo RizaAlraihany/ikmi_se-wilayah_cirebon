@@ -11,14 +11,14 @@ export const eventQueries = {
       skip,
       take,
       include: { program: true },
-      orderBy: { startDate: 'asc' }
+      orderBy: { startDate: 'asc' },
     })
   },
 
   async getEventById(id: string) {
     return prisma.event.findFirst({
       where: { id, deletedAt: null, status: { not: 'CANCELLED' } },
-      include: { program: true, report: true }
+      include: { program: true, report: true },
     })
   },
 
@@ -26,21 +26,21 @@ export const eventQueries = {
     return prisma.event.findMany({
       where: {
         program: departmentId ? { departmentId } : undefined,
-        report: null
+        report: null,
       },
-      select: { id: true, title: true }
+      select: { id: true, title: true },
     })
   },
 
-  async getUpcomingEventsForReminder(tomorrow: Date) {
+  async getUpcomingEventsForReminder(targetDate: Date) {
     return prisma.event.findMany({
       where: {
         status: 'UPCOMING',
         startDate: {
-          gte: new Date(new Date(tomorrow).setHours(0, 0, 0, 0)),
-          lte: new Date(new Date(tomorrow).setHours(23, 59, 59, 999))
-        }
-      }
+          gte: new Date(new Date(targetDate).setHours(0, 0, 0, 0)),
+          lte: new Date(new Date(targetDate).setHours(23, 59, 59, 999)),
+        },
+      },
     })
   },
 
@@ -49,39 +49,8 @@ export const eventQueries = {
       where: {
         status: 'COMPLETED',
         endDate: { lt: sevenDaysAgo },
-        report: null
-      }
-    })
-  },
-
-  /**
-   * Ambil semua event yang sudah melewati endDate tapi statusnya masih aktif.
-   * Digunakan oleh cron job untuk auto-complete ke COMPLETED.
-   */
-  async getExpiredActiveEvents(now: Date) {
-    return prisma.event.findMany({
-      where: {
-        deletedAt: null,
-        endDate: { lt: now },
-        status: { in: ['UPCOMING', 'ONGOING'] },
+        report: null,
       },
-      select: { id: true, title: true, programId: true },
-    })
-  },
-
-  /**
-   * Ambil semua event yang sudah dimulai tapi belum melewati endDate,
-   * dan statusnya masih UPCOMING. Digunakan untuk auto set ke ONGOING.
-   */
-  async getOngoingActiveEvents(now: Date) {
-    return prisma.event.findMany({
-      where: {
-        deletedAt: null,
-        startDate: { lte: now },
-        endDate: { gte: now },
-        status: 'UPCOMING',
-      },
-      select: { id: true, title: true, programId: true },
     })
   },
 }

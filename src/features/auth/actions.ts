@@ -4,30 +4,25 @@ import { signIn, signOut, auth } from '@/core/auth/auth'
 import { authService } from './services'
 import { LoginInput, loginSchema } from './schemas'
 import { AuthError } from 'next-auth'
-import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { rateLimit, RateLimitError } from '@/core/security/rate-limiter'
 
 export async function loginAction(data: LoginInput) {
   try {
-    const headerStore = await headers()
-    const ip = headerStore.get('x-forwarded-for') || 'unknown-ip'
-    await rateLimit(`login:${ip}`, 5, 300) // max 5 attempts per 5 minutes
-
     const parsed = loginSchema.parse(data)
-    
+
     await signIn('credentials', {
       email: parsed.email,
       password: parsed.password,
       redirect: false
     })
 
-    await authService.logLoginEventByEmail(parsed.email).catch(() => undefined)
-
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
         case 'CredentialsSignin':
+          if ('code' in error && error.code === 'rate_limited') {
+            return { error: 'Terlalu banyak percobaan login. Silakan coba lagi nanti.' }
+          }
           return { error: 'Email atau password salah.' }
         default:
           return { error: 'Terjadi kesalahan saat login.' }
@@ -39,10 +34,6 @@ export async function loginAction(data: LoginInput) {
        return { error: 'Format data tidak valid.' }
     }
     
-    if (error instanceof RateLimitError) {
-      return { error: error.message }
-    }
-
     return { error: 'Kredensial tidak valid.' }
   }
 
@@ -52,7 +43,12 @@ export async function loginAction(data: LoginInput) {
 export async function logoutAction() {
   const session = await auth()
   if (session?.user?.id) {
-    await authService.logLogoutEvent(session.user.id)
+    // Audit availability must never prevent session invalidation.
+    try {
+      await authService.logLogoutEvent(session.user.id)
+    } catch {
+      // Session invalidation remains the primary security outcome.
+    }
   }
   await signOut({ redirectTo: '/login' })
 }

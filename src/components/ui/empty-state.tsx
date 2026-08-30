@@ -17,8 +17,8 @@ export function EmptyState({
   actionLabel,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 px-6 py-12 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/5 text-accent">
+    <div className="flex flex-col items-start justify-center gap-4 border-l-2 border-accent px-5 py-8 text-left">
+      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-primary/5 text-accent">
         <Icon className="h-7 w-7" aria-hidden="true" />
       </div>
       <div className="max-w-md space-y-1">

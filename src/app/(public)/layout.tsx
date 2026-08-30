@@ -7,7 +7,7 @@ export default async function PublicLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden w-full">
+    <div className="public-shell flex min-h-screen w-full flex-col overflow-x-clip bg-background">
       <PublicNavbar />
       {children}
       <PublicFooter />

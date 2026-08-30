@@ -8,14 +8,11 @@ import {
   Mail,
   Megaphone,
   Newspaper,
-  TrendingUp,
   Users,
   WalletCards,
 } from 'lucide-react'
 import Link from 'next/link'
-import { auth } from '@/core/auth/auth'
-import { can } from '@/core/authorization/rbac'
-import type { SessionUser } from '@/core/authorization/rbac'
+import { requireAuth } from '@/core/authorization/guards'
 import { userQueries } from '@/features/users/queries'
 import { postQueries } from '@/features/blog/queries'
 import { registrationQueries } from '@/features/registration/queries'
@@ -25,76 +22,67 @@ import { reportQueries } from '@/features/reports/queries'
 import { letterQueries } from '@/features/letters/queries'
 import { documentArchiveQueries } from '@/features/document-archives/queries'
 import { contentPlanQueries } from '@/features/content-plan/queries'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { getPamfletRequests } from '@/features/request-pamflet/admin-actions'
+import { getKaryaTulisQueue } from '@/features/kirim-tulisan/actions'
+import { ButtonLink } from '@/components/ui/button'
 
 type RoleDashboard = {
   title: string
   subtitle: string
-  focus: string[]
 }
 
 const roleDashboards: Record<string, RoleDashboard> = {
   super_admin: {
-    title: 'Command Center Organisasi',
-    subtitle: 'Pantau anggota, program aktif, kas terkini, LPJ, dan publikasi lintas modul.',
-    focus: ['Overview', 'User & Role', 'LPJ Token', 'Read Access'],
+    title: 'Ringkasan Sistem IKMI',
+    subtitle: 'Pantau layanan organisasi dan Komdigi dari satu ruang kerja terotorisasi.',
   },
   admin_komdigi: {
     title: 'Dashboard Komdigi',
     subtitle: 'Kelola landing page, blog, media publikasi, content plan, dan kebutuhan publik website IKMI.',
-    focus: [],
   },
-  admin_sekretaris: {
-    title: 'Dashboard Sekretaris',
-    subtitle: 'Kelola kalender kegiatan, pengumuman, persuratan, pengurus, dan pendaftar baru.',
-    focus: [],
-  },
-  admin_bendahara: {
-    title: 'Dashboard Bendahara',
-    subtitle: 'Pantau buku kas, laporan keuangan, LPJ pending, dan token submission.',
-    focus: [],
-  },
-  user: {
-    title: 'Dashboard Anggota',
-    subtitle: 'Akses kalender, pengumuman, transparansi keuangan, request pamflet, dan submit LPJ token.',
-    focus: ['Kalender', 'Pengumuman', 'Keuangan', 'Profil'],
+  admin_organization: {
+    title: 'Dashboard Organisasi',
+    subtitle: 'Kelola program, agenda, anggota, struktur, dokumen, dan operasional organisasi.',
   },
 }
 
 const roleGroups = {
   superAdmin: ['super_admin'],
   komdigi: ['super_admin', 'admin_komdigi'],
-  sekretaris: ['super_admin', 'admin_sekretaris'],
-  bendahara: ['super_admin', 'admin_bendahara'],
-  user: ['super_admin', 'admin_komdigi', 'admin_sekretaris', 'admin_bendahara', 'user'],
+  organization: ['super_admin', 'admin_organization'],
 }
 
 export default async function AdminDashboardPage() {
-  const session = await auth()
-  const currentUser = session?.user.id ? await userQueries.getUserById(session.user.id) : null
-  const roleId = currentUser?.roleId ?? session?.user.roleId ?? 'user'
-  const dashboard = roleDashboards[roleId] ?? roleDashboards.user
+  const actor = await requireAuth()
+  const currentUser = await userQueries.getUserById(actor.id)
+  const roleId = actor.roleId
+  const dashboard = roleDashboards[roleId]
   const departmentLabel = currentUser?.department?.name
-  const canManageSystem = await can('system.manage', session?.user as SessionUser)
+  const canManageSystem = roleId === 'super_admin'
+  const canAccessOrganization = canManageSystem || roleId === 'admin_organization'
+  const canAccessKomdigi = canManageSystem || roleId === 'admin_komdigi'
 
   const [users, posts, registrations, financeSummary, events, pendingReports, letters, documentArchives, contentPlanCounts] =
     await Promise.all([
-      userQueries.getPaginatedUsers(1, 1),
-      postQueries.getPaginatedPosts(1, 1),
-      registrationQueries.getPaginatedRegistrations(1, 1),
-      financeQueries.getSummary(),
-      eventQueries.getEvents(undefined, 0, 10),
-      reportQueries.getPendingCount(),
-      letterQueries.getLetters(),
-      documentArchiveQueries.getDocuments(),
-      contentPlanQueries.getStatusCounts(),
+      canManageSystem ? userQueries.getPaginatedUsers(1, 1) : Promise.resolve({ meta: { total: 0 } }),
+      canAccessKomdigi ? postQueries.getPaginatedPosts(1, 1) : Promise.resolve({ meta: { total: 0 } }),
+      canAccessOrganization ? registrationQueries.getPaginatedRegistrations(1, 1) : Promise.resolve({ meta: { total: 0 } }),
+      canAccessOrganization ? financeQueries.getSummary() : Promise.resolve({ balance: 0 }),
+      canAccessOrganization ? eventQueries.getEvents(undefined, 0, 10) : Promise.resolve([]),
+      canAccessOrganization ? reportQueries.getPendingCount() : Promise.resolve(0),
+      canAccessOrganization ? letterQueries.getLetters() : Promise.resolve([]),
+      canAccessOrganization ? documentArchiveQueries.getDocuments() : Promise.resolve([]),
+      canAccessKomdigi ? contentPlanQueries.getStatusCounts() : Promise.resolve([]),
     ])
 
   const plannedContent = contentPlanCounts.reduce(
     (total: number, item: { _count: { id: number } }) => total + item._count.id,
     0,
   )
+
+  const [pamfletQueue, writingQueue] = roleId === 'admin_komdigi' && !canManageSystem
+    ? await Promise.all([getPamfletRequests(), getKaryaTulisQueue()])
+    : [[], []]
 
   const allKpis = [
     {
@@ -111,7 +99,7 @@ export default async function AdminDashboardPage() {
       label: 'Kalender',
       value: events.length,
       trend: '7 hari ke depan',
-      roles: [...roleGroups.sekretaris, ...roleGroups.user],
+      roles: roleGroups.organization,
     },
     {
       key: 'balance',
@@ -119,7 +107,7 @@ export default async function AdminDashboardPage() {
       label: 'Saldo Kas',
       value: `Rp ${financeSummary.balance.toLocaleString('id-ID')}`,
       trend: 'Terkini',
-      roles: roleGroups.bendahara,
+      roles: roleGroups.organization,
     },
     {
       key: 'reports',
@@ -127,7 +115,7 @@ export default async function AdminDashboardPage() {
       label: 'LPJ Pending',
       value: pendingReports,
       trend: 'Review',
-      roles: roleGroups.bendahara,
+      roles: roleGroups.organization,
     },
     {
       key: 'letters',
@@ -135,7 +123,7 @@ export default async function AdminDashboardPage() {
       label: 'Persuratan',
       value: letters.length,
       trend: 'Arsip',
-      roles: roleGroups.sekretaris,
+      roles: roleGroups.organization,
     },
     {
       key: 'documents',
@@ -143,7 +131,7 @@ export default async function AdminDashboardPage() {
       label: 'Dokumen',
       value: documentArchives.length,
       trend: 'Arsip',
-      roles: roleGroups.sekretaris,
+      roles: roleGroups.organization,
     },
     {
       key: 'registrations',
@@ -151,7 +139,7 @@ export default async function AdminDashboardPage() {
       label: 'Pendaftar',
       value: registrations.meta.total,
       trend: 'Arsip',
-      roles: roleGroups.sekretaris,
+      roles: roleGroups.organization,
     },
     {
       key: 'posts',
@@ -171,10 +159,8 @@ export default async function AdminDashboardPage() {
     },
   ]
 
-  const visibleKpis = allKpis.filter((kpi) => canManageSystem || kpi.roles.includes(roleId))
-  const displayKpis = visibleKpis.length > 0 ? (canManageSystem ? visibleKpis : visibleKpis.slice(0, 4)) : allKpis.slice(0, 4)
-  const secretaryHeroKpis = allKpis.filter((kpi) => ['events', 'letters', 'documents'].includes(kpi.key))
-
+  const visibleKpis = allKpis.filter((kpi) => kpi.roles.includes(roleId))
+  const displayKpis = canManageSystem ? visibleKpis : visibleKpis.slice(0, 4)
   // Sections per role
   const dashboardSections = [
     {
@@ -186,260 +172,146 @@ export default async function AdminDashboardPage() {
       ],
     },
     {
-      title: 'Sekretaris',
-      roles: roleGroups.sekretaris,
+      title: 'Operasional Organisasi',
+      roles: roleGroups.organization,
       items: [
         ['Pendaftar', registrations.meta.total],
         ['Surat arsip', letters.length],
         ['Dokumen', documentArchives.length],
-      ],
-    },
-    {
-      title: 'Bendahara',
-      roles: roleGroups.bendahara,
-      items: [
         ['Saldo kas', `Rp ${financeSummary.balance.toLocaleString('id-ID')}`],
         ['LPJ pending', pendingReports],
       ],
     },
-    {
-      title: 'Kegiatan',
-      roles: roleGroups.user,
-      items: [
-        ['Kalender', events.length],
-        ['Anggota aktif', users.meta.total],
-      ],
-    },
   ]
 
-  const visibleSections = dashboardSections.filter(
-    (section) => canManageSystem || section.roles.includes(roleId)
-  )
-  const compactSecretaryMobile = roleId === 'admin_sekretaris' && !canManageSystem
+  const visibleSections = dashboardSections.filter((section) => section.roles.includes(roleId))
+  const compactOrganizationMobile = roleId === 'admin_organization' && !canManageSystem
   const compactKomdigiMobile = roleId === 'admin_komdigi' && !canManageSystem
-  const compactBendaharaMobile = roleId === 'admin_bendahara' && !canManageSystem
-  const secretaryQuickActions = [
+  const organizationQuickActions = [
     {
-      title: 'Kalender Kegiatan',
-      description: 'Lihat dan kelola agenda organisasi.',
-      href: '/admin/events',
+      title: 'Program',
+      description: 'Kelola arah kerja organisasi.',
+      href: '/admin/programs',
       icon: CalendarDays,
-      metric: `${events.length} agenda`,
+      metric: 'Kelola',
     },
     {
-      title: 'Persuratan',
-      description: 'Arsip surat masuk dan keluar.',
-      href: '/admin/letters',
-      icon: Mail,
-      metric: `${letters.length} surat`,
+      title: 'Agenda',
+      description: 'Atur jadwal kegiatan terdekat.',
+      href: '/admin/agendas',
+      icon: CalendarDays,
+      metric: `${events.length} jadwal`,
     },
     {
-      title: 'Arsip Dokumen',
-      description: 'Simpan dokumen internal sekretaris.',
+      title: 'Anggota',
+      description: 'Tinjau pendaftaran keanggotaan.',
+      href: '/admin/organization/registrations',
+      icon: BookOpen,
+      metric: `${registrations.meta.total} data`,
+    },
+    {
+      title: 'Struktur',
+      description: 'Kelola penugasan pengurus aktif.',
+      href: '/admin/organization/structure',
+      icon: Users,
+      metric: 'Kelola',
+    },
+    {
+      title: 'Dokumen',
+      description: 'Buka arsip dokumen organisasi.',
       href: '/admin/documents',
       icon: Archive,
       metric: `${documentArchives.length} dokumen`,
     },
     {
-      title: 'Pengumuman',
-      description: 'Buat info dan blast WA anggota.',
-      href: '/admin/announcements',
-      icon: Megaphone,
-      metric: 'WA blast',
-    },
-    {
-      title: 'Pengurus',
-      description: 'Rapikan struktur dan status pengurus.',
-      href: '/admin/management',
-      icon: Users,
-      metric: 'Struktur',
-    },
-    {
-      title: 'Anggota Baru',
-      description: 'Pantau arsip pendaftar public.',
-      href: '/admin/registrations',
-      icon: BookOpen,
-      metric: `${registrations.meta.total} data`,
-    },
-  ]
-  const komdigiQuickActions = [
-    {
-      title: 'CMS Landing Page',
-      description: 'Hero, tentang, CTA, SEO, kontak, dan section publik.',
-      href: '/admin/cms/settings',
-      icon: Megaphone,
-      metric: 'Full CMS',
-    },
-    {
-      title: 'Content Plan',
-      description: 'Kalender publikasi Komdigi per bulan.',
-      href: '/admin/cms/content-plan',
+      title: 'Periode',
+      description: 'Atur periode dan unit organisasi.',
+      href: '/admin/organization#periode',
       icon: CalendarDays,
-      metric: `${plannedContent} plan`,
-    },
-    {
-      title: 'Blog & Berita Acara',
-      description: 'Draft, edit, dan publish artikel website.',
-      href: '/admin/cms/posts',
-      icon: Newspaper,
-      metric: `${posts.meta.total} artikel`,
-    },
-    {
-      title: 'Kategori',
-      description: 'Kelola kategori blog dan berita acara.',
-      href: '/admin/cms/categories',
-      icon: BookOpen,
-      metric: 'Taxonomy',
-    },
-    {
-      title: 'Media Library',
-      description: 'Upload aset gambar untuk landing dan artikel.',
-      href: '/admin/cms/media',
-      icon: Archive,
-      metric: 'Cloudinary',
-    },
-    {
-      title: 'Preview Publik',
-      description: 'Cek tampilan landing, struktur, tentang, dan blog.',
-      href: '/',
-      icon: ArrowRight,
-      metric: 'Website',
+      metric: 'Kelola',
     },
   ]
-  
-  const bendaharaQuickActions = [
-    {
-      title: 'Iuran & Laporan',
-      description: 'Kelola pemasukan iuran dan laporan keuangan.',
-      href: '/admin/finance',
-      icon: WalletCards,
-      metric: 'Finance',
-    },
-    {
-      title: 'LPJ Token',
-      description: 'Generate token submit LPJ.',
-      href: '/admin/finance/tokens',
-      icon: Archive,
-      metric: 'Token',
-    },
-    {
-      title: 'Review LPJ',
-      description: 'Verifikasi arsip LPJ yang masuk.',
-      href: '/admin/reports',
-      icon: FileText,
-      metric: `${pendingReports} pending`,
-    },
-  ]
-
   const komdigiHeroKpis = allKpis.filter((kpi) => ['posts', 'content-plan'].includes(kpi.key))
-  const bendaharaHeroKpis = allKpis.filter((kpi) => ['balance', 'reports'].includes(kpi.key))
+  const organizationHeroKpis = allKpis.filter((kpi) => ['events', 'registrations', 'documents', 'reports'].includes(kpi.key))
   
-  const showSecretaryMobileMenu = canManageSystem || roleId === 'admin_sekretaris'
-  const showKomdigiMobileMenu = canManageSystem || roleId === 'admin_komdigi'
-  const showBendaharaMobileMenu = canManageSystem || roleId === 'admin_bendahara'
+  const showOrganizationMobileMenu = roleId === 'admin_organization'
+
+  if (roleId === 'admin_komdigi' && !canManageSystem) {
+    return (
+      <KomdigiOverview
+        userName={currentUser?.name ?? actor.name ?? 'Admin Komdigi'}
+        plannedContent={plannedContent}
+        pamfletQueue={pamfletQueue}
+        writingQueue={writingQueue}
+      />
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Hero section */}
-      <section className="rounded-2xl bg-gradient-card p-5 text-surface shadow-card md:p-8">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+    <div className="dashboard-page">
+      <section className="dashboard-hero border-l-4 border-accent bg-primary p-5 text-white md:p-6">
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl space-y-4">
-            <Badge tone="surface" className="w-fit">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/75">
               {currentUser?.role?.name ?? 'Dashboard'}
               {departmentLabel ? ` - ${departmentLabel}` : ''}
-            </Badge>
+            </p>
             <div className="space-y-2">
-              <h1 className="font-heading text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight md:text-4xl">
+              <h1 className="font-heading text-2xl font-bold leading-tight text-white sm:text-3xl">
                 {dashboard.title}
               </h1>
-              <p className="text-sm leading-7 text-surface/78 md:text-base">{dashboard.subtitle}</p>
+              <p className="max-w-2xl text-sm leading-7 text-white/80 md:text-base">{dashboard.subtitle}</p>
             </div>
-            {compactSecretaryMobile || compactKomdigiMobile || compactBendaharaMobile ? (
-              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pt-1 md:hidden">
-                {(compactBendaharaMobile ? bendaharaHeroKpis : compactKomdigiMobile ? komdigiHeroKpis : secretaryHeroKpis).map((kpi) => (
+            {compactOrganizationMobile || compactKomdigiMobile ? (
+              <div className="grid grid-cols-2 gap-px overflow-hidden border border-white/20 bg-white/20 md:hidden">
+                {(compactKomdigiMobile ? komdigiHeroKpis : organizationHeroKpis).map((kpi) => (
                   <div
                     key={kpi.key}
-                    className="flex flex-1 min-w-[8.5rem] items-center gap-3 rounded-2xl bg-surface/12 p-3 ring-1 ring-surface/15"
+                    className="flex min-w-0 items-center gap-3 bg-primary p-3"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/10 text-white">
                       <kpi.icon className="h-4 w-4" aria-hidden="true" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-heading text-xl font-extrabold leading-none text-surface">{kpi.value}</p>
-                      <p className="mt-1 truncate text-[11px] font-semibold text-surface/78">{kpi.label}</p>
+                      <p className="font-heading text-xl font-extrabold leading-none text-white">{kpi.value}</p>
+                      <p className="mt-1 truncate text-[11px] font-semibold text-white/72">{kpi.label}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : null}
           </div>
-          {dashboard.focus.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {dashboard.focus.map((item) => (
-                <span key={item} className="rounded-full bg-surface/10 px-3 py-1 text-xs font-semibold">
-                  {item}
-                </span>
-              ))}
-            </div>
-          ) : null}
         </div>
       </section>
 
-      {showSecretaryMobileMenu ? (
-        <section className="space-y-3 lg:hidden" aria-labelledby="sekretaris-mobile-menu">
+      {showOrganizationMobileMenu ? (
+        <section className="space-y-3 lg:hidden" aria-labelledby="organization-mobile-menu">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Menu Sekretaris</p>
-              <h2 id="sekretaris-mobile-menu" className="font-heading text-xl font-extrabold text-primary">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Menu Organisasi</p>
+              <h2 id="organization-mobile-menu" className="font-heading text-xl font-extrabold text-primary">
                 Akses cepat harian
               </h2>
             </div>
-            <Badge tone="surface">Mobile</Badge>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {secretaryQuickActions.map((item, index) => {
+          <div className="divide-y divide-border border-y border-border bg-surface">
+            {organizationQuickActions.map((item) => {
               const Icon = item.icon
-              const featured = index === 0
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={
-                    featured
-                      ? 'group rounded-2xl bg-gradient-card p-4 text-surface shadow-card ring-1 ring-primary/10 transition active:scale-[0.99]'
-                      : 'group rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border transition active:scale-[0.99]'
-                  }
+                  className="group flex min-h-16 items-center gap-3 px-1 py-3 transition-colors hover:bg-surface-alt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div
-                      className={
-                        featured
-                          ? 'flex h-11 w-11 items-center justify-center rounded-2xl bg-surface/14 text-surface ring-1 ring-surface/16'
-                          : 'flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/8 text-primary'
-                      }
-                    >
-                      <Icon className="h-5 w-5" aria-hidden="true" />
-                    </div>
-                    <ArrowRight
-                      className={
-                        featured
-                          ? 'h-4 w-4 text-surface/70 transition group-hover:translate-x-0.5'
-                          : 'h-4 w-4 text-text-muted transition group-hover:translate-x-0.5 group-hover:text-accent'
-                      }
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div className="mt-4 space-y-1">
-                    <p className={featured ? 'font-heading text-base font-extrabold text-surface' : 'font-heading text-sm font-extrabold text-primary'}>
-                      {item.title}
-                    </p>
-                    <p className={featured ? 'text-xs leading-5 text-surface/72' : 'line-clamp-2 text-xs leading-5 text-text-secondary'}>
-                      {item.description}
-                    </p>
-                    <p className={featured ? 'text-xs font-bold text-surface/86' : 'text-xs font-bold text-accent'}>
-                      {item.metric}
-                    </p>
-                  </div>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-heading text-sm font-extrabold text-primary">{item.title}</span>
+                    <span className="mt-0.5 block text-xs leading-5 text-text-secondary">{item.description}</span>
+                  </span>
+                  <span className="shrink-0 text-right text-xs font-bold text-accent">{item.metric}</span>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-text-muted transition group-hover:translate-x-0.5 group-hover:text-accent" aria-hidden="true" />
                 </Link>
               )
             })}
@@ -447,187 +319,67 @@ export default async function AdminDashboardPage() {
         </section>
       ) : null}
 
-      {showKomdigiMobileMenu ? (
-        <section className="space-y-3 lg:hidden" aria-labelledby="komdigi-mobile-menu">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Menu Komdigi</p>
-              <h2 id="komdigi-mobile-menu" className="font-heading text-xl font-extrabold text-primary">
-                Akses cepat publikasi
-              </h2>
-            </div>
-            <Badge tone="surface">Mobile</Badge>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {komdigiQuickActions.map((item, index) => {
-              const Icon = item.icon
-              const featured = index === 0
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={
-                    featured
-                      ? 'group rounded-2xl bg-gradient-card p-4 text-surface shadow-card ring-1 ring-primary/10 transition active:scale-[0.99]'
-                      : 'group rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border transition active:scale-[0.99]'
-                  }
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div
-                      className={
-                        featured
-                          ? 'flex h-11 w-11 items-center justify-center rounded-2xl bg-surface/14 text-surface ring-1 ring-surface/16'
-                          : 'flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/8 text-primary'
-                      }
-                    >
-                      <Icon className="h-5 w-5" aria-hidden="true" />
-                    </div>
-                    <ArrowRight
-                      className={
-                        featured
-                          ? 'h-4 w-4 text-surface/70 transition group-hover:translate-x-0.5'
-                          : 'h-4 w-4 text-text-muted transition group-hover:translate-x-0.5 group-hover:text-accent'
-                      }
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div className="mt-4 space-y-1">
-                    <p className={featured ? 'font-heading text-base font-extrabold text-surface' : 'font-heading text-sm font-extrabold text-primary'}>
-                      {item.title}
-                    </p>
-                    <p className={featured ? 'text-xs leading-5 text-surface/72' : 'line-clamp-2 text-xs leading-5 text-text-secondary'}>
-                      {item.description}
-                    </p>
-                    <p className={featured ? 'text-xs font-bold text-surface/86' : 'text-xs font-bold text-accent'}>
-                      {item.metric}
-                    </p>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {showBendaharaMobileMenu ? (
-        <section className="space-y-3 lg:hidden" aria-labelledby="bendahara-mobile-menu">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-accent">Menu Bendahara</p>
-              <h2 id="bendahara-mobile-menu" className="font-heading text-xl font-extrabold text-primary">
-                Akses cepat keuangan
-              </h2>
-            </div>
-            <Badge tone="surface">Mobile</Badge>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {bendaharaQuickActions.map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="group rounded-xl flex flex-col justify-between bg-surface p-3 shadow-card ring-1 ring-border transition active:scale-[0.99]"
-                >
-                  <div className="flex items-start justify-between gap-1 mb-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary/8 text-primary">
-                      <Icon className="h-4 w-4" aria-hidden="true" />
-                    </div>
-                    <ArrowRight
-                      className="h-3 w-3 text-text-muted transition group-hover:translate-x-0.5 group-hover:text-accent"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="font-heading text-xs font-extrabold text-primary leading-tight">
-                      {item.title}
-                    </p>
-                    <p className="text-[10px] font-bold text-accent">
-                      {item.metric}
-                    </p>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {/* KPI Cards */}
-      <section className={compactSecretaryMobile || compactKomdigiMobile || compactBendaharaMobile ? 'hidden gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-4' : 'grid gap-4 sm:grid-cols-2 xl:grid-cols-4'}>
+      <section
+        aria-label="Ringkasan data"
+        className={compactOrganizationMobile || compactKomdigiMobile
+          ? 'hidden border-y border-border bg-surface sm:grid sm:grid-cols-2 xl:grid-cols-3'
+          : 'grid border-y border-border bg-surface sm:grid-cols-2 xl:grid-cols-3'}
+      >
         {displayKpis.map((kpi) => (
-          <Card key={kpi.key} className="overflow-hidden">
-            <CardContent className="space-y-4 p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-card text-surface">
-                  <kpi.icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <Badge tone="success">
-                  <TrendingUp className="mr-1 h-3 w-3" aria-hidden="true" />
-                  {kpi.trend}
-                </Badge>
-              </div>
-              <div className="min-w-0">
-                <p className="break-words font-heading text-2xl font-extrabold leading-tight text-primary md:text-3xl">
-                  {kpi.value}
-                </p>
-                <p className="text-sm font-medium text-text-secondary">{kpi.label}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <article key={kpi.key} className="flex min-h-28 items-center gap-4 border-b border-border p-5 sm:border-r xl:[&:nth-child(3n)]:border-r-0">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/8 text-primary">
+              <kpi.icon className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="break-words font-heading text-2xl font-extrabold leading-tight text-primary md:text-3xl">{kpi.value}</p>
+              <p className="text-sm font-semibold text-text-secondary">{kpi.label}</p>
+              <p className="mt-1 text-xs text-text-muted">{kpi.trend}</p>
+            </div>
+          </article>
         ))}
       </section>
 
-      {/* Sections per role */}
       {visibleSections.length > 0 ? (
         <section
           className={
-            compactSecretaryMobile || compactKomdigiMobile || compactBendaharaMobile
-              ? 'hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-4'
-              : 'grid gap-4 md:grid-cols-2 xl:grid-cols-4'
+            compactOrganizationMobile || compactKomdigiMobile
+              ? 'hidden gap-8 md:grid md:grid-cols-2'
+              : 'grid gap-8 md:grid-cols-2'
           }
         >
           {visibleSections.map((section) => (
-            <Card key={section.title}>
-              <CardContent className="space-y-4 p-5">
-                <h2 className="font-heading text-lg font-bold text-primary">{section.title}</h2>
-                <div className="space-y-3">
+            <article key={section.title} className="border-l-2 border-primary bg-surface px-5 py-4">
+              <h2 className="font-heading text-lg font-bold text-primary">{section.title}</h2>
+              <dl className="mt-3 divide-y divide-border">
                   {section.items.map(([label, value]) => (
                     <div
                       key={String(label)}
-                      className="flex items-center justify-between gap-3 rounded-xl bg-surface-alt px-4 py-3"
+                      className="flex min-h-12 items-center justify-between gap-3 py-3"
                     >
-                      <span className="min-w-0 text-sm font-medium text-text-secondary">{label}</span>
-                      <span className="min-w-0 text-right font-heading text-lg font-extrabold text-primary">{value}</span>
+                      <dt className="min-w-0 text-sm font-medium text-text-secondary">{label}</dt>
+                      <dd className="min-w-0 text-right font-heading text-lg font-extrabold text-primary">{value}</dd>
                     </div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
+              </dl>
+            </article>
           ))}
         </section>
       ) : null}
 
-      {/* Ruang tindak lanjut */}
-      <section>
-        <Card>
-          <CardContent className="p-5 md:p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <h2 className="font-heading text-xl font-bold text-primary">Ruang Tindak Lanjut</h2>
-                <p className="text-sm text-text-secondary">Pekerjaan yang perlu perhatian sesuai role aktif.</p>
-              </div>
-              <Badge tone="warning">Live</Badge>
-            </div>
-            <div className="space-y-3">
+      <section className="border-t-2 border-primary pt-5">
+        <div className="mb-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-accent">Tindak lanjut</p>
+          <h2 className="font-heading text-xl font-bold text-primary">Pekerjaan yang perlu diperiksa</h2>
+        </div>
+        <div className="divide-y divide-border border-y border-border bg-surface">
               {[
                 roleGroups.komdigi.includes(roleId) || canManageSystem
                   ? ['Content plan Komdigi', `${plannedContent} item terjadwal`]
                   : null,
-                roleGroups.sekretaris.includes(roleId) || canManageSystem
+                roleGroups.organization.includes(roleId) || canManageSystem
                   ? ['Pendaftar baru', `${registrations.meta.total} data arsip`]
                   : null,
-                roleGroups.bendahara.includes(roleId) || canManageSystem
+                roleGroups.organization.includes(roleId) || canManageSystem
                   ? ['LPJ kegiatan', `${pendingReports} pending verifikasi`]
                   : null,
               ]
@@ -637,32 +389,166 @@ export default async function AdminDashboardPage() {
                   return (
                     <div
                       key={title}
-                      className="flex items-center justify-between gap-3 rounded-2xl bg-surface-alt p-4"
+                      className="flex min-h-16 items-center justify-between gap-3 px-1 py-3"
                     >
                       <div>
                         <p className="font-semibold text-primary">{title}</p>
                         <p className="text-sm text-text-secondary">{description}</p>
                       </div>
-                      <Badge tone="surface">Review</Badge>
+                      <span className="text-xs font-bold text-accent">Periksa</span>
                     </div>
                   )
                 })}
               {[
                 roleGroups.komdigi.includes(roleId) || canManageSystem,
-                roleGroups.sekretaris.includes(roleId) || canManageSystem,
-                roleGroups.bendahara.includes(roleId) || canManageSystem,
+                roleGroups.organization.includes(roleId) || canManageSystem,
+                roleGroups.organization.includes(roleId) || canManageSystem,
               ].every((v) => !v) ? (
-                <div className="flex items-center gap-3 rounded-2xl bg-surface-alt p-4">
+                <div className="flex min-h-16 items-center gap-3 px-1 py-3">
                   <Megaphone className="h-5 w-5 text-accent" aria-hidden="true" />
                   <p className="text-sm font-semibold text-primary">
                     Gunakan navigasi untuk mengakses fitur sesuai role Anda.
                   </p>
                 </div>
               ) : null}
-            </div>
-          </CardContent>
-        </Card>
+        </div>
       </section>
     </div>
   )
+}
+
+type PamfletQueue = Awaited<ReturnType<typeof getPamfletRequests>>
+type WritingQueue = Awaited<ReturnType<typeof getKaryaTulisQueue>>
+
+function KomdigiOverview({
+  userName,
+  plannedContent,
+  pamfletQueue,
+  writingQueue,
+}: {
+  userName: string
+  plannedContent: number
+  pamfletQueue: PamfletQueue
+  writingQueue: WritingQueue
+}) {
+  const newRequests = pamfletQueue.filter((item) => item.status === 'BARU')
+  const activeRequests = pamfletQueue.filter((item) => !['SELESAI', 'DITOLAK', 'DIBATALKAN'].includes(item.status))
+  const reviewQueue = writingQueue.filter((item) => ['PENDING', 'REVISION', 'REVISION_REQUIRED'].includes(item.status))
+
+  const commandCards = [
+    {
+      href: '/admin/request-pamflet',
+      eyebrow: 'Inbox Pamflet',
+      value: `${newRequests.length} Request Baru`,
+      icon: Mail,
+      tone: 'border-white/20 bg-white/10 hover:bg-white/20',
+      iconTone: 'bg-white/10 text-white',
+    },
+    {
+      href: '/admin/cms/content-plan',
+      eyebrow: 'Content Plan',
+      value: `${plannedContent} Item Terencana`,
+      icon: CalendarDays,
+      tone: 'border-warning/45 bg-warning/15 hover:bg-warning/25',
+      iconTone: 'bg-warning/20 text-warning-surface',
+    },
+    {
+      href: '/admin/kirim-tulisan',
+      eyebrow: 'Meja Redaksi',
+      value: `${reviewQueue.length} Menunggu Review`,
+      icon: BookOpen,
+      tone: 'border-white/10 bg-white/5 hover:bg-white/10',
+      iconTone: 'border border-white/20 bg-white/5 text-white/75',
+    },
+  ]
+
+  return (
+    <div className="dashboard-page">
+      <section className="dashboard-hero border-l-4 border-accent bg-primary text-white">
+        <div className="p-5 md:p-6">
+          <div className="mb-6 border-b border-white/20 pb-6">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-green-400" aria-hidden="true" />
+              <span className="text-[11px] font-bold uppercase tracking-widest text-green-300">Ruang Kerja Komdigi</span>
+            </div>
+            <h1 className="font-heading text-2xl font-bold text-white sm:text-3xl">Fokus Redaksi Hari Ini</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-7 text-white/78 md:text-base">
+              Ada <strong className="text-white">{newRequests.length} Request Pamflet baru</strong> dan{' '}
+              <strong className="text-white">{reviewQueue.length} tulisan</strong> yang perlu ditinjau, {userName}.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {commandCards.map(({ href, eyebrow, value, icon: Icon, tone, iconTone }) => (
+              <Link key={href} href={href} className={`group flex min-h-24 items-center justify-between gap-4 rounded-md border p-4 text-left transition ${tone}`}>
+                <span className="flex min-w-0 items-center gap-4">
+                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${iconTone}`}>
+                    <Icon className="h-[22px] w-[22px]" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[11px] font-bold uppercase tracking-wider text-white/65">{eyebrow}</span>
+                    <span className="mt-0.5 block font-heading text-base font-extrabold text-white">{value}</span>
+                  </span>
+                </span>
+                <ArrowRight className="h-5 w-5 shrink-0 text-white/45 transition-transform group-hover:translate-x-1 group-hover:text-white" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-8 lg:grid-cols-12">
+        <section className="lg:col-span-7" aria-labelledby="komdigi-design-queue">
+          <div className="mb-4 flex items-end justify-between border-b border-border/80 pb-3">
+            <h2 id="komdigi-design-queue" className="font-heading text-lg font-extrabold text-primary">Antrean Desain</h2>
+            <Link href="/admin/request-pamflet" className="inline-flex min-h-11 items-center rounded-md px-2 text-xs font-semibold text-accent hover:bg-surface-alt hover:underline">Semua Antrean</Link>
+          </div>
+          <div className="space-y-4">
+            {activeRequests.slice(0, 3).map((request) => (
+              <article key={request.id} className="glass-subtle flex flex-col justify-between gap-4 rounded-lg p-4 sm:flex-row sm:items-center">
+                <div className="min-w-0">
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${request.status === 'BARU' ? 'bg-info' : 'bg-warning'}`} aria-hidden="true" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">{request.requestNumber}</span>
+                  </div>
+                  <h3 className="truncate font-heading text-base font-extrabold text-primary">{request.activityName}</h3>
+                  <p className="mt-1 text-xs text-text-secondary">{request.requesterName} · Tenggat {formatDashboardDate(request.deadline)}</p>
+                </div>
+                <ButtonLink href={`/admin/request-pamflet/${request.id}`} size="sm" variant={request.status === 'BARU' ? 'primary' : 'secondary'} className="shrink-0 self-start sm:self-auto">
+                  {request.status === 'BARU' ? 'Tinjau Request' : 'Lihat Detail'}
+                </ButtonLink>
+              </article>
+            ))}
+            {activeRequests.length === 0 ? <KomdigiEmptyState message="Belum ada Request Pamflet yang perlu ditindaklanjuti." /> : null}
+          </div>
+        </section>
+
+        <section className="lg:col-span-5" aria-labelledby="komdigi-editorial-queue">
+          <div className="mb-4 flex items-end justify-between border-b border-border/80 pb-3">
+            <h2 id="komdigi-editorial-queue" className="font-heading text-lg font-extrabold text-primary">Meja Redaksi</h2>
+            <Link href="/admin/kirim-tulisan" className="inline-flex min-h-11 items-center rounded-md px-2 text-xs font-semibold text-accent hover:bg-surface-alt hover:underline">Semua Naskah</Link>
+          </div>
+          <div className="glass-subtle divide-y divide-border rounded-lg p-4">
+            {reviewQueue.slice(0, 3).map((writing) => (
+              <article key={writing.id} className="py-4 first:pt-0 last:pb-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-accent">{writing.status.replaceAll('_', ' ')}</p>
+                <h3 className="mt-1 font-heading text-sm font-extrabold leading-snug text-primary">{writing.title}</h3>
+                <p className="mt-1 text-xs text-text-secondary">{writing.category ?? 'Tulisan'} · {writing.authorName ?? 'Penulis tidak diketahui'}</p>
+                <ButtonLink href="/admin/kirim-tulisan" variant="ghost" size="sm" className="mt-2 px-0 text-accent hover:bg-transparent">Mulai Review</ButtonLink>
+              </article>
+            ))}
+            {reviewQueue.length === 0 ? <p className="py-4 text-sm text-text-secondary">Belum ada naskah yang menunggu review.</p> : null}
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function KomdigiEmptyState({ message }: { message: string }) {
+  return <p className="glass-subtle rounded-lg p-4 text-sm text-text-secondary">{message}</p>
+}
+
+function formatDashboardDate(value: Date) {
+  return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).format(value)
 }

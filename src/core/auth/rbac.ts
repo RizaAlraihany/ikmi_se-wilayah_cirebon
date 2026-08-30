@@ -8,7 +8,7 @@ export const RBAC = {
       include: { role: { include: { permissions: { include: { permission: true } } } } }
     })
 
-    if (!user) return false
+    if (!user || !user.role) return false
     
     // Super Admin override
     if (isSuperAdminRole(user.role.id)) return true
@@ -22,7 +22,7 @@ export const RBAC = {
       include: { role: true, department: true }
     })
 
-    if (!user) return false
+    if (!user || !user.role) return false
     if (isSuperAdminRole(user.role.id)) return true
 
     return isKomdigiAdminRole(user.role.id) && user.department?.code === 'KOMDIGI'

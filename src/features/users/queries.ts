@@ -71,7 +71,7 @@ export const userQueries = {
   },
 
   async getRoles() {
-    return prisma.role.findMany({ orderBy: { name: 'asc' } })
+    return prisma.role.findMany({ where: { deletedAt: null }, orderBy: { name: 'asc' } })
   },
 
   async getDepartments() {

@@ -1,0 +1,61 @@
+name: Database Backup
+
+on:
+  schedule:
+    # Daily at 02:15 UTC / 09:15 WIB.
+    - cron: '15 2 * * *'
+    # Weekly every Sunday at 03:15 UTC / 10:15 WIB.
+    - cron: '15 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Backup retention class
+        required: true
+        default: daily
+        type: choice
+        options:
+          - daily
+          - weekly
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ikmi-database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+      BACKUP_DIRECTORY: ${{ runner.temp }}/ikmi-backup-staging
+      BACKUP_S3_URI: ${{ secrets.BACKUP_S3_URI }}
+      BACKUP_DAILY_RETENTION: '7'
+      BACKUP_WEEKLY_RETENTION: '4'
+      BACKUP_ALERT_WEBHOOK_URL: ${{ secrets.BACKUP_ALERT_WEBHOOK_URL }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.BACKUP_AWS_REGION }}
+    steps:
+      - name: Checkout operations code
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install --yes postgresql-client
+
+      - name: Select retention class
+        id: mode
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "value=${{ inputs.mode }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event.schedule }}" == "15 3 * * 0" ]]; then
+            echo "value=weekly" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=daily" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create encrypted external backup
+        run: node scripts/database-backup.mjs --mode "${{ steps.mode.outputs.value }}"

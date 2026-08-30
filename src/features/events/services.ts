@@ -87,6 +87,7 @@ export const eventService = {
           where: { id },
           data: {
             status: EventStatus.CANCELLED,
+            statusConfirmationState: 'CONFIRMED',
             deletedAt: new Date(),
             updatedBy: userId,
           },
@@ -109,7 +110,10 @@ export const eventService = {
     const [updated] = await prisma.$transaction([
       prisma.event.update({
         where: { id },
-        data: validated
+        data: {
+          ...validated,
+          ...(validated.status ? { statusConfirmationState: 'CONFIRMED' } : {}),
+        },
       }),
       prisma.auditLog.create({
         data: {

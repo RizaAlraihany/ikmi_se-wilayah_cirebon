@@ -3,12 +3,12 @@ import { cn } from '@/lib/utils'
 type BadgeTone = 'primary' | 'accent' | 'success' | 'warning' | 'danger' | 'surface'
 
 const tones: Record<BadgeTone, string> = {
-  primary: 'bg-primary text-surface',
+  primary: 'bg-accent text-surface',
   accent: 'bg-accent text-surface',
   success: 'bg-success-surface text-success-foreground',
   warning: 'bg-warning-surface text-warning-foreground',
   danger: 'bg-danger-surface text-danger-foreground',
-  surface: 'bg-surface text-primary ring-1 ring-border',
+  surface: 'bg-surface-alt text-primary ring-1 ring-border',
 }
 
 export function Badge({
@@ -29,7 +29,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex min-h-7 items-center rounded-full px-3 py-1 text-xs font-semibold',
+        'inline-flex min-h-6 items-center rounded-md px-2.5 py-1 text-[11px] font-bold tracking-[0.01em]',
         tones[resolvedTone],
         className,
       )}

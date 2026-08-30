@@ -1,5 +1,18 @@
 import { prisma } from '@/core/database/prisma'
 import { PostStatus } from '@prisma/client'
+import { publicPostSelect } from '@/features/public/public-data'
+import { requirePermission } from '@/core/authorization/guards'
+import { KOMDIGI_DASHBOARD_ROLE_IDS } from '@/core/auth/roles'
+import { ForbiddenError } from '@/core/errors/custom-errors'
+
+const publicPublicationCategorySlugs = ['berita', 'opini', 'artikel', 'kajian']
+
+async function requirePublicationReader() {
+  const user = await requirePermission('post.view')
+  if (!KOMDIGI_DASHBOARD_ROLE_IDS.includes(user.roleId as (typeof KOMDIGI_DASHBOARD_ROLE_IDS)[number])) {
+    throw new ForbiddenError('Publikasi hanya dapat dikelola oleh Admin Komdigi.')
+  }
+}
 
 export const postQueries = {
   async getPostOwnershipById(id: string) {
@@ -20,6 +33,7 @@ export const postQueries = {
   },
 
   async getPaginatedPosts(page: number = 1, limit: number = 10, search?: string) {
+    await requirePublicationReader()
     const skip = (page - 1) * limit
 
     const where = {
@@ -59,6 +73,7 @@ export const postQueries = {
   },
 
   async getPostForEdit(id: string) {
+    await requirePublicationReader()
     return prisma.post.findFirst({
       where: {
         id,
@@ -72,6 +87,7 @@ export const postQueries = {
           },
         },
         category: true,
+        writingSubmission: { select: { id: true, submissionNumber: true } },
       },
     })
   },
@@ -81,15 +97,9 @@ export const postQueries = {
       where: {
         status: PostStatus.PUBLISHED,
         deletedAt: null,
+        category: { deletedAt: null, slug: { in: publicPublicationCategorySlugs } },
       },
-      include: {
-        category: true,
-        author: {
-          include: {
-            position: true,
-          },
-        },
-      },
+      select: publicPostSelect,
       orderBy: { publishedAt: 'desc' },
       ...(limit ? { take: limit } : {}),
     })
@@ -101,19 +111,14 @@ export const postQueries = {
         slug,
         status: PostStatus.PUBLISHED,
         deletedAt: null,
+        category: { deletedAt: null, slug: { in: publicPublicationCategorySlugs } },
       },
-      include: {
-        category: true,
-        author: {
-          include: {
-            position: true,
-          },
-        },
-      },
+      select: publicPostSelect,
     })
   },
 
   async getAnalytics() {
+    await requirePublicationReader()
     const startOfYear = new Date(new Date().getFullYear(), 0, 1)
 
     const [

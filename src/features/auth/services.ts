@@ -1,4 +1,5 @@
 import { prisma } from '@/core/database/prisma'
+import { serializeAuditData } from '@/features/audit/audit-data'
 
 export const authService = {
   /**
@@ -36,6 +37,18 @@ export const authService = {
     if (user) {
       await authService.logLoginEvent(user.id)
     }
+  },
+
+  async logFailedLoginEvent(userId: string | null) {
+    await prisma.auditLog.create({
+      data: {
+        action: 'LOGIN_FAILED',
+        entity: 'Authentication',
+        entityId: userId ?? 'anonymous',
+        userId,
+        newData: serializeAuditData({ reason: 'invalid_credentials' }),
+      },
+    })
   },
 
   /**

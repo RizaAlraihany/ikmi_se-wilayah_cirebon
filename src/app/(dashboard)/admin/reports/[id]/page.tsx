@@ -7,6 +7,7 @@ import { FileText, MapPin, CalendarDays, ExternalLink } from 'lucide-react'
 import { ReportActions } from './components/ReportActions'
 import { auth } from '@/core/auth/auth'
 import { can, type SessionUser } from '@/core/authorization/rbac'
+import { LPJ_VERIFY_BPH_PERMISSION } from '@/core/authorization/permission-ids'
 
 export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const p = await params
@@ -23,7 +24,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
     notFound()
   }
 
-  const canVerify = await can('lpj.verify', user)
+  const canVerify = await can(LPJ_VERIFY_BPH_PERMISSION, user)
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -71,10 +72,10 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
               <FileText className="w-6 h-6 text-primary" />
               <div>
                 <p className="font-medium text-primary">Dokumen LPJ</p>
-                <p className="text-xs text-muted-foreground break-all">{report.documentUrl}</p>
+                <p className="text-xs text-muted-foreground">File privat dengan akses berumur pendek.</p>
               </div>
             </div>
-            <a href={report.documentUrl} target="_blank" rel="noreferrer" className="flex items-center text-sm font-medium text-primary hover:underline">
+            <a href={`/api/private/reports/${encodeURIComponent(report.id)}`} target="_blank" rel="noreferrer" className="flex items-center text-sm font-medium text-primary hover:underline">
               Buka <ExternalLink className="w-4 h-4 ml-1" />
             </a>
           </div>

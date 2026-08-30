@@ -1,374 +1,343 @@
-import { ButtonLink } from '@/components/ui/button'
-import { ArrowRight } from 'lucide-react'
-import { prisma } from '@/core/database/prisma'
-import type { Prisma } from '@prisma/client'
-import { defaultWebConfig } from '@/features/web-config/default-config'
-import { webConfigQueries } from '@/features/web-config/queries'
-import { masterDataSeed } from '../../../../prisma/master-data.generated'
-import { StrukturCard, type StrukturCardMember } from './struktur-card'
-import { DepartmentGrid, type DepartmentData } from './department-grid'
+import type { Metadata } from "next";
+import { Info } from "lucide-react";
+import Image from "next/image";
 
-export const metadata = {
-  title: 'Struktur Pengurus - IKMI Cirebon',
-  description: 'Daftar pengurus kabinet IKMI Cirebon.',
+import { siteUrl } from "@/core/seo/site";
+import { getActivePublicStructure } from "@/features/public/public-structure";
+import { webConfigQueries } from "@/features/web-config/queries";
+import { DepartmentGrid, type DepartmentData } from "./department-grid";
+import type { StrukturCardMember } from "./struktur-card";
+import { PublicBreadcrumb } from "../_components/public-breadcrumb";
+
+export const metadata: Metadata = {
+  title: "Struktur Pengurus",
+  description:
+    "Struktur pengurus aktif IKMI Cirebon berdasarkan periode, jabatan, dan unit organisasi.",
+  alternates: { canonical: "/struktur" },
+  openGraph: {
+    title: "Struktur Pengurus IKMI Cirebon",
+    description:
+      "Kenali pengurus aktif IKMI Cirebon beserta jabatan dan unit organisasinya.",
+    url: `${siteUrl}/struktur`,
+    type: "website",
+  },
+};
+
+type UnknownRecord = Record<string, unknown>;
+
+type StructureGroup = {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  unitType: string;
+  photoUrl: string | null;
+  members: StrukturCardMember[];
+};
+
+function asRecord(value: unknown): UnknownRecord | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as UnknownRecord;
 }
 
-export const dynamic = 'force-dynamic'
+function readString(
+  record: UnknownRecord | null,
+  keys: readonly string[],
+): string | null {
+  if (!record) return null;
 
-async function getConfig<T>(key: keyof typeof defaultWebConfig, fallback: T): Promise<T> {
-  const config = await webConfigQueries.getWebConfigByKey(key)
-  if (!config) return fallback
-  try {
-    return { ...fallback, ...JSON.parse(config.valueJson) }
-  } catch {
-    return fallback
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
   }
+
+  return null;
 }
 
-const publicDepartmentNames: Record<string, string> = {
-  HPM: 'Hubungan & Pengabdian Masyarakat',
-  KAJ: 'Kajian & Advokasi',
-  KOMDIGI: 'Komunikasi & Digitalisasi',
-  PSDA: 'Pengembangan Sumber Daya Anggota',
-  EKRAF: 'Ekonomi Kreatif',
-}
+function readMediaUrl(
+  record: UnknownRecord | null,
+  keys: readonly string[],
+): string | null {
+  if (!record) return null;
 
-const publicPositionDepartmentNames: Record<string, string> = {
-  HPM: 'HPM',
-  KAJ: 'Kajian & Advokasi',
-  KOMDIGI: 'Komdigi',
-  PSDA: 'PSDA',
-  EKRAF: 'Ekotif',
-}
+  for (const key of keys) {
+    const value = record[key];
 
-const structureDepartmentOrder = ['KAD', 'KAJ', 'PSDA', 'EKRAF', 'KOMDIGI', 'HPM']
+    if (typeof value === "string" && value.trim()) return value.trim();
 
-const bphPositionOrder = new Map([
-  ['ketum', 0],
-  ['waketum', 1],
-  ['sekum_1', 2],
-  ['sekum_2', 3],
-  ['bendum_1', 4],
-  ['bendum_2', 5],
-])
+    const nested = asRecord(value);
+    const nestedUrl = readString(nested, ["url", "src", "imageUrl", "fileUrl"]);
 
-
-
-const memberDataByEmail = new Map(
-  masterDataSeed.members.map((member) => [member.email.toLowerCase(), member]),
-)
-
-function normalizeLookup(value: string) {
-  return value.trim().toLowerCase().replace(/\s+/g, ' ')
-}
-
-type PublicDepartmentRef = {
-  id?: string | null
-  code?: string | null
-  name?: string | null
-}
-
-type PublicPositionRef = {
-  id?: string | null
-  name?: string | null
-  departmentId?: string | null
-  department?: PublicDepartmentRef | null
-}
-
-type KabinetUser = Prisma.UserGetPayload<{ include: { position: true } }> & {
-  department?: PublicDepartmentRef | null
-  position?: PublicPositionRef | null
-  memberData?: {
-    address?: string | null
-    birthInfo?: string | null
-    campus?: string | null
-    sourceEmail?: string | null
-  } | null
-}
-
-function toStrukturCardMember(user: KabinetUser): StrukturCardMember {
-  return {
-    id: user.id,
-    name: user.name,
-    positionName: publicPositionName(user),
-    photoUrl: user.photoUrl,
-    campus: user.memberData?.campus ?? null,
-    address: user.memberData?.address ?? null,
+    if (nestedUrl) return nestedUrl;
   }
+
+  return null;
 }
 
-function publicDepartmentName(department: PublicDepartmentRef) {
-  return department.code ? publicDepartmentNames[department.code] ?? department.name : department.name
-}
+function getUnitPriority(group: StructureGroup) {
+  const key = `${group.code} ${group.name}`.toLowerCase();
 
-function publicPositionName(user: {
-  department?: PublicDepartmentRef | null
-  position?: PublicPositionRef | null
-}) {
-  const departmentCode =
-    user.department?.code ?? user.position?.department?.code ?? user.position?.departmentId
-  const departmentName = departmentCode ? publicPositionDepartmentNames[departmentCode] : undefined
-
-  if (!departmentName || !user.position?.id) return user.position?.name || 'Pengurus'
-
-  if (user.position.id.startsWith('kadep_')) return `Ketua Departemen ${departmentName}`
-  if (user.position.id.startsWith('sekdep_')) return `Sekretaris Departemen ${departmentName}`
-  if (user.position.id.startsWith('anggota_')) return `Anggota Departemen ${departmentName}`
-
-  return user.position.name || 'Pengurus'
-}
-
-function departmentSortValue(department: PublicDepartmentRef) {
-  const index = structureDepartmentOrder.indexOf(department.code ?? department.id ?? '')
-  return index === -1 ? structureDepartmentOrder.length : index
-}
-
-function bphSortValue(user: KabinetUser) {
-  const order = user.position?.id ? bphPositionOrder.get(user.position.id) : undefined
-  return order ?? bphPositionOrder.size
-}
-
-function departmentUserSortValue(user: KabinetUser) {
-  let roleOrder = 2
-  if (user.position?.id?.startsWith('kadep_')) roleOrder = 0
-  else if (user.position?.id?.startsWith('sekdep_')) roleOrder = 1
-  return roleOrder * 100 + (user.name || '').localeCompare(user.name || '', 'id-ID')
-}
-
-function attachMemberData<T extends { email: string; name: string }>(
-  user: T,
-  registrationByName: Map<string, { campus: string; address: string }>,
-) {
-  const seedMember = memberDataByEmail.get(user.email.toLowerCase())
-  const registration = registrationByName.get(normalizeLookup(user.name))
-
-  return {
-    ...user,
-    memberData: seedMember
-      ? {
-          ...seedMember,
-          address: seedMember.address || registration?.address || null,
-          campus: registration?.campus || null,
-        }
-      : registration
-        ? {
-            address: registration.address,
-            birthInfo: null,
-            campus: registration.campus,
-            sourceEmail: user.email,
-          }
-        : null,
+  if (
+    group.unitType === "BPH" ||
+    key.includes("bph") ||
+    key.includes("pengurus harian")
+  ) {
+    return 0;
   }
+  if (key.includes("kaderisasi")) return 10;
+  if (key.includes("psda") || key.includes("sumber daya anggota")) return 20;
+  if (key.includes("advokasi") || key.includes("kajian strategis")) return 30;
+  if (key.includes("ekonomi kreatif") || key.includes("ekotif")) return 40;
+  if (
+    key.includes("komunikasi") ||
+    key.includes("digitalisasi") ||
+    key.includes("komdigi")
+  ) {
+    return 50;
+  }
+  if (
+    key.includes("hubungan") ||
+    key.includes("pengabdian masyarakat") ||
+    key.includes("hpm")
+  ) {
+    return 60;
+  }
+
+  return 100;
+}
+
+function getPositionPriority(positionName: string) {
+  const key = positionName.toLowerCase();
+
+  if (key.includes("ketua umum")) return 0;
+  if (key.includes("wakil ketua")) return 5;
+  if (key.includes("sekretaris umum")) return 10;
+  if (key.includes("bendahara umum")) return 20;
+  if (key.includes("kepala departemen") || key.includes("ketua departemen"))
+    return 30;
+  if (key.includes("sekretaris")) return 40;
+  if (key.includes("anggota")) return 60;
+
+  return 50;
 }
 
 export default async function PengurusPage() {
-  const landingHero = await getConfig('landing_hero', defaultWebConfig.landing_hero)
-  const fallbackHeroSlides = defaultWebConfig.landing_hero.slides.filter((slide) => slide.url)
-  const configuredHeroSlides = landingHero.slides?.filter((slide) => slide.url) ?? []
-  const structureHeroSlides = [...configuredHeroSlides, ...fallbackHeroSlides]
-    .filter((slide, index, slides) => slides.findIndex((item) => item.url === slide.url) === index)
-    .slice(0, 4)
+  const [structure, webConfig] = await Promise.all([
+    getActivePublicStructure(),
+    webConfigQueries.getMergedWebConfig(),
+  ]);
 
-  // Fetch Departments, their Positions, and Users with Profiles
-  const departments = await prisma.department.findMany({
-    include: {
-      positions: {
-        include: {
-          users: {
-            where: {
-              isActive: true,
-              deletedAt: null,
-            },
-          },
-        },
-        orderBy: { name: 'asc' },
-      },
-    },
-    // We can order departments or just let them be
-  })
-  const sortedDepartments = departments
-    .filter((department) => department.code !== 'BPH' && department.id !== 'BPH')
-    .sort((a, b) => departmentSortValue(a) - departmentSortValue(b))
+  const { period, assignments } = structure;
+  const webConfigRecord = asRecord(webConfig);
+  const structurePageConfig =
+    asRecord(webConfigRecord?.structure_page_extended) ??
+    asRecord(webConfigRecord?.structure_page) ??
+    asRecord(webConfigRecord?.organization_structure_page);
+  const configuredDepartmentPhotos =
+    asRecord(structurePageConfig?.departmentPhotos) ??
+    asRecord(structurePageConfig?.department_photos);
 
-  // Grouping logic:
-  // We can just iterate through departments, and for each department iterate through its positions and users.
-  // We might want to handle users who have no department (e.g. BPH maybe, if they don't have departmentId set)
-  // Let's also fetch users with position but NO department.
-  const bphUsers = await prisma.user.findMany({
-    where: {
-      isActive: true,
-      deletedAt: null,
-      OR: [
-        { departmentId: 'BPH' },
-        { position: { departmentId: 'BPH' } },
-        { position: { departmentId: null } },
-      ],
-    },
-    include: { position: true },
-    orderBy: { createdAt: 'asc' }
-  })
-  const activeStructureNames = [
-    ...bphUsers.map((user) => user.name),
-    ...sortedDepartments.flatMap((department) =>
-      department.positions.flatMap((position) => position.users.map((user) => user.name)),
-    ),
-  ]
-  const registrations = await prisma.registration.findMany({
-    where: {
-      deletedAt: null,
-      fullName: { in: activeStructureNames },
-    },
-    select: {
-      fullName: true,
-      campus: true,
-      address: true,
-    },
-  })
-  const registrationByName = new Map(
-    registrations.map((registration) => [normalizeLookup(registration.fullName), registration]),
-  )
-  const sortedBphUsers = bphUsers
-    .map((user) => attachMemberData(user, registrationByName))
-    .sort((a, b) => bphSortValue(a) - bphSortValue(b))
-  const bphLeaders = sortedBphUsers.filter(
-    (user) => user.positionId === 'ketum' || user.positionId === 'waketum',
-  )
-  const bphOfficers = sortedBphUsers.filter(
-    (user) => user.positionId !== 'ketum' && user.positionId !== 'waketum',
-  )
+  const groups = assignments.reduce<StructureGroup[]>((result, assignment) => {
+    const departmentRecord = asRecord(assignment.department);
+    const personRecord = asRecord(assignment.person);
+
+    let current = result.find((group) => group.id === assignment.department.id);
+
+    const member: StrukturCardMember = {
+      id: assignment.id,
+      name: assignment.person.name,
+      photoUrl:
+        readMediaUrl(personRecord, [
+          "photoUrl",
+          "avatarUrl",
+          "imageUrl",
+          "photo",
+        ]) ?? assignment.person.photoUrl,
+      positionName: assignment.position.name,
+      unitName: assignment.department.name,
+    };
+
+    if (!current) {
+      current = {
+        id: assignment.department.id,
+        code:
+          readString(departmentRecord, ["code", "slug", "shortName"]) ??
+          assignment.department.unitType,
+        name: assignment.department.name,
+        description:
+          assignment.department.description?.trim() ??
+          "Unit organisasi yang menjalankan bidang kerja dan program IKMI Cirebon.",
+        unitType: assignment.department.unitType,
+        photoUrl: readMediaUrl(departmentRecord, [
+          "groupPhotoUrl",
+          "photoUrl",
+          "imageUrl",
+          "coverUrl",
+          "featuredImageUrl",
+          "photo",
+          "image",
+        ]),
+        members: [],
+      };
+
+      result.push(current);
+    }
+
+    current.members.push(member);
+
+    return result;
+  }, []);
+
+  const sortedGroups = groups
+    .map((group) => ({
+      ...group,
+      members: [...group.members].sort(
+        (a, b) =>
+          getPositionPriority(a.positionName) -
+            getPositionPriority(b.positionName) ||
+          a.name.localeCompare(b.name, "id"),
+      ),
+      photoUrl:
+        group.photoUrl ??
+        readMediaUrl(configuredDepartmentPhotos, [
+          group.id,
+          group.code,
+          group.name,
+        ]) ??
+        null,
+    }))
+    .sort(
+      (a, b) =>
+        getUnitPriority(a) - getUnitPriority(b) ||
+        a.name.localeCompare(b.name, "id"),
+    );
+
+  const bph =
+    sortedGroups.find(
+      (group) =>
+        group.unitType === "BPH" ||
+        group.code.toLowerCase() === "bph" ||
+        group.name.toLowerCase().includes("pengurus harian"),
+    ) ?? null;
+
+  const departments = sortedGroups.filter((group) => group.id !== bph?.id);
+
+  const toDepartmentData = (group: StructureGroup): DepartmentData => ({
+    id: group.id,
+    code: group.code,
+    name: group.name,
+    description: group.description,
+    memberCount: group.members.length,
+    photoUrl: group.photoUrl,
+    users: group.members,
+  });
+
+  const leadDepartment = bph ? toDepartmentData(bph) : null;
+  const departmentData = departments.map(toDepartmentData);
+  const totalOfficerCount = sortedGroups.reduce(
+    (total, group) => total + group.members.length,
+    0,
+  );
+
+  const heroImage =
+    readMediaUrl(structurePageConfig, [
+      "heroImageUrl",
+      "heroImage",
+      "coverImageUrl",
+      "coverImage",
+      "bannerImageUrl",
+      "bannerImage",
+    ]) ??
+    bph?.photoUrl ??
+    "https://res.cloudinary.com/dsgldeuuy/image/upload/v1781210005/BPHU_rkqdtg.png";
 
   return (
-    <main className="bg-background min-h-screen">
-      {/* ─── HEADER ──────────────────────────────────────────────────────── */}
-      <section className="relative isolate overflow-hidden px-4 py-14 text-left sm:px-6 md:py-20 lg:px-8">
-        <div className="absolute inset-0 -z-20 grid grid-cols-2" aria-hidden="true">
-          {structureHeroSlides.map((slide, index) => (
-            <div
-              key={`${slide.url}-${index}`}
-              className="min-h-full bg-cover bg-center"
-              style={{ backgroundImage: `url('${slide.url}')` }}
-            />
-          ))}
-        </div>
-        <div className="absolute inset-0 -z-10 bg-primary/82" aria-hidden="true" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-primary via-secondary/85 to-primary/35" aria-hidden="true" />
-        <div className="mx-auto max-w-[1200px] space-y-3">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-surface/75 md:text-xs">
-            <span>Beranda</span>
-            <span className="text-surface/45">/</span>
-            <span className="text-surface">Struktur Organisasi</span>
+    <main className="structure-page public-page-root">
+      <header className="structure-hero">
+        {heroImage ? (
+          <Image
+            src={heroImage}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="structure-hero-image"
+            aria-hidden="true"
+          />
+        ) : null}
+
+        <div className="structure-hero-overlay" aria-hidden="true" />
+
+        <div className="public-container structure-hero-inner">
+          <PublicBreadcrumb
+            tone="inverse"
+            className="structure-breadcrumb"
+            items={[
+              { label: "Tentang", href: "/tentang-kami" },
+              { label: "Struktur Pengurus" },
+            ]}
+          />
+
+          <div className="structure-hero-layout">
+            <div className="structure-hero-copy">
+              <h1>Struktur Pengurus</h1>
+              <p>
+                Kenali orang-orang di balik gerak IKMI Se-Wilayah Cirebon. Klik
+                setiap divisi untuk melihat detail pengurus.
+              </p>
+
+              <aside className="structure-hint" aria-label="Petunjuk interaksi">
+                <span className="structure-hint-icon" aria-hidden="true">
+                  <Info />
+                </span>
+                <span className="structure-hint-copy">
+                  <strong>Lihat detail setiap divisi</strong>
+                  <span>
+                    Pilih foto divisi untuk membuka susunan pengurusnya.
+                  </span>
+                </span>
+              </aside>
+            </div>
+
+            <dl
+              className="structure-summary"
+              aria-label="Ringkasan kepengurusan aktif"
+            >
+              <div className="structure-summary-item structure-summary-item--period">
+                <dt>Periode</dt>
+                <dd>{period?.name ?? "Belum ditetapkan"}</dd>
+              </div>
+              <div className="structure-summary-item">
+                <dt>Jumlah Unit</dt>
+                <dd>{sortedGroups.length}</dd>
+              </div>
+              <div className="structure-summary-item">
+                <dt>Jumlah Pengurus</dt>
+                <dd>{totalOfficerCount}</dd>
+              </div>
+            </dl>
           </div>
-          <h1 className="max-w-3xl font-heading text-3xl font-extrabold leading-tight tracking-tight text-surface md:text-5xl">
-            Kabinet Sri Nawikasa
-          </h1>
-          <p className="max-w-2xl text-sm leading-6 text-surface/80 md:text-base md:leading-7">
-            Mengenal lebih dekat para penggerak roda organisasi IKMI Cirebon.
-            Mahasiswa dari berbagai kampus dan kecamatan yang bersatu untuk mengabdi.
-          </p>
         </div>
-      </section>
+      </header>
 
-      {/* ─── DAFTAR PENGURUS ─────────────────────────────────────────────── */}
-      <section className="public-section-alt px-4 pb-10 pt-2 sm:px-6 md:pb-16 md:pt-4 lg:px-8">
-        <div className="mx-auto max-w-[1200px] space-y-8 md:space-y-12">
-
-          {/* BPH (Non-Department) */}
-          {sortedBphUsers.length > 0 && (
-            <div className="space-y-5 md:space-y-8">
-              <div className="space-y-3">
-                <h2 className="font-heading text-lg font-bold tracking-tight text-primary sm:text-2xl">
-                  Badan Pengurus Harian
-                </h2>
-                <div className="soft-divider" aria-hidden="true" />
-              </div>
-              <div className="grid grid-cols-2 justify-center gap-3 sm:flex sm:flex-wrap sm:gap-6">
-                {bphLeaders.map((user) => (
-                  <StrukturCard key={user.id} member={toStrukturCardMember(user)} />
-                ))}
-              </div>
-              {bphOfficers.length > 0 && (
-                <div className="grid grid-cols-2 justify-center gap-3 sm:gap-6 sm:[grid-template-columns:repeat(auto-fit,minmax(220px,280px))]">
-                  {bphOfficers.map((user) => (
-                    <StrukturCard key={user.id} member={toStrukturCardMember(user)} />
-                  ))}
-                </div>
-              )}
+      <section
+        className="structure-content"
+        aria-label="Bagan struktur pengurus IKMI Cirebon"
+      >
+        <div className="public-container structure-stage">
+          {sortedGroups.length > 0 ? (
+            <DepartmentGrid
+              leadDepartment={leadDepartment}
+              departments={departmentData}
+            />
+          ) : (
+            <div className="structure-empty" role="status">
+              <h2>Struktur belum dipublikasikan</h2>
+              <p>Data pengurus untuk periode aktif belum tersedia.</p>
             </div>
           )}
-
-          {/* Departments */}
-          {sortedDepartments.length > 0 && (
-            <DepartmentGrid
-              departments={sortedDepartments
-                .map((dept): DepartmentData | null => {
-                  const deptUsers = dept.positions
-                    .flatMap((p) =>
-                      p.users.map((u) =>
-                        attachMemberData({ ...u, position: p, department: dept }, registrationByName),
-                      ),
-                    )
-                    .sort((a, b) => {
-                      const orderA = departmentUserSortValue(a)
-                      const orderB = departmentUserSortValue(b)
-                      if (orderA !== orderB) return orderA - orderB
-                      return a.name.localeCompare(b.name, 'id-ID')
-                    })
-
-                  if (deptUsers.length === 0) return null
-
-                  const iconType = dept.code as DepartmentData['iconType']
-                  const publicName = publicDepartmentName(dept)
-
-                  let description = ''
-                  if (dept.code === 'KAD') description = 'Bertanggung jawab atas proses rekrutmen, pembinaan, serta pengembangan karakter keorganisasian anggota.'
-                  if (dept.code === 'KAJ') description = 'Menjembatani aspirasi mahasiswa, mengkaji isu-isu strategis, dan memberikan pendampingan kesejahteraan.'
-                  if (dept.code === 'PSDA') description = 'Mewadahi antusiasme non-akademik di bidang e-sports, olahraga lapangan, seni, hingga minat bakat lainnya.'
-                  if (dept.code === 'EKRAF') description = 'Berfokus pada kemandirian finansial organisasi melalui kewirausahaan, merchandise, dan inovasi bisnis.'
-                  if (dept.code === 'KOMDIGI') description = 'Mengelola branding media sosial resmi, publikasi event, dokumentasi kegiatan, serta pembuatan aset digital.'
-                  if (dept.code === 'HPM') description = 'Membangun relasi eksternal organisasi serta merancang program pengabdian sosial berdampak bagi masyarakat.'
-
-                  // Cari Kadiv
-                  const kadivUser = deptUsers.find((u) => u.position?.id?.startsWith('kadep_'))
-                  const kadivName = kadivUser ? kadivUser.name : 'Belum Ditunjuk'
-
-                  return {
-                    id: dept.id,
-                    code: dept.code ?? '',
-                    name: publicName ?? dept.name ?? 'Departemen',
-                    description,
-                    iconType,
-                    memberCount: deptUsers.length,
-                    kadivName,
-                    users: deptUsers.map((u) => toStrukturCardMember(u)),
-                  }
-                })
-                .filter((d): d is DepartmentData => d !== null)}
-            />
-          )}
-        </div>
-      </section>
-
-      {/* ─── CTA KONVERSI ────────────────────────────────────────────────── */}
-      <section className="public-section-alt px-4 py-10 text-center sm:px-6 md:py-14 lg:px-8">
-        <div className="mx-auto max-w-[800px]">
-          <div className="mb-4 space-y-2 md:mb-8 md:space-y-3 md:text-center">
-            <h2 className="font-heading text-2xl font-extrabold tracking-tight text-primary sm:text-3xl md:text-4xl">
-              Ingin Menjadi Bagian dari Kami?
-            </h2>
-          </div>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-primary/70 md:mt-6 md:text-lg md:leading-relaxed">
-            Terbuka kesempatan untuk belajar, berorganisasi, dan mengembangkan diri
-            bersama IKMI Cirebon.
-          </p>
-          <ButtonLink
-            href="/gabung"
-            className="mt-6 min-h-10 px-6 py-2.5 text-sm md:mt-10 md:min-h-11 md:px-8 md:py-3 md:text-base"
-          >
-            Daftar Menjadi Anggota
-            <ArrowRight className="ml-1 h-4 w-4 md:ml-2 md:h-5 md:w-5" />
-          </ButtonLink>
         </div>
       </section>
     </main>
-  )
+  );
 }

@@ -2,16 +2,11 @@
 
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
-import { createLetterAction, uploadLetterDocumentAction } from '@/features/letters/actions'
+import { createLetterAction } from '@/features/letters/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ListboxSelect } from '@/components/ui/listbox-select'
-
-function getFormString(formData: FormData, key: string) {
-  const value = formData.get(key)
-  return typeof value === 'string' ? value : ''
-}
 
 export function LetterForm() {
   const [isOpen, setIsOpen] = useState(false)
@@ -28,23 +23,7 @@ export function LetterForm() {
       return
     }
 
-    const uploadData = new FormData()
-    uploadData.append('file', file)
-    const upload = await uploadLetterDocumentAction(uploadData)
-
-    if (upload.error || !upload.url) {
-      setError(upload.error || 'Upload dokumen gagal.')
-      setIsSubmitting(false)
-      return
-    }
-
-    const result = await createLetterAction({
-      type: getFormString(formData, 'type'),
-      subject: getFormString(formData, 'subject'),
-      fileUrl: upload.url,
-      filePublicId: upload.publicId,
-      date: getFormString(formData, 'date'),
-    })
+    const result = await createLetterAction(formData)
 
     if (result?.error) {
       setError(result.error)

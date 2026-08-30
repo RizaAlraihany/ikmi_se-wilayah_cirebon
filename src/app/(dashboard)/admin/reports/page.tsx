@@ -35,7 +35,7 @@ export default async function ReportsPage() {
   const upcomingEvents = await eventQueries.getEventsWithoutReport()
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
+    <div className="space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-extrabold text-primary">Manajemen LPJ</h1>
         <p className="mt-1 text-sm text-muted">Kelola dan tinjau laporan pertanggungjawaban kegiatan.</p>
@@ -62,7 +62,7 @@ export default async function ReportsPage() {
                         </div>
                         <Badge tone={getReportStatusTone(report.status)}>{report.status}</Badge>
                       </div>
-                      <LpjViewer url={report.documentUrl} title={report.event?.title ?? 'Dokumen LPJ'} />
+                      <LpjViewer reportId={report.id} title={report.event?.title ?? 'Dokumen LPJ'} />
                     </CardContent>
                   </Card>
                 ))}
@@ -89,7 +89,7 @@ export default async function ReportsPage() {
                             <Badge tone={getReportStatusTone(report.status)}>{report.status}</Badge>
                           </td>
                           <td className="px-5 py-4 text-right">
-                            <LpjViewer url={report.documentUrl} title={report.event?.title ?? 'Dokumen'} />
+                            <LpjViewer reportId={report.id} title={report.event?.title ?? 'Dokumen'} />
                           </td>
                         </tr>
                       ))}

@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Archive, ExternalLink, Search, Trash2 } from 'lucide-react'
+import { Archive, Download, Search, Trash2 } from 'lucide-react'
 import { deleteDocumentArchiveAction } from '@/features/document-archives/actions'
 import { documentArchiveCategories } from '@/features/document-archives/schemas'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Dialog } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -17,8 +18,13 @@ type DocumentArchive = {
   title: string
   category: string
   description: string | null
-  fileUrl: string
   archivedAt: Date
+  visibility: 'INTERNAL' | 'PUBLIC' | 'MEMBER_ONLY' | 'PENGURUS_ONLY' | 'BPH_ONLY' | 'HIDDEN'
+  fileName: string | null
+  fileSize: number | null
+  organizationalUnit: { name: string } | null
+  period: { name: string } | null
+  program: { name: string } | null
 }
 
 type FilterValue = '' | (typeof documentArchiveCategories)[number]
@@ -37,6 +43,16 @@ const archiveDateFormatter = new Intl.DateTimeFormat('id-ID', {
 
 function formatArchiveDate(value: Date | string) {
   return archiveDateFormatter.format(new Date(value))
+}
+
+function formatFileSize(value: number | null) {
+  if (value === null) return null
+  if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function relationSummary(document: DocumentArchive) {
+  return [document.organizationalUnit?.name, document.period?.name, document.program?.name].filter(Boolean).join(' · ')
 }
 
 export function DocumentArchiveBoard({
@@ -58,8 +74,8 @@ export function DocumentArchiveBoard({
     setDeletingId(id)
     setError('')
     const result = await deleteDocumentArchiveAction(id)
-    if (result?.error) {
-      setError(result.error)
+    if (!result.success) {
+      setError(result.message || 'Arsip dokumen tidak dapat diarsipkan.')
     } else {
       setPendingDeleteId(null)
       router.refresh()
@@ -107,12 +123,14 @@ export function DocumentArchiveBoard({
         </div>
         <form onSubmit={handleSearch} className="mt-3 grid w-full grid-cols-[1fr_auto] gap-2 md:max-w-md">
           <Input
+            id="document-search"
+            aria-label="Cari judul atau deskripsi dokumen"
             placeholder="Cari dokumen..."
             value={search}
             className="rounded-2xl"
             onChange={(event) => setSearch(event.target.value)}
           />
-          <Button type="submit" variant="secondary" className="px-5">
+          <Button type="submit" variant="secondary" className="px-5" aria-label="Cari dokumen">
             <Search className="h-4 w-4 md:hidden" aria-hidden="true" />
             <span className="hidden md:inline">Cari</span>
           </Button>
@@ -151,25 +169,28 @@ export function DocumentArchiveBoard({
                   {document.description ? (
                     <p className="line-clamp-2 text-sm leading-6 text-primary/80">{document.description}</p>
                   ) : null}
+                  <div className="space-y-1 text-xs leading-5 text-text-secondary">
+                    {relationSummary(document) ? <p>{relationSummary(document)}</p> : null}
+                    <p>{[document.fileName, formatFileSize(document.fileSize)].filter(Boolean).join(' · ') || 'Metadata file legacy belum tersedia'}</p>
+                    <p className="font-semibold uppercase tracking-wide">Internal</p>
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     <a
-                      href={document.fileUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-surface transition-colors hover:bg-secondary"
+                      href={`/api/private/documents/${document.id}`}
+                      className="ikmi-liquid-blue inline-flex min-h-11 items-center justify-center gap-2 rounded-md text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                       aria-label={`Lihat dokumen ${document.title}`}
                     >
-                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                      Lihat
+                      <Download className="h-4 w-4" aria-hidden="true" />
+                      Unduh
                     </a>
                     <button
                       type="button"
                       onClick={() => setPendingDeleteId(document.id)}
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-danger/15 text-sm font-semibold text-primary transition-colors hover:bg-danger/25"
-                      aria-label={`Hapus dokumen ${document.title}`}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-danger/15 text-sm font-semibold text-primary transition-colors hover:bg-danger/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                      aria-label={`Arsipkan dokumen ${document.title}`}
                     >
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
-                      Hapus
+                      Arsipkan
                     </button>
                   </div>
                 </CardContent>
@@ -201,27 +222,27 @@ export function DocumentArchiveBoard({
                       </td>
                       <td className="max-w-sm px-5 py-4 text-primary/80">
                         <span className="line-clamp-2">{document.description || '-'}</span>
+                        {relationSummary(document) ? <span className="mt-1 block text-xs text-text-secondary">{relationSummary(document)}</span> : null}
+                        <span className="mt-1 block text-xs text-text-secondary">{[document.fileName, formatFileSize(document.fileSize)].filter(Boolean).join(' · ') || 'Metadata file legacy belum tersedia'}</span>
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <a
-                            href={document.fileUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/5"
-                            aria-label={`Lihat dokumen ${document.title}`}
+                            href={`/api/private/documents/${document.id}`}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-md text-primary transition-colors hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                            aria-label={`Unduh dokumen ${document.title}`}
                           >
-                            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                            <Download className="h-4 w-4" aria-hidden="true" />
                           </a>
                           <button
                             type="button"
                             onClick={() => setPendingDeleteId(document.id)}
                             className={cn(
-                              'inline-flex h-9 w-9 items-center justify-center rounded-full text-primary transition-colors hover:bg-danger/20',
+                              'inline-flex h-11 w-11 items-center justify-center rounded-md text-primary transition-colors hover:bg-danger/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
                               deletingId === document.id && 'opacity-50',
                             )}
                             disabled={deletingId === document.id}
-                            aria-label={`Hapus dokumen ${document.title}`}
+                            aria-label={`Arsipkan dokumen ${document.title}`}
                           >
                             <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </button>
@@ -236,30 +257,25 @@ export function DocumentArchiveBoard({
         </>
       )}
 
-      {pendingDocument ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-document-title">
-          <Card className="w-full max-w-md rounded-2xl border-t-4 border-t-danger">
-            <CardContent className="space-y-5 p-6">
-              <div>
-                <h2 id="delete-document-title" className="font-heading text-xl font-bold text-primary">
-                  Hapus arsip dokumen?
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">
-                  Dokumen {pendingDocument.title} akan dihapus dari daftar arsip.
-                </p>
-              </div>
+      <Dialog
+        open={Boolean(pendingDocument)}
+        onOpenChange={(open) => { if (!open) setPendingDeleteId(null) }}
+        title="Arsipkan dokumen?"
+        description={pendingDocument ? `Dokumen ${pendingDocument.title} akan disembunyikan dari daftar aktif, namun riwayatnya tetap tersimpan.` : undefined}
+      >
+        {pendingDocument ? (
+            <div className="space-y-5">
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <Button variant="secondary" onClick={() => setPendingDeleteId(null)} disabled={deletingId === pendingDocument.id}>
                   Batal
                 </Button>
                 <Button variant="danger" onClick={() => handleDelete(pendingDocument.id)} disabled={deletingId === pendingDocument.id}>
-                  {deletingId === pendingDocument.id ? 'Menghapus...' : 'Hapus'}
+                  {deletingId === pendingDocument.id ? 'Mengarsipkan...' : 'Arsipkan'}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
+            </div>
+        ) : null}
+      </Dialog>
     </div>
   )
 }

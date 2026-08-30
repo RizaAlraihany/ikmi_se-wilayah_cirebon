@@ -16,6 +16,13 @@ export const letterQueries = {
       where,
       skip,
       take,
+      select: {
+        id: true,
+        letterNumber: true,
+        type: true,
+        subject: true,
+        date: true,
+      },
       orderBy: { date: 'desc' }
     })
   },

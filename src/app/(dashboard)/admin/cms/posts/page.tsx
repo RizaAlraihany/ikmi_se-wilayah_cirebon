@@ -1,10 +1,11 @@
-import { FileText, Plus, Search, Edit } from 'lucide-react'
+import { FileText, Import, Plus, Search, Edit } from 'lucide-react'
 import { postQueries } from '@/features/blog/queries'
 import { Button, ButtonLink } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
+import { KomdigiPageHeader } from '../../_components/komdigi-page-header'
 
 export default async function AdminPostsPage({
   searchParams,
@@ -18,13 +19,18 @@ export default async function AdminPostsPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <KomdigiPageHeader
         title="Artikel & Publikasi"
-        description="Kelola draft, review, dan publikasi resmi IKMI Cirebon."
-        action={<ButtonLink href="/admin/cms/posts/create"><Plus className="h-4 w-4" aria-hidden="true" />Tulis Artikel</ButtonLink>}
+        description="Arsip Berita, Opini, Artikel, dan Kajian yang tampil di website publik."
+        action={
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink href="/admin/cms/posts/import-blogger" variant="secondary"><Import className="h-4 w-4" aria-hidden="true" />Import Blogger</ButtonLink>
+            <ButtonLink href="/admin/cms/posts/create"><Plus className="h-4 w-4" aria-hidden="true" />Tulis Artikel</ButtonLink>
+          </div>
+        }
       />
 
-      <Card>
+      <Card className="glass-subtle shadow-none">
         <CardContent className="space-y-5 p-5">
           <form className="relative max-w-md">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden="true" />
@@ -35,9 +41,9 @@ export default async function AdminPostsPage({
             <EmptyState icon={FileText} title="Belum ada artikel" description="Draft dan publikasi yang dibuat departemen akan tampil di sini." actionHref="/admin/cms/posts/create" actionLabel="Tulis Artikel" />
           ) : (
             <>
-              <div className="hidden overflow-hidden rounded-2xl ring-1 ring-line md:block">
+              <div className="hidden overflow-hidden rounded-xl border border-white/80 md:block">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-background">
+                  <thead className="border-b border-white/60 bg-white/40 text-[10px] uppercase tracking-wider text-text-muted">
                     <tr>
                       {['Judul', 'Penulis', 'Departemen', 'Status', 'Aksi'].map((head) => (
                         <th key={head} className="px-4 py-3 font-semibold">{head}</th>
@@ -87,18 +93,6 @@ export default async function AdminPostsPage({
           <Pagination page={meta.page} totalPages={meta.totalPages} total={meta.total} />
         </CardContent>
       </Card>
-    </div>
-  )
-}
-
-function PageHeader({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="font-heading text-3xl font-extrabold text-primary">{title}</h1>
-        <p className="mt-1 text-sm text-muted">{description}</p>
-      </div>
-      {action}
     </div>
   )
 }

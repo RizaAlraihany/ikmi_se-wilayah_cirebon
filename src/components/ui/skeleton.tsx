@@ -6,7 +6,8 @@ export function Skeleton({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('rounded-xl bg-primary/10', className)}
+      aria-hidden="true"
+      className={cn('ikmi-skeleton rounded-md', className)}
       {...props}
     />
   )

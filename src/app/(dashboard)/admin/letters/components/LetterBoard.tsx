@@ -18,7 +18,6 @@ type Letter = {
   letterNumber: string
   type: LetterType
   subject: string
-  fileUrl: string
   date: Date
 }
 
@@ -140,10 +139,10 @@ export function LetterBoard({ initialLetters, currentFilter, currentSearch }: { 
                   <p className="text-sm leading-6 text-primary/80">{letter.subject}</p>
                   <div className="grid grid-cols-2 gap-2">
                     <a
-                      href={letter.fileUrl}
+                      href={`/api/private/letters/${encodeURIComponent(letter.id)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-surface transition-colors hover:bg-secondary"
+                      className="ikmi-liquid-blue inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                       aria-label={`Lihat dokumen ${letter.letterNumber}`}
                     >
                       <ExternalLink className="h-4 w-4" />
@@ -194,7 +193,7 @@ export function LetterBoard({ initialLetters, currentFilter, currentSearch }: { 
                       <td className="whitespace-nowrap px-5 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <a
-                            href={letter.fileUrl}
+                            href={`/api/private/letters/${encodeURIComponent(letter.id)}`}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex h-9 w-9 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/5"

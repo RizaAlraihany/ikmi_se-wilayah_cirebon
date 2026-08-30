@@ -3,6 +3,7 @@ import { cloudinary } from './cloudinary'
 export interface UploadOptions {
   folder?: string
   resourceType?: 'image' | 'raw' // raw for documents (PDF, etc)
+  accessType?: 'upload' | 'authenticated'
 }
 
 export const cloudinaryFolders = {
@@ -15,6 +16,8 @@ export const cloudinaryFolders = {
   media: 'media-library',
   organizations: 'organizations',
   website: 'website',
+  pamfletRequests: 'pamflet-requests',
+  writingSubmissions: 'writing-submissions',
 } as const
 
 function normalizeFolder(folder?: string) {
@@ -40,6 +43,7 @@ export const storageService = {
         {
           folder: `ikmi/${folderPath}`,
           resource_type: resourceType,
+          type: options?.accessType,
         },
         (error, result) => {
           if (error) {
@@ -70,9 +74,35 @@ export const storageService = {
     return this.uploadFile(file, { folder, resourceType: 'raw' })
   },
 
-  async deleteFile(publicId: string): Promise<void> {
+  async uploadPrivateImage(file: File, folder: string = cloudinaryFolders.pamfletRequests): Promise<{ url: string; publicId: string; secureUrl: string }> {
+    return this.uploadFile(file, { folder, resourceType: 'image', accessType: 'authenticated' })
+  },
+
+  async uploadPrivateDocument(file: File, folder: string = cloudinaryFolders.writingSubmissions): Promise<{ url: string; publicId: string; secureUrl: string }> {
+    return this.uploadFile(file, { folder, resourceType: 'raw', accessType: 'authenticated' })
+  },
+
+  getPrivateFileUrl(publicId: string, resourceType: 'image' | 'raw') {
+    return cloudinary.url(publicId, {
+      secure: true,
+      resource_type: resourceType,
+      type: 'authenticated',
+      sign_url: true,
+      expires_at: Math.floor(Date.now() / 1000) + 5 * 60,
+    })
+  },
+
+  getPrivateDocumentUrl(publicId: string) {
+    return this.getPrivateFileUrl(publicId, 'raw')
+  },
+
+  async deleteFile(
+    publicId: string,
+    resourceType: 'image' | 'raw' = 'image',
+    accessType: 'upload' | 'authenticated' = 'upload',
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
-      cloudinary.uploader.destroy(publicId, (error) => {
+      cloudinary.uploader.destroy(publicId, { resource_type: resourceType, type: accessType }, (error) => {
         if (error) {
           reject(error)
         } else {

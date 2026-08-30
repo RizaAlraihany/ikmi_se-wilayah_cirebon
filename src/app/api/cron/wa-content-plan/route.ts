@@ -1,85 +1,77 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/core/database/prisma'
-import { waService } from '@/core/notifications/wa-service'
-import { startOfMonth, endOfMonth, format } from 'date-fns'
+import { endOfMonth, format, startOfMonth } from 'date-fns'
 import { id } from 'date-fns/locale'
+import { env } from '@/core/config/env'
+import { prisma } from '@/core/database/prisma'
+import { logger } from '@/core/monitoring/logger'
+import { waService } from '@/core/notifications/wa-service'
+import {
+  claimBroadcast,
+  createContentPlanBroadcastKey,
+  recordBroadcastResult,
+} from '@/features/content-plan/broadcast-service'
 
-export const dynamic = 'force-dynamic' // Ensure it runs dynamically
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
-  try {
-    // Simple authentication check for cron jobs
-    const authHeader = request.headers.get('authorization')
-    const cronSecret = process.env.CRON_SECRET
-    
-    // In production, require CRON_SECRET if it's set
-    if (process.env.NODE_ENV === 'production' && cronSecret) {
-      if (authHeader !== `Bearer ${cronSecret}`) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-    }
+  if (request.headers.get('authorization') !== `Bearer ${env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
+  const targetNumber = env.WA_CONTENT_PLAN_TARGET
+  if (!targetNumber) {
+    logger.warn('Skipping content plan WhatsApp broadcast: recipient is not configured')
+    return NextResponse.json({ skipped: true, reason: 'recipient_not_configured' })
+  }
+
+  try {
     const now = new Date()
     const monthStart = startOfMonth(now)
     const monthEnd = endOfMonth(now)
-    
-    // 1. Fetch content plans for this month
     const plans = await prisma.contentPlan.findMany({
       where: {
-        publishDate: {
-          gte: monthStart,
-          lte: monthEnd,
-        },
+        publishDate: { gte: monthStart, lte: monthEnd },
         deletedAt: null,
       },
-      include: {
-        author: {
-          select: { name: true }
-        }
-      },
-      orderBy: {
-        publishDate: 'asc'
-      }
+      include: { author: { select: { name: true } } },
+      orderBy: { publishDate: 'asc' },
     })
 
     if (plans.length === 0) {
-      return NextResponse.json({ message: 'No content plans for this month. Skipping broadcast.' })
+      return NextResponse.json({ skipped: true, reason: 'no_content_plans' })
     }
 
-    // 3. Format Message
     const monthName = format(now, 'MMMM yyyy', { locale: id })
-    
-    let message = `*Jadwal Content Plan Komdigi*\n`
-    message += `Bulan: ${monthName}\n\n`
-    
-    plans.forEach((plan, index) => {
-      const dateStr = format(plan.publishDate, 'dd MMM (HH:mm)', { locale: id })
-      message += `${index + 1}. *${plan.title}*\n`
-      message += `   📅 ${dateStr}\n`
-      message += `   📱 ${plan.platform}\n`
-      message += `   👤 PIC: ${plan.author.name}\n\n`
-    })
-    
-    message += `_Pesan otomatis dari Sistem Terpadu IKMI Cirebon_`
+    const message = [
+      '*Jadwal Content Plan Komdigi*',
+      `Bulan: ${monthName}`,
+      '',
+      ...plans.flatMap((plan, index) => [
+        `${index + 1}. *${plan.title}*`,
+        `   📅 ${format(plan.publishDate, 'dd MMM (HH:mm)', { locale: id })}`,
+        `   📱 ${plan.platform}`,
+        `   👤 PIC: ${plan.author.name}`,
+        '',
+      ]),
+      '_Pesan otomatis dari Sistem Terpadu IKMI Cirebon_',
+    ].join('\n')
 
-    const targetNumber = '083837106539'
-    
-    const result = await waService.sendMessage({
-      to: targetNumber,
-      message: message
-    })
-
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        message: `Successfully broadcasted to ${targetNumber}.`,
-      })
-    } else {
-      return NextResponse.json({ error: 'Failed to broadcast WhatsApp.' }, { status: 500 })
+    const broadcastKey = createContentPlanBroadcastKey(format(now, 'yyyy-MM'), targetNumber)
+    const claim = await claimBroadcast(broadcastKey, targetNumber)
+    if (claim.kind !== 'claimed') {
+      return NextResponse.json({ skipped: true, reason: claim.kind })
     }
-    
+
+    const result = await waService.sendMessage({ to: targetNumber, message })
+    await recordBroadcastResult(claim.deliveryId, result, now)
+
+    if (!result.success) {
+      return NextResponse.json({ error: 'Failed to broadcast WhatsApp.' }, { status: 502 })
+    }
+
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[CRON WA Content Plan]', error)
+    logger.error(error, { job: 'cron.wa-content-plan' })
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

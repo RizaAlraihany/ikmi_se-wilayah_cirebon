@@ -29,7 +29,6 @@ export function UserForm({ roles, departments }: UserFormProps) {
   } = useForm<UserCreateInput>({
     resolver: zodResolver(userCreateSchema),
     defaultValues: {
-      roleId: '',
       departmentId: '',
     },
   })

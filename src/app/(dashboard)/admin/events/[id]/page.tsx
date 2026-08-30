@@ -17,7 +17,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     notFound()
   }
 
-  const showReportPanel = session?.user.roleId !== 'admin_sekretaris'
+  const showReportPanel = session?.user.roleId !== 'admin_organization'
 
   return (
     <div className="space-y-6">

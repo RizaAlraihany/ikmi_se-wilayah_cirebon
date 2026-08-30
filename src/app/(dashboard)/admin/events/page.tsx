@@ -19,6 +19,7 @@ export default async function AdminEventsPage() {
         startDate: event.startDate.toISOString(),
         endDate: event.endDate.toISOString(),
         status: event.status,
+        statusConfirmationState: event.statusConfirmationState,
         program: event.program
           ? {
               id: event.program.id,

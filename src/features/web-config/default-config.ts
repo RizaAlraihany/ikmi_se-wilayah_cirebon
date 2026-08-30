@@ -5,8 +5,8 @@ export const defaultWebConfig = {
     title: 'Membangun Daerah, Berkarya untuk Negeri.',
     subtitle: 'Ikatan Keluarga Mahasiswa Indramayu (IKMI) Se-Wilayah Cirebon. Wadah kolaborasi dan pengembangan diri bagi mahasiswa Indramayu untuk memberikan kontribusi nyata.',
     eyebrow: 'IKMI Se-Wilayah Cirebon',
-    primaryCtaLabel: 'Bergabung Bersama Kami',
-    primaryCtaHref: '/gabung',
+    primaryCtaLabel: 'Lihat FAQ',
+    primaryCtaHref: '/#faq',
     secondaryCtaLabel: 'Jelajahi Visi Misi',
     secondaryCtaHref: '/tentang-kami',
     pillarsLabel: 'Garis Besar Haluan IKMI',
@@ -48,7 +48,7 @@ export const defaultWebConfig = {
   },
   landing_sections: {
     aboutEyebrow: 'Tentang IKMI',
-    aboutImageUrl: IKMI_LOGO_URL,
+    aboutImageUrl: '',
     aboutImageAlt: 'Logo IKMI Cirebon',
     aboutBadgeLabel: 'Est. 2020',
     aboutLinkLabel: 'Baca Sejarah Lengkap IKMI',
@@ -62,20 +62,13 @@ export const defaultWebConfig = {
     agendaStatusLabel: 'Segera',
     agendaButtonLabel: 'Lihat Kalender Lengkap',
     agendaEmptyText: 'Belum ada agenda terdekat.',
-    galleryImages: [
-      { url: '', label: 'Dokumentasi kegiatan 1' },
-      { url: '', label: 'Dokumentasi kegiatan 2' },
-      { url: '', label: 'Dokumentasi kegiatan 3' },
-      { url: '', label: 'Dokumentasi kegiatan 4' },
-    ],
-    galleryFallbackLabel: 'Dokumentasi',
     blogEyebrow: 'Ruang Gagasan',
     blogTitle: 'Kabar & Pemikiran Terbaru',
     blogButtonLabel: 'Baca Semua Tulisan',
     blogEmptyText: 'Belum ada artikel.',
-    ctaEyebrow: 'Bergabung Sekarang',
-    ctaButtonLabel: 'Daftar Sekarang',
-    ctaButtonHref: '/gabung',
+    ctaEyebrow: 'Informasi Umum',
+    ctaButtonLabel: 'Baca FAQ',
+    ctaButtonHref: '/#faq',
   },
   landing_cta: {
     title: 'Jadilah Bagian dari Perubahan',
@@ -97,9 +90,94 @@ export const defaultWebConfig = {
       { title: 'Progresif', description: 'Terus berinovasi dan tidak anti terhadap perubahan zaman demi kemajuan.' }
     ]
   },
+  about_page_extended: {
+    fallbackCabinet: {
+      name: 'Sri Nangala Wira Perkasa',
+      period: '2026–2027',
+      tagline: 'Berani bermimpi, nyata mengabdi.',
+      vision: 'Mewujudkan organisasi mahasiswa kedaerahan yang berperan sebagai ruang pengembangan intelektual, penguatan identitas daerah, serta penggerak kesadaran kritis dan kontribusi nyata bagi kemajuan daerah.',
+      missions: [
+        'Mengembangkan kapasitas intelektual mahasiswa melalui kegiatan diskusi, kajian ilmiah, pelatihan, dan riset yang berpijak pada persoalan daerah.',
+        'Menumbuhkan kesadaran historis, sosial, dan kultural terhadap daerah sebagai bagian dari identitas dan tanggung jawab mahasiswa.',
+        'Mendorong sikap kritis, progresif, dan solutif dalam merespons isu-isu daerah, nasional, maupun global.',
+        'Menjadi wadah konsolidasi mahasiswa daerah untuk membangun jejaring intelektual, sosial, dan advokasi kebijakan yang berpihak pada kepentingan masyarakat daerah.',
+        'Mengimplementasikan nilai keilmuan dan pengabdian melalui program pengabdian masyarakat berbasis kebutuhan dan potensi daerah.',
+      ],
+    },
+    philosophyElements: [
+      {
+        word: 'Sri',
+        meaning: 'Keberkahan & Kesejahteraan',
+        desc: 'Mencerminkan harapan agar kabinet ini mampu membawa keberkahan, kejayaan, serta kesejahteraan bagi seluruh anggota dan masyarakat.',
+      },
+      {
+        word: 'Nangala',
+        meaning: 'Ketajaman Visi & Strategi Matang',
+        desc: 'Nangala secara historis merujuk pada senjata tombak atau kekuatan utama dalam peperangan. Filosofinya adalah ketajaman visi, ketegasan sikap, serta kesiapan dalam menghadapi berbagai tantangan organisasi dengan strategi yang matang.',
+      },
+      {
+        word: 'Wira',
+        meaning: 'Pahlawan & Semangat Pengabdian',
+        desc: 'Wira berarti pahlawan atau sosok pemberani. Ini menggambarkan karakter anggota kabinet yang memiliki keberanian, jiwa kepemimpinan, dan semangat pengabdian tanpa pamrih.',
+      },
+      {
+        word: 'Perkasa',
+        meaning: 'Kuat & Tidak Mudah Goyah',
+        desc: 'Perkasa bermakna kuat, tangguh, dan tidak mudah goyah. Kata ini menegaskan bahwa kabinet diharapkan memiliki ketahanan, soliditas, serta kekuatan dalam menjalankan amanah dan menghadapi dinamika organisasi.',
+      },
+    ],
+    coreValues: [
+      {
+        title: 'Kemahasiswaan',
+        desc: 'Meningkatkan kualitas intelektual mahasiswa.',
+        icon: 'BookOpen',
+      },
+      {
+        title: 'Kekeluargaan',
+        desc: 'Mempererat solidaritas dan kebersamaan.',
+        icon: 'Users',
+      },
+      {
+        title: 'Kedaerahan',
+        desc: 'Menjaga identitas dan melestarikan nilai daerah.',
+        icon: 'Compass',
+      },
+      {
+        title: 'Sosial',
+        desc: 'Berperan aktif dalam kegiatan sosial.',
+        icon: 'Shield',
+      },
+      {
+        title: 'Pengabdian',
+        desc: 'Menghadirkan kontribusi nyata bagi masyarakat.',
+        icon: 'HandHeart',
+      },
+    ],
+    timelineItems: [
+      {
+        period: 'Dari dekade 2010-an',
+        meta: 'Era rumpun paguyuban',
+        title: 'Kelahiran Pergerakan & Silaturahmi Kamar Rantau',
+        desc: 'Berawal dari forum silaturahmi informal mingguan yang dikoordinasikan antarkampus UGJ, IAIN, dan UMC untuk membantu mahasiswa baru beradaptasi di Cirebon. Forum ini menyatukan simpul kekeluargaan dan meringankan tantangan perantauan.',
+      },
+      {
+        period: 'Desember 2018',
+        meta: 'Transformasi kelembagaan',
+        title: 'Transformasi Konstitusional & AD/ART Berdaulat',
+        desc: 'Formalisasi Anggaran Dasar dan Anggaran Rumah Tangga (AD/ART) secara independen menjadi tonggak tata kelola kepengurusan se-Wilayah Cirebon yang lebih sistematis dan adaptif.',
+      },
+      {
+        period: 'Kini & masa depan',
+        meta: 'Periode aktif',
+        title: 'Akselerasi Kabinet Periode Aktif',
+        desc: 'Mengusung kepemimpinan yang berwibawa, inovatif, dan berfokus pada kontribusi nyata bagi daerah melalui penguatan organisasi, pengabdian, dan pengembangan gagasan.',
+        active: true,
+      },
+    ],
+  },
   contact_info: {
-    email: 'komdigi@ikmicirebon.or.id',
-    whatsapp: '6280000000000',
+    email: 'ikmikominfo@gmail.com',
+    whatsapp: '',
     address: 'Cirebon, Jawa Barat',
     instagram: 'https://instagram.com/ikmicirebon',
     tiktok: '',

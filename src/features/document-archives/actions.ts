@@ -1,80 +1,72 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { auth } from '@/core/auth/auth'
-import { can, type SessionUser } from '@/core/authorization/rbac'
-import { validateDocument } from '@/core/storage/file-validator'
+import { isOrganizationAdminRole, isSuperAdminRole } from '@/core/auth/roles'
+import { requirePermission } from '@/core/authorization/guards'
+import { ForbiddenError, NotFoundError, ValidationError } from '@/core/errors/custom-errors'
+import { rateLimit } from '@/core/security/rate-limiter'
+import { validateDocumentSignature } from '@/core/storage/file-validator'
 import { cloudinaryFolders, storageService } from '@/core/storage/storage-service'
 import { createDocumentArchiveSchema } from './schemas'
-import { documentArchiveService } from './services'
+import { documentArchiveService, validateDocumentArchiveRelations } from './services'
 
-function toSessionUser(user: { id?: string | null; roleId?: string | null; departmentId?: string | null; positionId?: string | null }): SessionUser | null {
-  if (!user.id || !user.roleId) return null
-
-  return {
-    id: user.id,
-    roleId: user.roleId,
-    departmentId: user.departmentId ?? null,
-    positionId: user.positionId ?? null,
-  }
+function actionErrorMessage(error: unknown) {
+  if (error instanceof ValidationError || error instanceof ForbiddenError || error instanceof NotFoundError) return error.message
+  return 'Arsip dokumen tidak dapat diproses. Silakan coba kembali.'
 }
 
-export async function createDocumentArchiveAction(data: unknown) {
-  try {
-    const session = await auth()
-    const sessionUser = session?.user ? toSessionUser(session.user) : null
-    if (!sessionUser || !(await can('letter.create', sessionUser))) {
-      return { error: 'Akses ditolak.' }
-    }
-
-    const parsed = createDocumentArchiveSchema.parse(data)
-    await documentArchiveService.createDocument(parsed, sessionUser)
-
-    revalidatePath('/admin/documents')
-    return { success: true }
-  } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan saat membuat arsip dokumen' }
+async function requireDocumentManager() {
+  const user = await requirePermission('document_archive.manage')
+  if (!isOrganizationAdminRole(user.roleId) && !isSuperAdminRole(user.roleId)) {
+    throw new ForbiddenError('Arsip dokumen hanya dapat dikelola oleh Admin Organisasi.')
   }
+  return user
 }
 
-export async function uploadDocumentArchiveAction(formData: FormData) {
+export async function createDocumentArchiveAction(formData: FormData) {
+  let uploaded: { publicId: string; secureUrl: string } | null = null
   try {
-    const session = await auth()
-    const sessionUser = session?.user ? toSessionUser(session.user) : null
-    if (!sessionUser || !(await can('letter.create', sessionUser))) {
-      return { error: 'Akses ditolak.' }
-    }
+    const user = await requireDocumentManager()
+    await rateLimit(`document-archive:create:${user.id}`, 30, 3600)
+    const parsed = createDocumentArchiveSchema.safeParse({
+      title: formData.get('title'), category: formData.get('category'), description: formData.get('description'),
+      archivedAt: formData.get('archivedAt'), organizationalUnitId: formData.get('organizationalUnitId'),
+      periodId: formData.get('periodId'), programId: formData.get('programId'), visibility: formData.get('visibility') || 'INTERNAL',
+    })
+    if (!parsed.success) return { success: false, message: 'Data arsip dokumen tidak valid.' }
+    await validateDocumentArchiveRelations(parsed.data)
 
     const file = formData.get('file')
-    if (!(file instanceof File) || file.size === 0) {
-      return { error: 'Dokumen wajib dipilih.' }
-    }
+    if (!(file instanceof File) || file.size === 0) return { success: false, message: 'Dokumen PDF atau DOCX wajib dipilih.' }
+    const validation = await validateDocumentSignature(file)
+    if (!validation.valid) return { success: false, message: validation.error ?? 'Dokumen tidak valid.' }
 
-    const validation = validateDocument(file)
-    if (!validation.valid) return { error: validation.error || 'File tidak valid.' }
-
-    const uploaded = await storageService.uploadDocument(file, cloudinaryFolders.documents)
-    return { success: true, url: uploaded.secureUrl, publicId: uploaded.publicId }
+    uploaded = await storageService.uploadPrivateDocument(file, cloudinaryFolders.documents)
+    await documentArchiveService.createDocument(parsed.data, {
+      fileUrl: uploaded.secureUrl,
+      filePublicId: uploaded.publicId,
+      fileName: file.name,
+      fileMimeType: file.type,
+      fileSize: file.size,
+    }, user)
+    revalidatePath('/admin/documents')
+    revalidatePath('/admin')
+    return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan saat upload dokumen' }
+    if (uploaded) await storageService.deleteFile(uploaded.publicId, 'raw', 'authenticated').catch(() => undefined)
+    return { success: false, message: actionErrorMessage(error) }
   }
 }
 
 export async function deleteDocumentArchiveAction(id: string) {
   try {
-    const session = await auth()
-    const sessionUser = session?.user ? toSessionUser(session.user) : null
-    if (!sessionUser || !(await can('letter.delete', sessionUser))) {
-      return { error: 'Akses ditolak.' }
-    }
-
-    await documentArchiveService.deleteDocument(id, sessionUser)
+    const user = await requireDocumentManager()
+    await rateLimit(`document-archive:archive:${user.id}`, 60, 3600)
+    await documentArchiveService.archiveDocument(id, user)
     revalidatePath('/admin/documents')
+    revalidatePath('/admin')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan saat menghapus arsip dokumen' }
+    return { success: false, message: actionErrorMessage(error) }
   }
 }

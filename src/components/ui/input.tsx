@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 export const inputControlClassName =
-  'w-full rounded-xl border border-border bg-surface text-sm text-primary shadow-sm transition placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:bg-surface-alt disabled:opacity-70'
+  'w-full rounded-md border border-border bg-surface text-base text-foreground shadow-sm transition-[border-color,box-shadow,background-color] placeholder:text-text-muted hover:border-primary/25 focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/10 disabled:cursor-not-allowed disabled:bg-surface-alt disabled:opacity-70 lg:text-sm'
 
 export function Input({
   className,
@@ -11,8 +11,8 @@ export function Input({
     <input
       className={cn(
         inputControlClassName,
-        'h-11 px-4',
-        'file:mr-4 file:h-9 file:rounded-lg file:border-0 file:bg-primary file:px-4 file:text-sm file:font-semibold file:text-surface hover:file:bg-secondary',
+        'h-12 px-4 lg:h-11',
+        'file:mr-4 file:h-9 file:rounded-md file:border-0 file:bg-accent file:px-4 file:text-sm file:font-semibold file:text-surface hover:file:bg-secondary',
         props.type === 'file' ? 'cursor-pointer py-1.5 pl-2 text-text-secondary file:cursor-pointer' : '',
         className,
       )}
@@ -30,7 +30,7 @@ export function Select({
     <select
       className={cn(
         inputControlClassName,
-        'h-11 cursor-pointer appearance-none px-4 pr-11 font-semibold hover:border-accent/60',
+        'h-12 cursor-pointer appearance-none px-4 pr-11 font-semibold hover:border-accent/60 lg:h-11',
         className,
       )}
       style={{

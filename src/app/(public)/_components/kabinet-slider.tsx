@@ -26,7 +26,7 @@ function KabinetCard({
   member: Member
 }) {
   return (
-    <div className="isolate flex h-full flex-col overflow-hidden rounded-[inherit] bg-white shadow-none [backface-visibility:hidden]">
+    <div className="isolate flex h-full flex-col overflow-hidden rounded-[inherit] bg-surface-alt shadow-none [backface-visibility:hidden]">
       {/* Foto area (avatar placeholder dengan aspect 3:4) */}
       <div className="relative w-full overflow-hidden bg-surface-alt" style={{ aspectRatio: '4/5' }}>
 
@@ -41,16 +41,10 @@ function KabinetCard({
           />
         ) : (
           <div
-            className="flex h-full w-full items-center justify-center bg-muted text-4xl font-extrabold text-surface relative overflow-hidden"
+            className="flex h-full w-full items-center justify-center bg-primary text-4xl font-extrabold text-surface"
             aria-hidden="true"
           >
-            <Image
-              src="/images/avatar-placeholder.png"
-              alt="Placeholder"
-              fill
-              className="object-cover object-center opacity-50"
-              unoptimized
-            />
+            {member.initials || 'IK'}
           </div>
         )}
       </div>
@@ -205,7 +199,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
             <button
               key={member.id}
               type="button"
-              className="overflow-hidden rounded-2xl bg-white p-0"
+              className="overflow-hidden rounded-lg bg-surface-alt p-0"
               onClick={isClickable ? () => goTo(index, { scrollCard: true }) : undefined}
               disabled={isHidden}
               style={{
@@ -239,7 +233,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
           type="button"
           onClick={() => goTo(activeIndex - 1, { scrollCard: true })}
           aria-label="Pengurus sebelumnya"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-primary shadow-sm transition hover:bg-surface-alt"
+          className="flex h-11 w-11 items-center justify-center rounded-md border border-border bg-surface-alt text-primary shadow-sm transition hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -258,7 +252,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
           type="button"
           onClick={() => goTo(activeIndex + 1, { scrollCard: true })}
           aria-label="Pengurus berikutnya"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-primary shadow-sm transition hover:bg-surface-alt"
+          className="flex h-11 w-11 items-center justify-center rounded-md border border-border bg-surface-alt text-primary shadow-sm transition hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -280,7 +274,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
             <div
               key={member.id}
               ref={(el) => { cardRefs.current[index] = el }}
-              className="w-[64vw] max-w-[218px] flex-shrink-0 snap-center overflow-hidden rounded-2xl bg-white shadow-card sm:max-w-[240px]"
+              className="w-[64vw] max-w-[218px] flex-shrink-0 snap-center overflow-hidden rounded-lg bg-surface-alt shadow-sm sm:max-w-[240px]"
             >
               <KabinetCard member={member} />
             </div>
@@ -294,7 +288,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
             onClick={() => goTo(activeIndex - 1, { scrollCard: true })}
             disabled={activeIndex === 0}
             aria-label="Pengurus sebelumnya"
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-border bg-white text-text-primary shadow-sm transition-all duration-150 hover:bg-surface-alt disabled:opacity-40"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md border border-border bg-surface-alt text-text-primary shadow-sm transition-all duration-150 hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -316,7 +310,7 @@ export function KabinetSlider({ kabinet }: KabinetSliderProps) {
             onClick={() => goTo(activeIndex + 1, { scrollCard: true })}
             disabled={activeIndex >= kabinet.length - 1}
             aria-label="Pengurus berikutnya"
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-border bg-white text-text-primary shadow-sm transition-all duration-150 hover:bg-surface-alt disabled:opacity-40"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md border border-border bg-surface-alt text-text-primary shadow-sm transition-all duration-150 hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

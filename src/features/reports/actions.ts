@@ -1,46 +1,54 @@
 'use server'
 
-import { auth } from '@/core/auth/auth'
+import { requirePermission } from '@/core/authorization/guards'
+import { LPJ_SUBMIT_PERMISSION, LPJ_VERIFY_BPH_PERMISSION } from '@/core/authorization/permission-ids'
+import { prisma } from '@/core/database/prisma'
 import { reportService } from './services'
-import { ReportSubmitInput } from './schemas'
 import { revalidatePath } from 'next/cache'
-import { validateDocument } from '@/core/storage/file-validator'
+import { rateLimit } from '@/core/security/rate-limiter'
+import { validateDocumentSignature } from '@/core/storage/file-validator'
 import { cloudinaryFolders, storageService } from '@/core/storage/storage-service'
+import { safeActionError } from '@/core/errors/safe-action-error'
 
-export async function submitReportAction(data: ReportSubmitInput) {
+function formString(formData: FormData, key: string) {
+  const value = formData.get(key)
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+export async function submitReportAction(formData: FormData) {
+  let uploaded: { publicId: string; secureUrl: string } | null = null
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
+    const actor = await requirePermission(LPJ_SUBMIT_PERMISSION)
+    await rateLimit(`report:upload:${actor.id}`, 30, 3600)
 
-    await reportService.submitReport(data, session.user.id)
+    const eventId = formString(formData, 'eventId')
+    const file = formData.get('documentFile')
+    if (!eventId || eventId.length > 150 || !(file instanceof File) || file.size === 0) {
+      return { error: 'Event dan dokumen LPJ wajib diisi.' }
+    }
+
+    const validation = await validateDocumentSignature(file)
+    if (!validation.valid) return { error: validation.error || 'Dokumen LPJ tidak valid.' }
+
+    const event = await prisma.event.findFirst({
+      where: { id: eventId, deletedAt: null },
+      select: { id: true, title: true },
+    })
+    if (!event) return { error: 'Event tidak ditemukan.' }
+
+    uploaded = await storageService.uploadPrivateDocument(file, cloudinaryFolders.reports)
+    await reportService.submitReport({
+      title: `LPJ: ${event.title}`,
+      eventId: event.id,
+      documentUrl: uploaded.secureUrl,
+      documentPublicId: uploaded.publicId,
+    }, actor.id)
     revalidatePath('/admin/reports')
     revalidatePath('/dashboard/reports')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') return { error: 'Data tidak valid' }
-    if (error instanceof Error) return { error: error.message || 'Terjadi kesalahan' }
-    return { error: 'Terjadi kesalahan' }
-  }
-}
-
-export async function uploadReportDocumentAction(formData: FormData) {
-  try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-
-    const file = formData.get('file')
-    if (!(file instanceof File) || file.size === 0) {
-      return { error: 'Dokumen LPJ wajib dipilih.' }
-    }
-
-    const validation = validateDocument(file)
-    if (!validation.valid) return { error: validation.error || 'File tidak valid.' }
-
-    const uploaded = await storageService.uploadDocument(file, cloudinaryFolders.reports)
-    return { success: true, url: uploaded.secureUrl, publicId: uploaded.publicId }
-  } catch (error) {
-    if (error instanceof Error) return { error: error.message || 'Terjadi kesalahan' }
-    return { error: 'Terjadi kesalahan' }
+    if (uploaded) await storageService.deleteFile(uploaded.publicId, 'raw', 'authenticated').catch(() => undefined)
+    return { error: safeActionError(error, 'LPJ belum dapat dikirim.', 'report.submit') }
   }
 }
 
@@ -49,28 +57,22 @@ export async function uploadReportDocumentAction(formData: FormData) {
  */
 export async function verifyReportAction(id: string, notes?: string) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-
-    await reportService.verifyReport(id, session.user.id, notes)
+    const actor = await requirePermission(LPJ_VERIFY_BPH_PERMISSION)
+    await reportService.verifyReport(id, actor.id, notes)
     revalidatePath('/admin/reports')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'LPJ belum dapat diverifikasi.', 'report.verify') }
   }
 }
 
 export async function rejectReportAction(id: string, notes?: string) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-
-    await reportService.rejectReport(id, session.user.id, notes)
+    const actor = await requirePermission(LPJ_VERIFY_BPH_PERMISSION)
+    await reportService.rejectReport(id, actor.id, notes)
     revalidatePath('/admin/reports')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'LPJ belum dapat ditolak.', 'report.reject') }
   }
 }

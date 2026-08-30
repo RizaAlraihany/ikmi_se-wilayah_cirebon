@@ -3,6 +3,8 @@ import { prisma } from '@/core/database/prisma'
 import { logger } from '@/core/monitoring/logger'
 import { noopPushProvider } from '@/core/notifications'
 import { notificationService } from '@/features/notifications/services'
+import { LPJ_VERIFY_BPH_PERMISSION } from '@/core/authorization/permission-ids'
+import { serializeAuditData } from '@/features/audit/audit-data'
 import { eventBus } from './event-bus'
 import { EventName } from './event-types'
 
@@ -54,16 +56,13 @@ async function systemManagers() {
 }
 
 async function auditAutomation(event: EventName, entityId: string, payload: unknown) {
-  const systemUserId = (await systemManagers())[0]
-  if (!systemUserId) return
-
   await prisma.auditLog.create({
     data: {
       action: AuditAction.CREATE,
       entity: 'WorkflowAutomation',
       entityId,
-      userId: systemUserId,
-      newData: JSON.stringify({ event, payload }),
+      userId: null,
+      newData: serializeAuditData({ event, payload }),
     },
   })
 }
@@ -117,26 +116,16 @@ export function registerEventHandlers() {
 
   eventBus.on('audit.log', async (payload) => {
     try {
-      let finalUserId = payload.userId
-      if (!finalUserId) {
-        finalUserId = (await systemManagers())[0]
-      }
-
-      if (!finalUserId) {
-        logger.warn('No system user found for audit log fallback. Skipping log.')
-        return
-      }
-
-      const action = payload.action === 'UPDATE_STATUS' ? AuditAction.UPDATE : payload.action
+      const action = payload.action === 'UPDATE_STATUS' ? AuditAction.STATUS_CHANGE : payload.action
 
       await prisma.auditLog.create({
         data: {
           action: action as AuditAction,
           entity: payload.entity,
           entityId: payload.entityId,
-          oldData: payload.oldData,
-          newData: payload.newData,
-          userId: finalUserId,
+          oldData: payload.oldData ? serializeAuditData(payload.oldData) : null,
+          newData: payload.newData ? serializeAuditData(payload.newData) : null,
+          userId: payload.userId ?? null,
         },
       })
     } catch (error) {
@@ -191,7 +180,7 @@ export function registerEventHandlers() {
       type: NotificationType.POST,
       title: 'Artikel dipublikasikan',
       message: 'Artikel telah dipublikasikan ke website publik.',
-      actionUrl: `/blog`,
+      actionUrl: `/publikasi`,
       event: 'post.published',
       entityId: payload.postId,
     })
@@ -373,7 +362,7 @@ export function registerEventHandlers() {
 
   eventBus.on('lpj.verified', async (payload) => {
     await notifyUsers({
-      userIds: uniqueIds([...(await usersByPermission('lpj.view')), ...(await usersByPermission('lpj.verify'))]),
+      userIds: uniqueIds([...(await usersByPermission('lpj.view')), ...(await usersByPermission(LPJ_VERIFY_BPH_PERMISSION))]),
       type: NotificationType.LPJ,
       title: 'LPJ terverifikasi',
       message: `LPJ telah diverifikasi.`,

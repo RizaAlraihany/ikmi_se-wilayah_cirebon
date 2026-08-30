@@ -102,14 +102,14 @@ export function PengurusEditor({
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="departmentId" className="text-sm font-semibold text-primary">Departemen</label>
+              <label htmlFor="departmentId" className="text-sm font-semibold text-primary">Unit Organisasi</label>
               <ListboxSelect
                 id="departmentId"
                 name="departmentId"
                 defaultValue={pengurus.departmentId ?? ''}
                 disabled={isSubmitting || isDeleting}
                 options={[
-                  { value: '', label: 'BPH / Tanpa Departemen' },
+                  { value: '', label: 'BPH / Tanpa Unit Organisasi' },
                   ...departments.map((department) => ({ value: department.id, label: department.name })),
                 ]}
               />

@@ -1,70 +1,58 @@
 'use server'
 
-import { auth } from '@/core/auth/auth'
+import { requireAuth } from '@/core/authorization/guards'
 import { notificationService } from './services'
 import { revalidatePath } from 'next/cache'
+import { safeActionError } from '@/core/errors/safe-action-error'
 import { notificationPreferenceSchema } from './schemas'
 
 export async function markNotificationReadAction(id: string) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-
-    await notificationService.markSingleRead(id, session.user.id)
+    const actor = await requireAuth()
+    await notificationService.markSingleRead(id, actor.id)
     revalidatePath('/dashboard')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'Notifikasi belum dapat ditandai.', 'notification.read') }
   }
 }
 
 export async function markAllNotificationsReadAction() {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-
-    await notificationService.markAllRead(session.user.id)
+    const actor = await requireAuth()
+    await notificationService.markAllRead(actor.id)
     revalidatePath('/dashboard')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'Notifikasi belum dapat diperbarui.', 'notification.unread') }
   }
 }
 
 export async function markNotificationUnreadAction(id: string) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-
-    await notificationService.markSingleUnread(id, session.user.id)
+    const actor = await requireAuth()
+    await notificationService.markSingleUnread(id, actor.id)
     revalidatePath('/dashboard')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'Notifikasi belum dapat diperbarui.', 'notification.read_all') }
   }
 }
 
 export async function deleteNotificationAction(id: string) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-
-    await notificationService.deleteNotification(id, session.user.id)
+    const actor = await requireAuth()
+    await notificationService.deleteNotification(id, actor.id)
     revalidatePath('/dashboard')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'Notifikasi belum dapat dihapus.', 'notification.delete') }
   }
 }
 
 export async function updateNotificationPreferencesAction(formData: FormData) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
+    const actor = await requireAuth()
 
     const parsed = notificationPreferenceSchema.parse({
       system: formData.get('system') === 'on',
@@ -76,11 +64,10 @@ export async function updateNotificationPreferencesAction(formData: FormData) {
       letters: formData.get('letters') === 'on',
     })
 
-    await notificationService.updatePreferences(session.user.id, parsed)
+    await notificationService.updatePreferences(actor.id, parsed)
     revalidatePath('/dashboard/admin/notifications')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'Notifikasi belum dapat dibuat.', 'notification.create') }
   }
 }

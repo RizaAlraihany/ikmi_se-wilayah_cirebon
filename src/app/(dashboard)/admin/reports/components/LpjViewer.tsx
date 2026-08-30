@@ -5,8 +5,9 @@ import { ExternalLink, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
-export function LpjViewer({ url, title }: { url: string; title: string }) {
+export function LpjViewer({ reportId, title }: { reportId: string; title: string }) {
   const [isOpen, setIsOpen] = useState(false)
+  const url = `/api/private/reports/${encodeURIComponent(reportId)}`
 
   if (!isOpen) {
     return (

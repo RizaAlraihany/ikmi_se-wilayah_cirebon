@@ -9,20 +9,38 @@ export const reportQueries = {
       },
       skip,
       take,
-      include: {
-        event: { include: { program: true } },
-        lpjToken: true,
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        submittedBy: true,
+        verifiedBy: true,
+        verifiedAt: true,
+        verifyNotes: true,
+        createdAt: true,
+        updatedAt: true,
+        event: { select: { id: true, title: true, startDate: true, location: true, program: { select: { id: true, name: true } } } },
+        lpjToken: { select: { id: true, activityName: true, status: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
   },
 
   async getReportById(id: string) {
-    return prisma.report.findUnique({
-      where: { id },
-      include: {
-        event: { include: { program: true } },
-        lpjToken: true,
+    return prisma.report.findFirst({
+      where: { id, deletedAt: null },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        submittedBy: true,
+        verifiedBy: true,
+        verifiedAt: true,
+        verifyNotes: true,
+        createdAt: true,
+        updatedAt: true,
+        event: { select: { id: true, title: true, startDate: true, location: true, program: { select: { id: true, name: true } } } },
+        lpjToken: { select: { id: true, activityName: true, status: true } },
       },
     })
   },

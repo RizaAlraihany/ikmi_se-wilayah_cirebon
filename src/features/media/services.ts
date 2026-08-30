@@ -1,5 +1,5 @@
 import { storageService } from '@/core/storage/storage-service'
-import { validateImage } from '@/core/storage/file-validator'
+import { validateImageSignature } from '@/core/storage/file-validator'
 import { prisma } from '@/core/database/prisma'
 import { ValidationError, NotFoundError } from '@/core/errors/custom-errors'
 import { mediaQueries } from './queries'
@@ -9,7 +9,7 @@ export const mediaService = {
   async uploadMedia(file: File, userId: string) {
     await requireCmsUpdate(userId)
 
-    const validation = validateImage(file)
+    const validation = await validateImageSignature(file)
     if (!validation.valid) {
       throw new ValidationError(validation.error || 'File tidak valid.')
     }

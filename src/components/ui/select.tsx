@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { inputControlClassName } from './input'
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
   value?: string
@@ -17,7 +18,8 @@ export function Select({ value, onValueChange, children, className, onChange, st
         onValueChange?.(event.target.value)
       }}
       className={cn(
-        'h-11 w-full cursor-pointer appearance-none rounded-xl border border-border bg-surface px-4 pr-11 text-sm font-semibold text-primary shadow-sm transition hover:border-accent/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:bg-surface-alt disabled:opacity-70',
+        inputControlClassName,
+        'h-12 cursor-pointer appearance-none px-4 pr-11 font-semibold hover:border-accent/60 lg:h-11',
         className,
       )}
       style={{

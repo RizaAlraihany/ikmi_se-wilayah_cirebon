@@ -120,7 +120,7 @@ class FonnteProvider implements WAProvider {
 class NoopWAProvider implements WAProvider {
   async sendMessage(msg: WAMessage): Promise<WAResult> {
     if (process.env.WA_DEBUG === 'true') {
-      console.log(`[WA Noop] Send to ${msg.to}: ${msg.message.slice(0, 80)}...`)
+      console.log(`[WA Noop] Send to recipient ending ${msg.to.slice(-4)} (${msg.message.length} chars)`)
     }
     return { success: true, provider: 'noop' }
   }

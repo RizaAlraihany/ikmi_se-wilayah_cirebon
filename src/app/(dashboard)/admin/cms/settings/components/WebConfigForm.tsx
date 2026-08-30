@@ -61,20 +61,6 @@ function textToSlides(value: string) {
   })
 }
 
-function imageItemsToText(items: { url: string; label: string }[]) {
-  return items.map((item) => `${item.url}|${item.label}`).join('\n')
-}
-
-function textToImageItems(value: string) {
-  return lines(value).map((line, index) => {
-    const [url, label] = line.split('|')
-    return {
-      url: url?.trim() || '',
-      label: label?.trim() || `Gambar ${index + 1}`,
-    }
-  })
-}
-
 function pillarsToText(items: { title: string; description: string }[]) {
   return items.map((item) => `${item.title}|${item.description}`).join('\n')
 }
@@ -273,7 +259,7 @@ export function WebConfigForm({ configs }: { configs: ConfigValues }) {
               </Field>
             </ConfigPanel>
 
-            <ConfigPanel title="Section Agenda & Dokumentasi" onSave={() => saveConfig('landing_sections', landingSections)} loading={loadingKey === 'landing_sections'}>
+            <ConfigPanel title="Section Agenda" onSave={() => saveConfig('landing_sections', landingSections)} loading={loadingKey === 'landing_sections'}>
               <Field label="Eyebrow" htmlFor="agenda-eyebrow">
                 <Input id="agenda-eyebrow" value={landingSections.agendaEyebrow} onChange={(event) => setLandingSections({ ...landingSections, agendaEyebrow: event.target.value })} />
               </Field>
@@ -293,18 +279,6 @@ export function WebConfigForm({ configs }: { configs: ConfigValues }) {
               </div>
               <Field label="Empty Text" htmlFor="agenda-empty">
                 <Input id="agenda-empty" value={landingSections.agendaEmptyText} onChange={(event) => setLandingSections({ ...landingSections, agendaEmptyText: event.target.value })} />
-              </Field>
-              <ImageListField
-                label="Gambar Dokumentasi"
-                htmlFor="gallery-images"
-                value={imageItemsToText(landingSections.galleryImages)}
-                help="Format: URL|Alt text, satu gambar per baris."
-                onChange={(value) => setLandingSections({ ...landingSections, galleryImages: textToImageItems(value) })}
-                onUpload={(url) => setLandingSections({ ...landingSections, galleryImages: [...landingSections.galleryImages, { url, label: `Dokumentasi kegiatan ${landingSections.galleryImages.length + 1}` }] })}
-                uploadImage={uploadImage}
-              />
-              <Field label="Label Placeholder Galeri" htmlFor="gallery-fallback">
-                <Input id="gallery-fallback" value={landingSections.galleryFallbackLabel} onChange={(event) => setLandingSections({ ...landingSections, galleryFallbackLabel: event.target.value })} />
               </Field>
             </ConfigPanel>
 

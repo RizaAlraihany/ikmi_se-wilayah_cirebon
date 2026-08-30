@@ -89,7 +89,7 @@ export default async function AdminNotificationsPage({ searchParams }: PageProps
           <Link
             key={tab.value}
             href={`/admin/notifications?status=${tab.value}&module=${selectedModule}`}
-            className={`rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-line ${status === tab.value ? 'bg-primary text-surface' : 'bg-surface text-primary'}`}
+            className={`rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-line ${status === tab.value ? 'ikmi-liquid-blue' : 'bg-surface text-primary'}`}
           >
             {tab.label}
             {tab.value === 'unread' && unreadCount > 0 ? (
@@ -106,7 +106,7 @@ export default async function AdminNotificationsPage({ searchParams }: PageProps
           <Link
             key={filter.value}
             href={`/admin/notifications?status=${status}&module=${filter.value}`}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-line ${selectedModule === filter.value ? 'bg-accent text-surface' : 'bg-surface text-primary'}`}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-line ${selectedModule === filter.value ? 'ikmi-liquid-blue' : 'bg-surface text-primary'}`}
           >
             {filter.label}
           </Link>

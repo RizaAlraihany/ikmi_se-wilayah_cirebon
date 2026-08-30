@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import type { EventStatus } from '@prisma/client'
+import type { EventStatus, EventStatusConfirmationState } from '@prisma/client'
 import {
   CalendarDays,
   CheckCircle2,
@@ -31,6 +31,7 @@ type CalendarEvent = {
   startDate: string
   endDate: string
   status: EventStatus
+  statusConfirmationState: EventStatusConfirmationState
   program: {
     id: string
     name: string
@@ -238,6 +239,7 @@ export function EventsManager({
             startDate: startDate.toISOString(),
             endDate: endDate.toISOString(),
             status: 'UPCOMING',
+            statusConfirmationState: 'NOT_REQUIRED',
             program: program ? { id: program.id, name: program.name } : null,
           },
         ])
@@ -359,6 +361,11 @@ export function EventsManager({
                           <h3 className="line-clamp-2 font-heading text-lg font-extrabold leading-tight text-primary">
                             {event.title}
                           </h3>
+                          {event.statusConfirmationState === 'NEEDS_STATUS_CONFIRMATION' ? (
+                            <p className="mt-2 text-xs font-semibold text-danger-foreground">
+                              Tanggal rencana telah lewat. Konfirmasi status pelaksanaan secara manual.
+                            </p>
+                          ) : null}
                         </div>
                         <Badge tone={status.tone} className="shrink-0">
                           {status.label}

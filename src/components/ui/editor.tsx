@@ -95,7 +95,7 @@ export function Editor({ id, value, onChange }: EditorProps) {
             aria-label={control.label}
             className={cn(
               'rounded-xl p-2 text-primary transition hover:bg-primary/5 disabled:opacity-50',
-              control.active && 'bg-accent text-surface hover:bg-accent',
+              control.active && 'ikmi-liquid-blue',
               (index === 2 || index === 6) && 'ml-2',
             )}
           >

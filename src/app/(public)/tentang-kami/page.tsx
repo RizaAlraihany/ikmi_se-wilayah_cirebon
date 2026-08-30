@@ -1,352 +1,975 @@
-import type { LucideIcon } from 'lucide-react'
+import type { ReactNode } from "react";
 import {
-  ArrowUpRight,
-  BookOpen,
-  Compass,
+  ArrowDown,
+  ArrowRight,
+  ImageIcon,
   Quote,
-  Shield,
-  Users,
-} from 'lucide-react'
-import { ButtonLink } from '@/components/ui/button'
-import { defaultWebConfig } from '@/features/web-config/default-config'
-import { webConfigQueries } from '@/features/web-config/queries'
+  Target,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+
+import { siteUrl } from "@/core/seo/site";
+import { getActivePublicStructure } from "@/features/public/public-structure";
+import { webConfigQueries } from "@/features/web-config/queries";
+import { PublicBreadcrumb } from "../_components/public-breadcrumb";
+
+/* =========================================================
+   ABOUT — CONTENT FALLBACK
+   Data aktif dari database / web-config tetap mendapat prioritas.
+   Copy di bawah adalah fallback resmi ketika data dinamis belum tersedia.
+   ========================================================= */
+
+const DEFAULT_CABINET = {
+  name: "Kabinet IKMI",
+  period: "2026–2027",
+  tagline: "Memayu Ing Jagat",
+  vision:
+    "Mewujudkan organisasi mahasiswa kedaerahan yang berperan sebagai ruang pengembangan intelektual, penguatan identitas daerah, serta penggerak kesadaran kritis dan kontribusi nyata bagi kemajuan daerah.",
+  missions: [
+    "Mengembangkan kapasitas intelektual mahasiswa melalui kegiatan diskusi, kajian ilmiah, pelatihan, dan riset yang berpijak pada persoalan daerah.",
+    "Menumbuhkan kesadaran historis, sosial, dan kultural terhadap daerah sebagai bagian dari identitas dan tanggung jawab mahasiswa.",
+    "Mendorong sikap kritis, progresif, dan solutif dalam merespons isu-isu daerah, nasional, maupun global.",
+    "Menjadi wadah konsolidasi mahasiswa daerah untuk membangun jejaring intelektual, sosial, dan advokasi kebijakan yang berpihak pada kepentingan masyarakat daerah.",
+    "Mengimplementasikan nilai keilmuan dan pengabdian melalui program pengabdian masyarakat berbasis kebutuhan dan potensi daerah.",
+  ],
+} as const;
+
+const MISSION_META = [
+  {
+    title: "Mengembangkan Intelektualitas",
+    short:
+      "Diskusi, kajian ilmiah, pelatihan, dan riset yang berpijak pada persoalan daerah.",
+  },
+  {
+    title: "Menguatkan Identitas Daerah",
+    short:
+      "Menumbuhkan kesadaran historis, sosial, dan kultural sebagai tanggung jawab mahasiswa.",
+  },
+  {
+    title: "Menumbuhkan Nalar Kritis",
+    short:
+      "Mendorong sikap kritis, progresif, dan solutif terhadap isu daerah hingga global.",
+  },
+  {
+    title: "Memperluas Jejaring",
+    short:
+      "Membangun jejaring intelektual, sosial, dan advokasi yang berpihak pada masyarakat.",
+  },
+  {
+    title: "Menghadirkan Pengabdian",
+    short:
+      "Menerapkan ilmu dan nilai pengabdian melalui program berbasis kebutuhan daerah.",
+  },
+] as const;
+
+/**
+ * Milestone sejarah sengaja tidak mengarang tahun lain.
+ * Fakta eksplisit yang diberikan: IKMI berdiri 1 Desember 1999.
+ * Milestone berikutnya menggambarkan prinsip perkembangan organisasi.
+ */
+const HISTORY_STEPS = [
+  {
+    meta: "1 Desember 1999",
+    title: "IKMI Berdiri",
+  },
+  {
+    meta: "Persatuan",
+    title: "Ruang Bersama",
+  },
+  {
+    meta: "Dialektika",
+    title: "Keilmuan & Kedaerahan",
+  },
+  {
+    meta: "Regenerasi",
+    title: "Lintas Generasi",
+  },
+  {
+    meta: "Kini",
+    title: "Melanjutkan Perjalanan",
+  },
+] as const;
 
 export const metadata = {
-  title: 'Tentang Kami - IKMI Cirebon',
-  description: 'Sejarah, Visi, Misi, dan Nilai Organisasi IKMI Cirebon.',
+  title: "Tentang IKMI Cirebon",
+  description:
+    "Profil, sejarah, kabinet, visi dan misi, serta pengurus IKMI Se-Wilayah Cirebon.",
+  alternates: {
+    canonical: `${siteUrl}/tentang-kami`,
+  },
+  openGraph: {
+    title: "Tentang IKMI Cirebon",
+    description:
+      "Profil, sejarah, kabinet, visi dan misi, serta pengurus IKMI Se-Wilayah Cirebon.",
+    url: `${siteUrl}/tentang-kami`,
+    type: "website",
+  },
+};
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+type UnknownRecord = Record<string, unknown>;
+
+type CabinetFallback = {
+  name?: string;
+  period?: string;
+  tagline?: string;
+  vision?: string;
+  missions?: readonly string[];
+  logoUrl?: string;
+};
+
+type OfficerMember = {
+  id: string;
+  name: string;
+  positionName: string;
+  photoUrl: string | null;
+};
+
+type OfficerGroup = {
+  id: string;
+  name: string;
+  members: OfficerMember[];
+};
+
+const MAIN_UNIT_PREVIEW_POSITION_PATTERN =
+  /ketua umum|wakil ketua|sekretaris umum|bendahara umum/i;
+const DEPARTMENT_PREVIEW_POSITION_PATTERN =
+  /ketua departemen|kepala departemen|sekretaris departemen/i;
+
+type MediaFrameProps = {
+  src?: string | null;
+  alt: string;
+  fallbackLabel: string;
+  priority?: boolean;
+  variant?: "hero" | "landscape" | "archive";
+  className?: string;
+};
+
+function asRecord(value: unknown): UnknownRecord | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as UnknownRecord;
 }
 
-export const dynamic = 'force-dynamic'
+function readString(
+  record: UnknownRecord | null,
+  keys: string[],
+): string | null {
+  if (!record) return null;
 
-async function getConfig<T>(key: keyof typeof defaultWebConfig, fallback: T): Promise<T> {
-  const config = await webConfigQueries.getWebConfigByKey(key)
-  if (!config) return fallback
-  try {
-    return { ...fallback, ...JSON.parse(config.valueJson) }
-  } catch {
-    return fallback
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
   }
+
+  return null;
 }
 
-type MisiPoint = {
-  num: string
-  title: string
-  description: string
+function readStringArray(
+  record: UnknownRecord | null,
+  keys: string[],
+): string[] | null {
+  if (!record) return null;
+
+  for (const key of keys) {
+    const value = record[key];
+    if (!Array.isArray(value)) continue;
+
+    const result = value
+      .map((item) => {
+        if (typeof item === "string") return item.trim();
+
+        return readString(asRecord(item), [
+          "description",
+          "text",
+          "content",
+          "value",
+        ]);
+      })
+      .filter((item): item is string => Boolean(item));
+
+    if (result.length > 0) return result;
+  }
+
+  return null;
 }
 
-type PhilosophyElement = {
-  word: string
-  meaning: string
-  desc: string
+function readMediaUrl(
+  record: UnknownRecord | null,
+  keys: string[],
+): string | null {
+  if (!record) return null;
+
+  for (const key of keys) {
+    const value = record[key];
+
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+
+    const nested = asRecord(value);
+    const nestedUrl = readString(nested, ["url", "src", "imageUrl", "fileUrl"]);
+
+    if (nestedUrl) return nestedUrl;
+  }
+
+  return null;
 }
 
-type CoreValue = {
-  title: string
-  desc: string
-  Icon: LucideIcon
+function readMediaArray(
+  record: UnknownRecord | null,
+  keys: string[],
+): string[] | null {
+  if (!record) return null;
+
+  for (const key of keys) {
+    const value = record[key];
+    if (!Array.isArray(value)) continue;
+
+    const urls = value
+      .map((item) => {
+        if (typeof item === "string" && item.trim()) return item.trim();
+
+        const nested = asRecord(item);
+        return readString(nested, ["url", "src", "imageUrl", "fileUrl"]);
+      })
+      .filter((item): item is string => Boolean(item));
+
+    if (urls.length > 0) return urls;
+  }
+
+  return null;
 }
 
-type TimelineItem = {
-  period: string
-  meta: string
-  title: string
-  desc: string
-  active?: boolean
+function normalizeCabinet(
+  period: unknown,
+  configFallback: CabinetFallback | null,
+) {
+  const periodRecord = asRecord(period);
+  const cabinetRecord = asRecord(periodRecord?.cabinet);
+  const fallbackRecord = asRecord(configFallback);
+
+  return {
+    periodLabel:
+      readString(periodRecord, ["name", "label", "periodName", "periode"]) ??
+      readString(fallbackRecord, ["period", "periodLabel"]) ??
+      DEFAULT_CABINET.period,
+
+    cabinetName:
+      readString(cabinetRecord, ["name", "title"]) ??
+      readString(periodRecord, ["cabinetName", "kabinetName", "nameKabinet"]) ??
+      readString(fallbackRecord, ["name", "title"]) ??
+      DEFAULT_CABINET.name,
+
+    tagline:
+      readString(cabinetRecord, ["tagline"]) ??
+      readString(periodRecord, ["tagline", "cabinetTagline"]) ??
+      readString(fallbackRecord, ["tagline"]) ??
+      DEFAULT_CABINET.tagline,
+
+    logoUrl:
+      readMediaUrl(cabinetRecord, ["logoUrl", "logo", "imageUrl"]) ??
+      readMediaUrl(periodRecord, [
+        "cabinetLogoUrl",
+        "kabinetLogoUrl",
+        "logoKabinet",
+      ]) ??
+      readMediaUrl(fallbackRecord, ["logoUrl", "logo"]) ??
+      null,
+
+    vision:
+      readString(cabinetRecord, ["vision", "visi"]) ??
+      readString(periodRecord, ["vision", "visi", "cabinetVision"]) ??
+      readString(fallbackRecord, ["vision", "visi"]) ??
+      DEFAULT_CABINET.vision,
+
+    missions: readStringArray(cabinetRecord, ["missions", "misi"]) ??
+      readStringArray(periodRecord, ["missions", "misi", "cabinetMissions"]) ??
+      readStringArray(fallbackRecord, ["missions", "misi"]) ?? [
+        ...DEFAULT_CABINET.missions,
+      ],
+  };
 }
 
-const misiPoints: MisiPoint[] = [
-  {
-    num: '01',
-    title: 'Mengembangkan Kapasitas Intelektual',
-    description:
-      'Mengembangkan kapasitas intelektual mahasiswa melalui kegiatan diskusi, kajian ilmiah, pelatihan, dan riset yang berpijak pada persoalan daerah.',
-  },
-  {
-    num: '02',
-    title: 'Menumbuhkan Kesadaran Identitas',
-    description:
-      'Menumbuhkan kesadaran historis, sosial, dan kultural terhadap daerah sebagai bagian dari identitas dan tanggung jawab mahasiswa.',
-  },
-  {
-    num: '03',
-    title: 'Mendorong Sikap Kritis & Solutif',
-    description:
-      'Mendorong sikap kritis, progresif, dan solutif dalam merespons isu-isu daerah, nasional, maupun global.',
-  },
-  {
-    num: '04',
-    title: 'Wadah Konsolidasi Jejaring',
-    description:
-      'Menjadi wadah konsolidasi mahasiswa daerah untuk membangun jejaring intelektual, sosial, dan advokasi kebijakan yang berpihak pada kepentingan masyarakat daerah.',
-  },
-  {
-    num: '05',
-    title: 'Implementasi Nilai Pengabdian',
-    description:
-      'Mengimplementasikan nilai keilmuan dan pengabdian melalui program pengabdian masyarakat berbasis kebutuhan dan potensi daerah.',
-  },
-]
+function getDepartmentPriority(name: string) {
+  const key = name.toLowerCase();
 
-const philosophyElements: PhilosophyElement[] = [
-  {
-    word: 'Sri',
-    meaning: 'Keberkahan & Kesejahteraan',
-    desc: 'Mencerminkan harapan agar kabinet ini mampu membawa keberkahan, kejayaan, serta kesejahteraan bagi seluruh anggota dan masyarakat.',
-  },
-  {
-    word: 'Nanggala',
-    meaning: 'Ketajaman Visi & Strategi Matang',
-    desc: 'Nanggala secara historis merujuk pada senjata tombak atau kekuatan utama dalam peperangan. Filosofinya adalah ketajaman visi, ketegasan sikap, serta kesiapan dalam menghadapi berbagai tantangan organisasi dengan strategi yang matang.',
-  },
-  {
-    word: 'Wira',
-    meaning: 'Pahlawan & Semangat Pengabdian',
-    desc: 'Wira berarti pahlawan atau sosok pemberani. Ini menggambarkan karakter anggota kabinet yang memiliki keberanisan, jiwa kepemimpinan, dan semangat pengabdian tanpa pamrih.',
-  },
-  {
-    word: 'Perkasa',
-    meaning: 'Kuat & Tidak Mudah Goyah',
-    desc: 'Perkasa bermakna kuat, tangguh, dan tidak mudah goyah. Kata ini menegaskan bahwa kabinet diharapkan memiliki ketahanan, soliditas, serta kekuatan dalam menjalankan amanah dan menghadapi dinamika organisasi.',
-  },
-]
+  if (
+    key.includes("badan pengurus harian") ||
+    key === "bph" ||
+    key.includes("pengurus harian")
+  ) {
+    return 0;
+  }
 
-const coreValues: CoreValue[] = [
-  {
-    title: 'Kemahasiswaan',
-    desc: 'Meningkatkan kualitas intelektual mahasiswa.',
-    Icon: BookOpen,
-  },
-  {
-    title: 'Kekeluargaan',
-    desc: 'Mempererat solidaritas dan kebersamaan.',
-    Icon: Users,
-  },
-  {
-    title: 'Kedaerahan',
-    desc: 'Menjaga identitas dan melestarikan nilai daerah.',
-    Icon: Compass,
-  },
-  {
-    title: 'Sosial',
-    desc: 'Berperan aktif dalam kegiatan sosial dan pengabdian masyarakat.',
-    Icon: Shield,
-  },
-]
+  if (key.includes("kaderisasi")) return 10;
+  if (key.includes("psda") || key.includes("sumber daya anggota")) return 20;
+  if (key.includes("advokasi") || key.includes("kajian strategis")) return 30;
+  if (key.includes("ekonomi kreatif") || key.includes("ekotif")) return 40;
+  if (
+    key.includes("komunikasi") ||
+    key.includes("digitalisasi") ||
+    key.includes("komdigi")
+  ) {
+    return 50;
+  }
+  if (
+    key.includes("hubungan") ||
+    key.includes("pengabdian masyarakat") ||
+    key === "hpm"
+  ) {
+    return 60;
+  }
 
-const timelineItems: TimelineItem[] = [
-  {
-    period: 'DARI DEKADE 2010an',
-    meta: 'ERA RUMPUN PAGUYUBAN',
-    title: 'Kelahiran Pergerakan & Silaturahmi Kamar Rantau',
-    desc: 'Berawal dari forum silaturahmi informal mingguan dikoordinasikan antarkampus UGJ, IAIN, dan UMC guna membantu mahasiswa baru beradaptasi di Cirebon. Forum ini menyatukan simpul kekeluargaan dan meringankan tantangan perantauan.',
-  },
-  {
-    period: 'DESEMBER 2018',
-    meta: 'KURSUS TIANG UTAMA',
-    title: 'Transformasi Konstitusional & AD/ART Berdaulat',
-    desc: 'Formalisasi mutlak Anggaran Dasar dan Anggaran Rumah Tangga (AD/ART) secara independen, meresmikan pranata struktur kepengurusan Se-Wilayah Cirebon secara tersistem demi merespon tantangan organisasi modern.',
-  },
-  {
-    period: 'KINI & MASA DEPAN',
-    meta: 'DART DIGITAL ADVERTISMENT',
-    title: 'Akselerasi Kabinet Sri Nanggala Wira Perkasa',
-    desc: 'Mengusung nilai luhur kepemimpinan yang berwibawa, inovatif, dan berfokus pada kesejahteraan daerah pesisir, serta rilis riset digital terpadu demi menyumbang sumbangsih nyata ke Pemkab Indramayu.',
-    active: true,
-  },
-]
+  return 100;
+}
 
-export default async function TentangPage() {
-  const landingHero = await getConfig('landing_hero', defaultWebConfig.landing_hero)
-  const heroImage =
-    landingHero.slides?.[1]?.url ?? landingHero.slides?.[0]?.url ?? '/images/blog-hero-city.png'
+function getPositionPriority(name: string) {
+  const key = name.toLowerCase();
+
+  if (key.includes("ketua umum")) return 0;
+  if (key.includes("wakil ketua")) return 5;
+  if (key.includes("sekretaris umum")) return 10;
+  if (key.includes("bendahara umum")) return 20;
+  if (key.includes("kepala departemen") || key.includes("ketua departemen")) {
+    return 30;
+  }
+  if (key.includes("sekretaris")) return 40;
+  if (key.includes("anggota")) return 50;
+
+  return 60;
+}
+
+function buildOfficerGroups(
+  assignments: Awaited<
+    ReturnType<typeof getActivePublicStructure>
+  >["assignments"],
+): OfficerGroup[] {
+  const groups = assignments.reduce<OfficerGroup[]>((result, assignment) => {
+    let group = result.find((item) => item.id === assignment.department.id);
+
+    if (!group) {
+      group = {
+        id: assignment.department.id,
+        name: assignment.department.name,
+        members: [],
+      };
+      result.push(group);
+    }
+
+    group.members.push({
+      id: assignment.id,
+      name: assignment.person.name,
+      positionName: assignment.position.name,
+      photoUrl: assignment.person.photoUrl,
+    });
+
+    return result;
+  }, []);
+
+  return groups
+    .map((group) => ({
+      ...group,
+      members: [...group.members].sort(
+        (a, b) =>
+          getPositionPriority(a.positionName) -
+            getPositionPriority(b.positionName) ||
+          a.name.localeCompare(b.name, "id"),
+      ),
+    }))
+    .sort(
+      (a, b) =>
+        getDepartmentPriority(a.name) - getDepartmentPriority(b.name) ||
+        a.name.localeCompare(b.name, "id"),
+    );
+}
+
+function buildOfficerPreview(groups: OfficerGroup[]): OfficerGroup[] {
+  return groups
+    .map((group) => ({
+      ...group,
+      members:
+        getDepartmentPriority(group.name) === 0
+          ? group.members.filter((member) =>
+              MAIN_UNIT_PREVIEW_POSITION_PATTERN.test(member.positionName),
+            )
+          : group.members.filter((member) =>
+              DEPARTMENT_PREVIEW_POSITION_PATTERN.test(member.positionName),
+            ),
+    }))
+    .filter((group) => group.members.length > 0);
+}
+
+function getPublicMissionCopy(
+  dynamicMission: string | undefined,
+  fallback: string,
+) {
+  if (!dynamicMission) return fallback;
+
+  const normalized = dynamicMission.replace(/\s+/g, " ").trim();
+
+  // Public About needs concise, scannable mission copy.
+  // Short CMS copy remains authoritative; long formal copy falls back
+  // to the compact editorial summary used in the mockup.
+  return normalized.length <= 135 ? normalized : fallback;
+}
+
+function SectionHeading({
+  number,
+  eyebrow,
+  id,
+  children,
+}: {
+  number: string;
+  eyebrow: string;
+  id: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="about-heading">
+      <p className="about-eyebrow">
+        <span>{number}</span>
+        <span aria-hidden="true">—</span>
+        {eyebrow}
+      </p>
+      <h2 id={id}>{children}</h2>
+    </div>
+  );
+}
+
+function MediaFrame({
+  src,
+  alt,
+  fallbackLabel,
+  priority = false,
+  variant = "landscape",
+  className = "",
+}: MediaFrameProps) {
+  if (!src) {
+    return (
+      <div
+        className={[
+          "about-media",
+          `about-media--${variant}`,
+          "about-media--empty",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        role="img"
+        aria-label={`${fallbackLabel}. Dokumentasi belum tersedia.`}
+      >
+        <ImageIcon aria-hidden="true" />
+        <span>Dokumentasi belum tersedia</span>
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-background" id="tentang-page">
-      <section
-        className="relative isolate bg-cover bg-center px-4 py-14 text-left md:px-6 md:py-20 lg:px-8"
-        style={{ backgroundImage: `url('${heroImage}')` }}
-      >
-        <div className="absolute inset-0 -z-10 bg-primary/80" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-primary via-secondary/85 to-primary/35" />
-        <div className="mx-auto max-w-[1200px] space-y-3">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-surface/75 md:text-xs">
-            <span>Beranda</span>
-            <span className="text-surface/45">/</span>
-            <span className="text-surface">Tentang Kami</span>
+    <figure
+      className={["about-media", `about-media--${variant}`, className]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        priority={priority}
+        sizes={
+          variant === "hero"
+            ? "(min-width: 1024px) 58vw, 100vw"
+            : variant === "archive"
+              ? "(min-width: 1024px) 140px, 42vw"
+              : "(min-width: 1024px) 42vw, 100vw"
+        }
+        className="about-media-image"
+      />
+    </figure>
+  );
+}
+
+function OfficerAvatar({ src, name }: { src: string | null; name: string }) {
+  if (!src) {
+    return (
+      <span className="about-officer-avatar" aria-hidden="true">
+        <UserRound />
+      </span>
+    );
+  }
+
+  return (
+    <span className="about-officer-avatar about-officer-avatar--photo">
+      <Image src={src} alt={`Foto ${name}`} fill sizes="40px" />
+    </span>
+  );
+}
+
+export default async function TentangPage() {
+  const [structure, webConfig] = await Promise.all([
+    getActivePublicStructure(),
+    webConfigQueries.getMergedWebConfig(),
+  ]);
+
+  const { period, assignments } = structure;
+
+  const aboutRecord = asRecord(webConfig.about_page_extended);
+  const mediaRecord = asRecord(aboutRecord?.media);
+  const fallbackCabinet = asRecord(
+    aboutRecord?.fallbackCabinet,
+  ) as CabinetFallback | null;
+
+  const cabinet = normalizeCabinet(period, fallbackCabinet);
+
+  const heroImage =
+    readMediaUrl(mediaRecord, [
+      "heroImageUrl",
+      "heroImage",
+      "hero",
+      "coverImageUrl",
+    ]) ??
+    readMediaUrl(aboutRecord, ["heroImageUrl", "heroImage", "hero"]) ??
+    webConfig.landing_hero?.slides?.[0]?.url ??
+    "https://res.cloudinary.com/dsgldeuuy/image/upload/v1781210005/BPHU_rkqdtg.png";
+
+  const profileImage =
+    readMediaUrl(mediaRecord, ["profileImageUrl", "profileImage", "profile"]) ??
+    readMediaUrl(aboutRecord, ["profileImageUrl", "profileImage", "profile"]);
+
+  const cabinetImage =
+    readMediaUrl(mediaRecord, [
+      "cabinetImageUrl",
+      "cabinetImage",
+      "cabinetPhotoUrl",
+      "cabinet",
+    ]) ??
+    readMediaUrl(aboutRecord, [
+      "cabinetImageUrl",
+      "cabinetImage",
+      "cabinetPhotoUrl",
+    ]);
+
+  const historyImages =
+    readMediaArray(mediaRecord, [
+      "historyImages",
+      "historyImageUrls",
+      "archiveImages",
+    ]) ??
+    readMediaArray(aboutRecord, [
+      "historyImages",
+      "historyImageUrls",
+      "archiveImages",
+    ]) ??
+    [];
+
+  const officerGroups = buildOfficerGroups(assignments);
+  const officerPreviewGroups = buildOfficerPreview(officerGroups);
+
+  const showCabinetIdentity =
+    Boolean(cabinet.logoUrl) ||
+    (cabinet.cabinetName.trim() !== "" &&
+      cabinet.cabinetName !== DEFAULT_CABINET.name);
+
+  return (
+    <main className="about public-page-root" id="tentang-page">
+      {/* =====================================================
+          HERO / PROFILE INTRO
+          ===================================================== */}
+      <header className="about-hero" id="profil">
+        <Image
+          src={heroImage}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="about-hero-image"
+          aria-hidden="true"
+        />
+        <div className="about-hero-overlay" aria-hidden="true" />
+        <div className="about-container about-hero-inner">
+          <div className="about-reveal about-hero-copy">
+            <PublicBreadcrumb items={[{ label: "Tentang" }]} tone="inverse" />
+            <h1>
+              Rumah Mahasiswa
+              <span>Indramayu di Cirebon</span>
+            </h1>
+
+            <p className="about-hero-lead">
+              IKMI Se-Wilayah Cirebon adalah ruang bagi mahasiswa asal Indramayu
+              di Cirebon untuk bersilaturahmi, bertumbuh, dan bergerak bersama.
+              Di sini, kekeluargaan bertemu dengan pengembangan potensi dan
+              kontribusi nyata bagi daerah.
+            </p>
+
+            <p className="about-motto">
+              <span aria-hidden="true" />
+              Memayu Ing Jagat
+              <span aria-hidden="true" />
+            </p>
+
+            <Link href="#sejarah" className="public-text-link about-action">
+              Selengkapnya tentang IKMI
+              <ArrowDown aria-hidden="true" />
+            </Link>
           </div>
-          <h1 className="max-w-3xl font-heading text-3xl font-extrabold leading-tight text-surface md:text-5xl">
-            Tentang IKMI Cirebon
-          </h1>
-          <p className="max-w-xl text-sm leading-6 text-surface/80 md:text-base md:leading-7">
-            Menyelami arah darmabakti, struktur kabinet, perumusan visi utama, serta sejarah pergerakan organisasi kedaerahan.
-          </p>
+        </div>
+      </header>
+
+      {/* =====================================================
+          01 — PROFIL
+          ===================================================== */}
+      <section
+        className="about-section about-section--profile"
+        aria-labelledby="profil-title"
+      >
+        <div className="about-container about-profile-grid">
+          <div className="about-reveal about-section-media">
+            <MediaFrame
+              src={profileImage}
+              alt="Dokumentasi kebersamaan mahasiswa IKMI"
+              fallbackLabel="Foto profil kebersamaan IKMI"
+            />
+          </div>
+
+          <div className="about-reveal about-copy">
+            <SectionHeading number="01" eyebrow="Profil" id="profil-title">
+              Rumah Mahasiswa Indramayu
+            </SectionHeading>
+
+            <p>
+              IKMI adalah ruang bagi mahasiswa Indramayu untuk bertemu,
+              bertumbuh, dan bergerak bersama melalui ikatan kekeluargaan,
+              menjaga identitas, menebar kebaikan, dan menyiapkan aksi nyata
+              untuk daerah.
+            </p>
+
+            <blockquote className="about-quote">
+              <Quote aria-hidden="true" />
+              <p>
+                Dari tanah rantau, kami belajar.
+                <br />
+                Untuk Indramayu, kami bergerak.
+              </p>
+            </blockquote>
+
+            <Link href="#sejarah" className="public-text-link about-action">
+              Kenali Perjalanan IKMI
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="px-4 py-10 md:px-6 md:py-16 lg:px-8">
-        <div className="mx-auto max-w-[1200px]">
-          <div className="mb-16 grid gap-10 lg:grid-cols-12 lg:gap-14">
-            <div className="space-y-5 lg:col-span-7">
-              <div className="inline-flex items-center gap-2 rounded-full bg-surface-alt px-3 py-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-                  Visi Utama Organisasi
+      {/* 02 — SEJARAH */}
+      <section
+        className="about-section about-section--history"
+        id="sejarah"
+        aria-labelledby="sejarah-title"
+      >
+        <div className="about-container about-history-grid">
+          <div className="about-reveal about-copy about-history-copy">
+            <SectionHeading number="02" eyebrow="Sejarah" id="sejarah-title">
+              <>
+                <span className="about-history-title-line">
+                  Lahir dari Ruang,
                 </span>
+                <span className="about-history-title-line">
+                  Tumbuh dalam Perjuangan
+                </span>
+              </>
+            </SectionHeading>
+
+            <p>
+              IKMI berdiri pada <strong>1 Desember 1999</strong> dari semangat
+              mahasiswa Indramayu di Cirebon untuk memiliki ruang bersama.
+              Berawal dari obrolan sederhana di warung kopi, lahirlah organisasi
+              kedaerahan sebagai wadah silaturahmi dan persatuan mahasiswa
+              Indramayu.
+            </p>
+
+            <p>
+              Sejak itu, IKMI tumbuh dengan dua komitmen utama:
+              <strong> keilmuan dan kedaerahan</strong>.
+            </p>
+
+            <blockquote className="about-quote">
+              <Quote aria-hidden="true" />
+              <p>
+                Dari percakapan sederhana,
+                <br />
+                lahir perjalanan lintas generasi.
+              </p>
+            </blockquote>
+
+            <Link href="#kabinet" className="public-text-link about-action">
+              Lihat Perjalanan Organisasi
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="about-reveal about-history-board">
+            <div className="about-history-board-label">
+              <span>Arsip Perjalanan</span>
+              <span>1999 — kini</span>
+            </div>
+
+            <div
+              className="about-history-track"
+              aria-label="Garis perjalanan IKMI"
+            >
+              {HISTORY_STEPS.map((step, index) => (
+                <article
+                  className="about-history-step"
+                  key={`${step.meta}-${step.title}`}
+                >
+                  <MediaFrame
+                    src={historyImages[index]}
+                    alt={`Dokumentasi ${step.title} IKMI`}
+                    fallbackLabel={`Dokumentasi ${step.title}`}
+                    variant="archive"
+                  />
+
+                  <span className="about-history-node" aria-hidden="true" />
+
+                  <div className="about-history-caption">
+                    <p>{step.meta}</p>
+                    <h3>{step.title}</h3>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          03 — KABINET
+          ===================================================== */}
+      <section
+        className="about-section about-section--cabinet"
+        id="kabinet"
+        aria-labelledby="kabinet-title"
+      >
+        <div className="about-container about-cabinet-grid">
+          <div className="about-reveal about-section-media about-cabinet-media-wrap">
+            <span className="about-cabinet-period-badge">
+              Periode {cabinet.periodLabel}
+            </span>
+
+            <MediaFrame
+              src={cabinetImage}
+              alt={`Dokumentasi Kabinet IKMI periode ${cabinet.periodLabel}`}
+              fallbackLabel={`Foto Kabinet periode ${cabinet.periodLabel}`}
+            />
+
+            {cabinet.logoUrl ? (
+              <div className="about-cabinet-logo">
+                <Image
+                  src={cabinet.logoUrl}
+                  alt={`Logo ${cabinet.cabinetName}`}
+                  width={56}
+                  height={56}
+                  sizes="56px"
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="about-reveal about-copy">
+            <SectionHeading
+              number="03"
+              eyebrow={`Kabinet periode ${cabinet.periodLabel}`}
+              id="kabinet-title"
+            >
+              Satu Arah, Banyak Gerak
+            </SectionHeading>
+
+            {showCabinetIdentity ? (
+              <p className="about-cabinet-name">{cabinet.cabinetName}</p>
+            ) : null}
+
+            <p>
+              Kabinet IKMI Se-Wilayah Cirebon periode {cabinet.periodLabel}{" "}
+              membawa budaya kerja yang{" "}
+              <strong>terorganisir, kolaboratif, dan proaktif</strong>. Fokusnya
+              adalah memperkuat tata kelola, menjaga transparansi, mengembangkan
+              kapasitas anggota, serta membangun kemandirian organisasi secara
+              intelektual maupun ekonomi.
+            </p>
+
+            <blockquote className="about-quote">
+              <Quote aria-hidden="true" />
+              <p>
+                Bekerja bersama,
+                <br />
+                bertumbuh bersama.
+              </p>
+            </blockquote>
+
+            <Link href="#visi-misi" className="public-text-link about-action">
+              Kenali Arah Kabinet
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          04 — VISI & MISI KABINET
+          ===================================================== */}
+      <section
+        className="about-section about-section--direction"
+        id="visi-misi"
+        aria-labelledby="visi-misi-title"
+      >
+        <div className="about-container">
+          <div className="about-reveal">
+            <SectionHeading
+              number="04"
+              eyebrow="Visi & Misi Kabinet"
+              id="visi-misi-title"
+            >
+              Dari Gagasan Menjadi Dampak
+            </SectionHeading>
+          </div>
+
+          <div className="about-direction-grid">
+            <div className="about-reveal about-vision-card">
+              <div className="about-card-label">
+                <Target aria-hidden="true" />
+                <span>Visi</span>
               </div>
 
-              <div className="relative border-l-2 border-accent py-1 pl-5 md:pl-7">
-                <Quote className="absolute -left-3 -top-3 h-7 w-7 rotate-180 text-border" aria-hidden="true" />
-                <blockquote className="font-heading text-lg font-semibold italic leading-relaxed text-primary md:text-2xl">
-                  &quot;Mewujudkan organisasi mahasiswa kedaerahan yang berperan sebagai ruang pengembangan intelektual, penguatan identitas daerah, serta penggerak kesadaran kritis dan kontribusi nyata bagi kemajuan daerah.&quot;
-                </blockquote>
-                <div className="mt-4 flex items-center gap-3">
-                  <span className="h-px w-8 bg-border" />
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-text-muted">
-                    Kabinet Sri Nanggala Wira Perkasa
-                  </p>
+              <p>{cabinet.vision}</p>
+            </div>
+
+            <div className="about-missions" aria-label="Daftar misi kabinet">
+              {MISSION_META.map((mission, index) => (
+                <div className="about-reveal about-mission" key={mission.title}>
+                  <span className="about-mission-number">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+
+                  <div>
+                    <h3>{mission.title}</h3>
+                    <p>
+                      {getPublicMissionCopy(
+                        cabinet.missions[index],
+                        mission.short,
+                      )}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
 
-              <p className="max-w-3xl text-sm leading-7 text-text-secondary">
-                Visi ini dirakit sebagai falsafah perjuangan kolektif yang mengintegrasikan tiga pilar esensial pergerakan mahasiswa kedaerahan saat ini. Pondasi awal dimulai dengan menyediakan wadah yang memfasilitasi pengembangan intelektual secara akademis maupun non-akademis. Di saat yang sama, komunitas ini memperkokoh penguatan identitas daerah agar para kader tetap menjaga nilai budaya tanah kelahiran. Kesadaran kritis mahasiswa juga dipacu secara konsisten agar peka terhadap dinamika sosial di sekitarnya. Melalui sinergi komprehensif ini, seluruh elemen kepengurusan bergerak bersama guna menyalurkan kontribusi nyata demi kemajuan daerah asal. Wadah ini pun bertransformasi menjadi katalisator perubahan yang melahirkan generasi pemimpin masa depan berkarakter cerdas, solutif, serta berdedikasi tinggi. Upaya masif tersebut dilakukan dengan menanamkan nilai luhur gotong royong, rasa kepedulian sosial yang mendalam, serta komitmen penuh dalam mengabdi pada kemaslahatan masyarakat luas.
+            <div className="about-reveal">
+              <blockquote className="about-impact-quote">
+                <Quote aria-hidden="true" />
+                <p>
+                  Berpikir kritis adalah awal.
+                  <br />
+                  Memberi dampak adalah tujuannya.
+                </p>
+              </blockquote>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          05 — PROFIL PENGURUS
+          ===================================================== */}
+      <section
+        className="about-section about-section--officers"
+        id="pengurus"
+        aria-labelledby="pengurus-title"
+      >
+        <div className="about-container">
+          <div className="about-reveal">
+            <SectionHeading
+              number="05"
+              eyebrow="Profil Pengurus"
+              id="pengurus-title"
+            >
+              Mereka yang Menjaga Roda Organisasi
+            </SectionHeading>
+          </div>
+
+          <div className="about-reveal">
+            <p className="about-officers-intro">
+              {period
+                ? `Pimpinan BPH serta ketua dan sekretaris setiap departemen untuk periode ${period.name}.`
+                : "Perwakilan pengurus akan ditampilkan berdasarkan periode kepengurusan aktif."}
+            </p>
+          </div>
+
+          {officerPreviewGroups.length > 0 ? (
+            <div className="about-officer-grid">
+              {officerPreviewGroups.map((group) => (
+                <div
+                  className="about-reveal about-officer-group"
+                  key={group.id}
+                >
+                  <h3 title={group.name}>{group.name}</h3>
+
+                  <div className="about-officer-list">
+                    {group.members.map((member) => (
+                      <article className="about-officer-card" key={member.id}>
+                        <OfficerAvatar
+                          src={member.photoUrl}
+                          name={member.name}
+                        />
+
+                        <div>
+                          <h4 title={member.name}>{member.name}</h4>
+                          <p>{member.positionName}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="about-reveal about-officers-empty" role="status">
+              <h3>Data pengurus belum tersedia</h3>
+              <p>
+                Susunan pengurus akan tampil setelah penugasan periode aktif
+                disimpan melalui dashboard organisasi.
+              </p>
+            </div>
+          )}
+
+          <div className="about-reveal about-closing">
+            <div className="about-closing-icon" aria-hidden="true">
+              <UsersRound />
+            </div>
+
+            <div>
+              <h2>Berbeda Peran, Satu Tujuan</h2>
+              <p>
+                Setiap departemen mempunyai fokus yang berbeda. Namun semuanya
+                bergerak menuju arah yang sama: membangun organisasi yang kuat,
+                anggota yang berkembang, dan kontribusi yang terasa bagi
+                masyarakat.
               </p>
             </div>
 
-            <aside className="space-y-6 rounded-3xl bg-surface p-6 ring-1 ring-border lg:col-span-5 md:p-8">
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-text-muted">
-                  Filosofi Nama Kabinet
-                </p>
-                <h2 className="mt-1 font-heading text-xl font-extrabold text-primary">
-                  Sri Nanggala Wira Perkasa
-                </h2>
-              </div>
-
-              <div className="space-y-5">
-                {philosophyElements.map((elem) => (
-                  <div key={elem.word} className="border-l border-border pl-4">
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                      <h3 className="font-heading text-base font-extrabold text-primary">{elem.word}</h3>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-accent">
-                        {elem.meaning}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs leading-6 text-text-secondary">{elem.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </aside>
+            <Link
+              href="/struktur"
+              className="public-text-link about-closing-action"
+            >
+              Lihat Seluruh Pengurus
+              <ArrowRight aria-hidden="true" />
+            </Link>
           </div>
-
-          <div className="mb-16 border-y border-border py-10">
-            <div className="mb-9 space-y-4">
-              <span className="inline-flex rounded-full bg-accent/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-accent">
-                Pilar Utama Organisasi
-              </span>
-              <div className="grid gap-4 md:grid-cols-[minmax(0,380px)_minmax(0,1fr)] md:items-start md:gap-8">
-                <h2 className="font-heading text-2xl font-extrabold leading-tight text-primary md:border-r md:border-border md:pr-8 md:text-3xl">
-                  Garis Besar Haluan IKMI se-wilayah cirebon
-                </h2>
-                <p className="max-w-md text-sm leading-6 text-text-secondary md:pt-1">
-                  Arus kemudi pergerakan organisasi yang mengikat erat empat sendi darmabakti demi kesinambungan visi luhur Bumi Wiralodra.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {coreValues.map(({ title, desc, Icon }) => (
-                <div key={title} className="flex gap-4 rounded-2xl border border-border bg-surface p-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-alt text-primary">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-extrabold uppercase tracking-wide text-primary">{title}</h3>
-                    <p className="text-xs leading-5 text-text-secondary">{desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mb-16">
-            <div className="mb-9 space-y-4">
-              <span className="inline-flex rounded-full bg-accent/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-accent">
-                Darmabakti
-              </span>
-              <div className="grid gap-4 md:grid-cols-[minmax(0,380px)_minmax(0,1fr)] md:items-start md:gap-8">
-                <h2 className="font-heading text-2xl font-extrabold leading-tight text-primary md:border-r md:border-border md:pr-8 md:text-3xl">
-                  Lima Tiang <br /> Pengabdian Strategis
-                </h2>
-                <p className="max-w-2xl text-sm leading-7 text-text-secondary md:pt-1">
-                Misi luhur IKMI se-wilayah Cirebon diartikulasikan dalam lima poros gerak strategis. Setiap poros dirancang sebagai acuan kerja konkret eksekutif dalam merefleksikan pengabdian tulus bagi daerah.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              {misiPoints.map((point) => (
-                <div
-                  key={point.num}
-                  className="flex flex-col gap-3 border-b border-border py-4 last:border-0 sm:flex-row sm:gap-5"
-                >
-                  <div className="shrink-0 font-heading text-2xl font-extrabold text-text-muted">
-                    {point.num}
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-extrabold tracking-wide text-primary">{point.title}</h3>
-                    <p className="text-xs leading-6 text-text-secondary md:text-sm">{point.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <section className="relative overflow-hidden rounded-3xl bg-primary p-6 text-surface md:p-10 lg:p-12">
-            <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-secondary/45 blur-3xl" aria-hidden="true" />
-            <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-accent/15 blur-3xl" aria-hidden="true" />
-            <div className="relative grid gap-10 lg:grid-cols-12 lg:gap-12">
-              <div className="space-y-5 lg:col-span-5">
-                <span className="inline-flex rounded bg-accent/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-accent">
-                  Kronologi Perjalanan
-                </span>
-                <h2 className="font-heading text-3xl font-extrabold leading-tight md:text-4xl">
-                  Merajut Rantai Kebersamaan
-                </h2>
-                <div className="space-y-4 text-sm leading-7 text-surface/75">
-                  <p>
-                    IKMI Se-Wilayah Cirebon didirikan sebagai ikatan rasa rindu, tanggung jawab moral, dan dialektika kritis para mahasiswa asal Indramayu yang menempuh jalan studi di Kota Udang (Cirebon). Sejak awal perintisannya, organisasi ini memfokuskan tujuannya untuk mengikis sekat primordialisme kampus, mengumpulkan mahasiswa daerah asal Indramayu ke dalam satu dekap kehangatan kekeluargaan.
-                  </p>
-                  <p>
-                    Seiring pergulatan waktu, IKMI bertransformasi menjadi laboratorium kepemimpinan yang tangguh. Melalui pembinaan rutin dan konsolidasi pemikiran, IKMI senantiasa mencetak kader-kader yang sadar akan pentingnya melestarikan identitas lokal Bumi Wiralodra serta menyumbangkan gagasan solutif demi pembangunan.
-                  </p>
-                </div>
-                <ButtonLink href="/event" className="bg-accent px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em] !text-surface hover:bg-accent/90">
-                  Jelajahi Aksi Nyata Kami
-                  <ArrowUpRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                </ButtonLink>
-              </div>
-
-              <div className="space-y-8 border-l border-surface/15 pl-6 lg:col-span-7">
-                {timelineItems.map((item) => (
-                  <div key={item.title} className="relative space-y-2">
-                    <span className="absolute -left-[33px] top-1 flex h-4 w-4 items-center justify-center rounded-full border border-surface/20 bg-primary">
-                      <span className={`h-1.5 w-1.5 rounded-full bg-accent ${item.active ? 'animate-pulse' : ''}`} />
-                    </span>
-                    <div className="flex flex-wrap items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-accent">
-                      <span>{item.period}</span>
-                      <span className="text-surface/35">/</span>
-                      <span className="text-surface/55">{item.meta}</span>
-                    </div>
-                    <h3 className="font-heading text-base font-extrabold text-surface">{item.title}</h3>
-                    <p className="max-w-xl text-xs leading-6 text-surface/65 md:text-sm">{item.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
         </div>
       </section>
-
     </main>
-  )
+  );
 }

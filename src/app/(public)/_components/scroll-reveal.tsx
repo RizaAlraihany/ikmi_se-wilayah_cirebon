@@ -3,9 +3,8 @@
 import { useEffect } from 'react'
 
 /**
- * ScrollReveal — client component yang mengaktifkan animasi scroll reveal
- * untuk semua elemen dengan atribut [data-reveal] dan [data-stagger].
- * Gunakan satu kali di dalam layout atau page.
+ * ScrollReveal - Mengaktifkan animasi scroll reveal dengan debounced observer
+ * untuk performa optimal pada React Fast Refresh & Hydration.
  */
 export function ScrollReveal() {
   useEffect(() => {
@@ -21,22 +20,26 @@ export function ScrollReveal() {
       {
         threshold: 0.1,
         rootMargin: '0px 0px -40px 0px',
-      }
+      },
     )
 
     const observeElements = () => {
       const elements = document.querySelectorAll(
-        '[data-reveal]:not(.revealed), [data-stagger]:not(.revealed)'
+        '[data-reveal]:not(.revealed), [data-stagger]:not(.revealed)',
       )
       elements.forEach((el) => observer.observe(el))
     }
 
-    // Panggil saat mount pertama
+    // Panggil saat pertama kali mount
     observeElements()
 
-    // Gunakan MutationObserver untuk menangkap elemen yang di-render belakangan (mis. saat navigasi klien atau streaming hydration)
+    // Debounce mutation observer agar tidak membebani browser saat render cepat di localhost
+    let debounceTimer: NodeJS.Timeout | null = null
     const mutationObserver = new MutationObserver(() => {
-      observeElements()
+      if (debounceTimer) clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(() => {
+        observeElements()
+      }, 100)
     })
 
     mutationObserver.observe(document.body, {
@@ -45,6 +48,7 @@ export function ScrollReveal() {
     })
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer)
       observer.disconnect()
       mutationObserver.disconnect()
     }

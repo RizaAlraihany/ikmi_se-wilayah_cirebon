@@ -1,60 +1,53 @@
 'use server'
 
-import { auth } from '@/core/auth/auth'
+import { requirePermission } from '@/core/authorization/guards'
 import { categoryService } from './services'
 import { CategoryCreateInput, CategoryUpdateInput } from './schemas'
 import { revalidatePath } from 'next/cache'
 import { rateLimit } from '@/core/security/rate-limiter'
+import { safeActionError } from '@/core/errors/safe-action-error'
 
 export async function createCategoryAction(data: CategoryCreateInput) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-    await rateLimit(`cms:category:create:${session.user.id}`, 30, 3600)
+    const actor = await requirePermission('cms.update')
+    await rateLimit(`cms:category:create:${actor.id}`, 30, 3600)
 
-    await categoryService.createCategory(data, session.user.id)
+    await categoryService.createCategory(data, actor.id)
     revalidatePath('/admin/cms/categories')
     revalidatePath('/admin/cms/posts')
-    revalidatePath('/blog')
+    revalidatePath('/publikasi')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') return { error: 'Data tidak valid' }
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'Kategori belum dapat dibuat.', 'category.create') }
   }
 }
 
 export async function updateCategoryAction(data: CategoryUpdateInput) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-    await rateLimit(`cms:category:update:${session.user.id}`, 60, 3600)
+    const actor = await requirePermission('cms.update')
+    await rateLimit(`cms:category:update:${actor.id}`, 60, 3600)
 
-    await categoryService.updateCategory(data, session.user.id)
+    await categoryService.updateCategory(data, actor.id)
     revalidatePath('/admin/cms/categories')
     revalidatePath('/admin/cms/posts')
-    revalidatePath('/blog')
+    revalidatePath('/publikasi')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') return { error: 'Data tidak valid' }
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'Kategori belum dapat diperbarui.', 'category.update') }
   }
 }
 
 export async function deleteCategoryAction(id: string) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak.' }
-    await rateLimit(`cms:category:delete:${session.user.id}`, 30, 3600)
+    const actor = await requirePermission('cms.update')
+    await rateLimit(`cms:category:delete:${actor.id}`, 30, 3600)
 
-    await categoryService.deleteCategory(id, session.user.id)
+    await categoryService.deleteCategory(id, actor.id)
     revalidatePath('/admin/cms/categories')
     revalidatePath('/admin/cms/posts')
-    revalidatePath('/blog')
+    revalidatePath('/publikasi')
     return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'Kategori belum dapat dihapus.', 'category.delete') }
   }
 }

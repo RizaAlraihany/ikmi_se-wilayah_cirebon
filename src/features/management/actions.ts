@@ -1,15 +1,14 @@
 'use server'
 
-import { auth } from '@/core/auth/auth'
+import { requirePermission } from '@/core/authorization/guards'
 import { prisma } from '@/core/database/prisma'
 import { revalidatePath } from 'next/cache'
+import { safeActionError } from '@/core/errors/safe-action-error'
 import { updatePengurusSchema, UpdatePengurusInput } from './schemas'
 
 export async function updatePengurusAction(id: string, input: UpdatePengurusInput) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak atau sesi habis.' }
-
+    const actor = await requirePermission('user.update')
     const validated = updatePengurusSchema.parse(input)
 
     const current = await prisma.user.findUnique({ where: { id } })
@@ -19,7 +18,10 @@ export async function updatePengurusAction(id: string, input: UpdatePengurusInpu
       where: { id },
       data: {
         ...validated,
-        updatedBy: session.user.id,
+        ...(validated.isActive !== undefined && validated.isActive !== current.isActive
+          ? { sessionVersion: { increment: 1 } }
+          : {}),
+        updatedBy: actor.id,
       },
     })
 
@@ -35,7 +37,7 @@ export async function updatePengurusAction(id: string, input: UpdatePengurusInpu
           departmentId: current.departmentId,
         }),
         newData: JSON.stringify(validated),
-        userId: session.user.id,
+        userId: actor.id,
       },
     })
 
@@ -43,16 +45,14 @@ export async function updatePengurusAction(id: string, input: UpdatePengurusInpu
     revalidatePath(`/admin/management/${id}`)
     return { success: true, data: updated }
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') return { error: 'Data tidak valid' }
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'Data pengurus belum dapat diperbarui.', 'management.update') }
   }
 }
 
 export async function deletePengurusAction(id: string) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) return { error: 'Akses ditolak atau sesi habis.' }
+    const actor = await requirePermission('user.delete')
+    if (id === actor.id) return { error: 'Anda tidak dapat menonaktifkan akun sendiri.' }
 
     const current = await prisma.user.findUnique({
       where: { id },
@@ -66,7 +66,8 @@ export async function deletePengurusAction(id: string) {
         isActive: false,
         departmentId: null,
         positionId: null,
-        updatedBy: session.user.id,
+        sessionVersion: { increment: 1 },
+        updatedBy: actor.id,
       },
     })
 
@@ -87,7 +88,7 @@ export async function deletePengurusAction(id: string) {
           departmentId: null,
           positionId: null,
         }),
-        userId: session.user.id,
+        userId: actor.id,
       },
     })
 
@@ -95,7 +96,6 @@ export async function deletePengurusAction(id: string) {
     revalidatePath(`/admin/management/${id}`)
     return { success: true }
   } catch (error) {
-    if (error instanceof Error) return { error: error.message }
-    return { error: 'Terjadi kesalahan' }
+    return { error: safeActionError(error, 'Role pengurus belum dapat diperbarui.', 'management.role_update') }
   }
 }

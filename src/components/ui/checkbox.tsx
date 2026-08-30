@@ -12,7 +12,7 @@ export function Checkbox({ className, checked, onCheckedChange, ...props }: Chec
       type="checkbox"
       checked={checked}
       onChange={(event) => onCheckedChange?.(event.target.checked)}
-      className={cn('h-4 w-4 rounded border-line accent-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent', className)}
+      className={cn('h-5 w-5 shrink-0 rounded border-border accent-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60', className)}
       {...props}
     />
   )

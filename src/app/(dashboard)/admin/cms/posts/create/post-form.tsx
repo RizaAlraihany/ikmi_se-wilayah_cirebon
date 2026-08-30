@@ -9,19 +9,15 @@ import { postCreateSchema, postUpdateSchema, type PostCreateInput, type PostUpda
 import { createPostAction, updatePostAction, uploadBlogCoverAction } from '@/features/blog/actions'
 import { Editor } from '@/components/ui/editor'
 import { Button } from '@/components/ui/button'
+import { Alert } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { ListboxSelect } from '@/components/ui/listbox-select'
 import { Textarea } from '@/components/ui/textarea'
+import { PostStatus } from '@prisma/client'
 
 type CategoryOption = {
   id: string
   name: string
-}
-
-type AuthorOption = {
-  id: string
-  name: string
-  meta?: string
 }
 
 type InitialPost = {
@@ -32,8 +28,15 @@ type InitialPost = {
   excerpt: string | null
   thumbnailUrl: string | null
   thumbnailPublicId: string | null
+  ogImageUrl: string | null
+  ogImagePublicId: string | null
   categoryId: string
-  authorId: string
+  authorName: string | null
+  programId?: string | null
+  agendaId?: string | null
+  status?: PostStatus
+  scheduledAt?: Date | null
+  revisionNotes?: string | null
   seoTitle: string | null
   seoDescription: string | null
   seoKeywords: string | null
@@ -41,18 +44,21 @@ type InitialPost = {
 
 export function PostForm({
   categories,
-  authors,
-  currentUserId,
+  programs = [],
+  agendas = [],
+  currentUserName,
   initialPost,
 }: {
   categories: CategoryOption[]
-  authors: AuthorOption[]
-  currentUserId?: string
+  programs?: { id: string, name: string }[]
+  agendas?: { id: string, name: string }[]
+  currentUserName?: string | null
   initialPost?: InitialPost
 }) {
   const router = useRouter()
   const [globalError, setGlobalError] = useState<string>('')
   const [coverUploadMessage, setCoverUploadMessage] = useState<string>('')
+  const [ogUploadMessage, setOgUploadMessage] = useState<string>('')
   const isEdit = Boolean(initialPost)
 
   const schema = isEdit ? postUpdateSchema : postCreateSchema
@@ -74,8 +80,12 @@ export function PostForm({
       excerpt: initialPost?.excerpt || '',
       featuredImage: initialPost?.thumbnailUrl || '',
       featuredImagePublicId: initialPost?.thumbnailPublicId || '',
+      ogImage: initialPost?.ogImageUrl || '',
+      ogImagePublicId: initialPost?.ogImagePublicId || '',
       categoryId: initialPost?.categoryId || categories[0]?.id || '',
-      authorId: initialPost?.authorId || currentUserId || authors[0]?.id || '',
+      authorName: initialPost?.authorName || currentUserName || '',
+      programId: initialPost?.programId || '',
+      agendaId: initialPost?.agendaId || '',
       seoTitle: initialPost?.seoTitle || '',
       seoDescription: initialPost?.seoDescription || '',
       seoKeywords: initialPost?.seoKeywords || '',
@@ -111,6 +121,21 @@ export function PostForm({
     setCoverUploadMessage('Cover berhasil diupload ke Cloudinary.')
   }
 
+  const uploadOgImage = async (file: File | undefined) => {
+    setOgUploadMessage('')
+    if (!file) return
+    const formData = new FormData()
+    formData.append('file', file)
+    const result = await uploadBlogCoverAction(formData)
+    if (result.error) {
+      setOgUploadMessage(result.error)
+      return
+    }
+    setValue('ogImage', result.url || '', { shouldValidate: true, shouldDirty: true })
+    setValue('ogImagePublicId', result.publicId || '', { shouldValidate: true, shouldDirty: true })
+    setOgUploadMessage('OG image berhasil diupload.')
+  }
+
   const onSubmit = async (data: PostCreateInput | PostUpdateInput) => {
     setGlobalError('')
     const result = isEdit
@@ -135,6 +160,11 @@ export function PostForm({
 
       {initialPost ? <input type="hidden" {...register('id')} /> : null}
       <input type="hidden" {...register('featuredImagePublicId')} />
+      <input type="hidden" {...register('ogImagePublicId')} />
+
+      {initialPost?.status === PostStatus.REVISION && initialPost.revisionNotes ? (
+        <Alert tone="warning" title="Perlu revisi">{initialPost.revisionNotes}</Alert>
+      ) : null}
 
       <Field label="Judul Artikel" htmlFor="title" error={errors.title?.message}>
         <Input
@@ -150,7 +180,7 @@ export function PostForm({
       <Field label="Slug URL" htmlFor="slug" error={errors.slug?.message}>
         <div className="grid gap-2 sm:grid-cols-[auto_1fr]">
           <span className="inline-flex h-11 items-center rounded-xl bg-background px-4 text-sm font-medium text-muted ring-1 ring-line">
-            ikmicirebon.or.id/blog/
+            ikmicirebon.web.id/publikasi/kategori/
           </span>
           <Input id="slug" {...register('slug')} type="text" disabled={isSubmitting} />
         </div>
@@ -173,22 +203,13 @@ export function PostForm({
           />
         </Field>
 
-        <Field label="Author / Penulis" htmlFor="authorId" error={errors.authorId?.message}>
-          <Controller
-            name="authorId"
-            control={control}
-            render={({ field }) => (
-              <ListboxSelect
-                id="authorId"
-                value={field.value ?? currentUserId ?? authors[0]?.id ?? ''}
-                onValueChange={field.onChange}
-                disabled={isSubmitting || authors.length === 0}
-                options={authors.map((author) => ({
-                  value: author.id,
-                  label: author.meta ? `${author.name} - ${author.meta}` : author.name,
-                }))}
-              />
-            )}
+        <Field label="Penulis" htmlFor="authorName" error={errors.authorName?.message}>
+          <Input
+            id="authorName"
+            {...register('authorName')}
+            type="text"
+            placeholder="Masukkan nama penulis"
+            disabled={isSubmitting}
           />
         </Field>
       </div>
@@ -227,6 +248,38 @@ export function PostForm({
         />
       </Field>
 
+      <div className="grid gap-4 md:grid-cols-2 mt-4">
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Program Terkait (Opsional)</label>
+          <Controller
+            name="programId"
+            control={control}
+            render={({ field }) => (
+              <ListboxSelect
+                options={[{ value: '', label: 'Tidak ada' }, ...programs.map(p => ({ value: p.id, label: p.name }))]}
+                value={field.value || ''}
+                onValueChange={field.onChange}
+              />
+            )}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Agenda Terkait (Opsional)</label>
+          <Controller
+            name="agendaId"
+            control={control}
+            render={({ field }) => (
+              <ListboxSelect
+                options={[{ value: '', label: 'Tidak ada' }, ...agendas.map(a => ({ value: a.id, label: a.name }))]}
+                value={field.value || ''}
+                onValueChange={field.onChange}
+              />
+            )}
+          />
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-3">
         <Field label="SEO Title" htmlFor="seoTitle" error={errors.seoTitle?.message}>
           <Input id="seoTitle" {...register('seoTitle')} disabled={isSubmitting} />
@@ -239,11 +292,18 @@ export function PostForm({
         </Field>
       </div>
 
+      <Field label="OG Image" htmlFor="ogImage" error={errors.ogImage?.message}>
+        <p className="text-xs leading-5 text-muted">Gambar khusus saat artikel dibagikan. Jika kosong, cover artikel digunakan.</p>
+        <Input id="ogImage" {...register('ogImage')} type="url" placeholder="https://res.cloudinary.com/..." disabled={isSubmitting} />
+        <Input id="ogImageFile" type="file" accept="image/jpeg,image/png,image/webp" disabled={isSubmitting} onChange={(event) => void uploadOgImage(event.target.files?.[0])} />
+        {ogUploadMessage ? <p className="text-xs font-semibold text-muted">{ogUploadMessage}</p> : null}
+      </Field>
+
       <div className="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:justify-end">
         <Button type="button" variant="secondary" onClick={() => router.back()} disabled={isSubmitting}>
           Batal
         </Button>
-        <Button type="submit" disabled={isSubmitting || categories.length === 0 || authors.length === 0}>
+        <Button type="submit" disabled={isSubmitting || categories.length === 0}>
           {isSubmitting ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan Draf'}
         </Button>
       </div>

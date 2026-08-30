@@ -3,6 +3,7 @@ import { webConfigSchema, WebConfigInput } from './schemas'
 import { prisma } from '@/core/database/prisma'
 import { webConfigQueries } from './queries'
 import { requireCmsUpdate } from '@/features/cms/access'
+import { serializeAuditData } from '@/features/audit/audit-data'
 
 export const webConfigService = {
   async upsertWebConfig(input: WebConfigInput, userId: string) {
@@ -28,11 +29,11 @@ export const webConfigService = {
       }),
       prisma.auditLog.create({
         data: {
-          action: existing ? 'UPDATE' : 'CREATE',
+          action: 'SECURITY_SETTING_CHANGE',
           entity: 'WebConfig',
           entityId: validated.key,
-          oldData: existing ? existing.valueJson : null,
-          newData: validated.valueJson,
+          oldData: existing ? serializeAuditData(existing.valueJson) : null,
+          newData: serializeAuditData(validated.valueJson),
           userId,
         }
       })

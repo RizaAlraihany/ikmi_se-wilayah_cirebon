@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { EventStatus, PostStatus } from '@prisma/client'
+import { PostStatus } from '@prisma/client'
 import { prisma } from '@/core/database/prisma'
 import { siteUrl } from '@/core/seo/site'
 
@@ -9,9 +9,12 @@ const staticRoutes = [
   { path: '/', priority: 1 },
   { path: '/tentang-kami', priority: 0.9 },
   { path: '/struktur', priority: 0.8 },
-  { path: '/event', priority: 0.8 },
-  { path: '/blog', priority: 0.8 },
+  { path: '/program', priority: 0.8 },
+  { path: '/agenda', priority: 0.8 },
+  { path: '/kalender', priority: 0.8 },
+  { path: '/publikasi', priority: 0.8 },
   { path: '/gabung', priority: 0.7 },
+  { path: '/kontak', priority: 0.6 },
 ] as const
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -24,46 +27,61 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   try {
-    const [posts, events] = await Promise.all([
+    const [posts, programs, agendas] = await Promise.all([
       prisma.post.findMany({
         where: {
           deletedAt: null,
           status: PostStatus.PUBLISHED,
+          category: { deletedAt: null, slug: { in: ['berita', 'opini', 'artikel', 'kajian'] } },
         },
         select: {
           slug: true,
           updatedAt: true,
           publishedAt: true,
+          category: { select: { slug: true } },
         },
         orderBy: { publishedAt: 'desc' },
       }),
-      prisma.event.findMany({
+      prisma.program.findMany({
         where: {
           deletedAt: null,
-          status: {
-            in: [EventStatus.UPCOMING, EventStatus.ONGOING, EventStatus.COMPLETED],
-          },
+          visibility: 'PUBLIC',
+          slug: { not: null },
         },
         select: {
-          id: true,
+          slug: true,
           updatedAt: true,
-          startDate: true,
         },
-        orderBy: { startDate: 'desc' },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      prisma.agenda.findMany({
+        where: {
+          deletedAt: null,
+          visibility: 'PUBLIC',
+          status: { notIn: ['DRAFT', 'ARCHIVED'] },
+        },
+        select: { slug: true, updatedAt: true },
+        orderBy: { updatedAt: 'desc' },
       }),
     ])
 
     return [
       ...staticUrls,
       ...posts.map((post) => ({
-        url: `${siteUrl}/blog/${post.slug}`,
+        url: `${siteUrl}/publikasi/${post.category.slug}/${post.slug}`,
         lastModified: post.updatedAt || post.publishedAt || now,
         changeFrequency: 'monthly' as const,
         priority: 0.7,
       })),
-      ...events.map((event) => ({
-        url: `${siteUrl}/event/${event.id}`,
-        lastModified: event.updatedAt || event.startDate || now,
+      ...programs.map((program) => ({
+        url: `${siteUrl}/program/${program.slug}`,
+        lastModified: program.updatedAt || now,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      })),
+      ...agendas.map((agenda) => ({
+        url: `${siteUrl}/agenda/${agenda.slug}`,
+        lastModified: agenda.updatedAt || now,
         changeFrequency: 'monthly' as const,
         priority: 0.6,
       })),

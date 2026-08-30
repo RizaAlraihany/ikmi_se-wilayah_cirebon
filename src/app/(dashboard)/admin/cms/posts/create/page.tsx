@@ -4,13 +4,15 @@ import { PostForm } from './post-form'
 import { Card, CardContent } from '@/components/ui/card'
 import { auth } from '@/core/auth/auth'
 import { categoryQueries } from '@/features/categories/queries'
-import { userQueries } from '@/features/users/queries'
+import { programQueries } from '@/features/programs/queries'
+import { agendaQueries } from '@/features/agendas/queries'
 
 export default async function AdminCreatePostPage() {
-  const [session, categories, authors] = await Promise.all([
+  const [session, categories, programs, agendas] = await Promise.all([
     auth(),
-    categoryQueries.getAllCategories(),
-    userQueries.getAuthorOptions(),
+    categoryQueries.getPublicationCategories(),
+    programQueries.getPrograms(),
+    agendaQueries.getAgendas(),
   ])
 
   return (
@@ -29,12 +31,9 @@ export default async function AdminCreatePostPage() {
         <CardContent className="p-6">
           <PostForm
             categories={categories.map((category) => ({ id: category.id, name: category.name }))}
-            authors={authors.map((author) => ({
-              id: author.id,
-              name: author.name,
-              meta: author.department?.name || author.role?.name || undefined,
-            }))}
-            currentUserId={session?.user?.id}
+            programs={programs.map(p => ({ id: p.id, name: p.name }))}
+            agendas={agendas.map(a => ({ id: a.id, name: a.name }))}
+            currentUserName={session?.user?.name}
           />
         </CardContent>
       </Card>

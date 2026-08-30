@@ -2,6 +2,7 @@ import { prisma } from '@/core/database/prisma'
 import { waService } from '@/core/notifications/wa-service'
 import { announcementRepository } from './repository'
 import { CreateAnnouncementInput } from './schemas'
+import { requirePermissionForUser } from '@/core/authorization/guards'
 
 export const announcementService = {
   /**
@@ -9,6 +10,8 @@ export const announcementService = {
    * Jika publish=true, otomatis blast ke WA semua user aktif yang punya nomor WA.
    */
   async createAnnouncement(input: CreateAnnouncementInput, userId: string, publish = false) {
+    await requirePermissionForUser(userId, 'announcement.manage')
+
     const announcement = await announcementRepository.create({
       title: input.title,
       content: input.content,
@@ -40,6 +43,8 @@ export const announcementService = {
    * Publish pengumuman yang sudah ada + trigger WA blast.
    */
   async publishAnnouncement(id: string, userId: string) {
+    await requirePermissionForUser(userId, 'announcement.manage')
+
     const announcement = await announcementRepository.findById(id)
     if (!announcement) throw new Error('Pengumuman tidak ditemukan')
 
@@ -50,6 +55,26 @@ export const announcementService = {
 
     await announcementService.blastWA(id, announcement.title, announcement.content, userId)
     return announcement
+  },
+
+  async deleteAnnouncement(id: string, userId: string) {
+    await requirePermissionForUser(userId, 'announcement.manage')
+
+    const announcement = await announcementRepository.findById(id)
+    if (!announcement) throw new Error('Pengumuman tidak ditemukan')
+
+    const deleted = await announcementRepository.softDelete(id, userId)
+    await prisma.auditLog.create({
+      data: {
+        action: 'DELETE',
+        entity: 'Announcement',
+        entityId: id,
+        oldData: JSON.stringify({ title: announcement.title }),
+        userId,
+      },
+    })
+
+    return deleted
   },
 
   /**

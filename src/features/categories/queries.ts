@@ -1,6 +1,15 @@
 import { prisma } from '@/core/database/prisma'
+import { requirePermission } from '@/core/authorization/guards'
 
 export const categoryQueries = {
+  async getPublicationCategories() {
+    await requirePermission('post.view')
+    return prisma.category.findMany({
+      where: { deletedAt: null, slug: { in: ['berita', 'opini', 'artikel', 'kajian'] } },
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: 'asc' },
+    })
+  },
   async getAllCategories() {
     return prisma.category.findMany({
       where: { deletedAt: null },

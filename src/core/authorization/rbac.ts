@@ -1,5 +1,7 @@
+import { cache as reactCache } from 'react'
 import { prisma } from '../database/prisma'
 import { isSuperAdminRole } from '../auth/roles'
+import { permissionCache } from '../cache/permission-cache'
 
 export interface SessionUser {
   id: string
@@ -8,16 +10,14 @@ export interface SessionUser {
   positionId: string | null
 }
 
-import { permissionCache } from '../cache/permission-cache'
-
 const CACHE_TTL_SECONDS = 5 * 60 // 5 minutes
 const CACHE_NAMESPACE = 'rbac:v2'
 
 /**
- * Checks if the user has the required permission.
- * Bypasses permission check if the user is a Super Admin.
+ * Pengecekan hak akses permission untuk role pengguna.
+ * Dilindungi React cache() untuk mencegah duplikasi query dalam 1 siklus render.
  */
-export async function can(permissionName: string, user: SessionUser | null | undefined): Promise<boolean> {
+async function checkPermission(permissionName: string, user: SessionUser | null | undefined): Promise<boolean> {
   if (!user) {
     return false
   }
@@ -28,18 +28,19 @@ export async function can(permissionName: string, user: SessionUser | null | und
 
   const cacheKey = `${CACHE_NAMESPACE}:${user.roleId}:${permissionName}`
   const cached = await permissionCache.get(cacheKey)
+
   if (cached !== null) {
     return cached
   }
 
-  // Find if the role has the specific permission
+  // Cari apakah role memiliki permission spesifik
   const rolePermission = await prisma.rolePermission.findUnique({
     where: {
       roleId_permissionId: {
         roleId: user.roleId,
-        permissionId: permissionName
-      }
-    }
+        permissionId: permissionName,
+      },
+    },
   })
 
   const result = !!rolePermission
@@ -48,3 +49,5 @@ export async function can(permissionName: string, user: SessionUser | null | und
 
   return result
 }
+
+export const can = reactCache(checkPermission)

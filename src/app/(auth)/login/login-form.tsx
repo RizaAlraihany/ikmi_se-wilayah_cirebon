@@ -32,17 +32,33 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {globalError ? (
-        <div className="rounded-xl bg-danger px-4 py-3 text-center text-sm font-medium text-primary" role="alert">
+        <div className="rounded-md border border-danger/20 bg-danger-surface px-4 py-3 text-sm font-medium text-danger-foreground" role="alert">
           {globalError}
         </div>
       ) : null}
 
       <Field label="Email" htmlFor="email" error={errors.email?.message}>
-        <Input id="email" {...register('email')} type="email" placeholder="admin@ikmi.ac.id" autoComplete="email" />
+        <Input
+          id="email"
+          {...register('email')}
+          type="email"
+          inputMode="email"
+          placeholder="Masukkan email admin"
+          autoComplete="email"
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? 'email-error' : undefined}
+        />
       </Field>
 
       <Field label="Password" htmlFor="password" error={errors.password?.message}>
-        <PasswordInput id="password" {...register('password')} placeholder="Masukkan password" autoComplete="current-password" />
+        <PasswordInput
+          id="password"
+          {...register('password')}
+          placeholder="Masukkan password"
+          autoComplete="current-password"
+          aria-invalid={Boolean(errors.password)}
+          aria-describedby={errors.password ? 'password-error' : undefined}
+        />
       </Field>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
@@ -69,7 +85,7 @@ function Field({
         {label}
       </label>
       {children}
-      {error ? <p className="text-sm font-medium text-primary">{error}</p> : null}
+      {error ? <p id={`${htmlFor}-error`} className="text-sm font-medium text-danger">{error}</p> : null}
     </div>
   )
 }

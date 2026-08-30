@@ -1,8 +1,9 @@
 import { can } from '@/core/authorization/rbac'
 import { prisma } from '@/core/database/prisma'
 import { ForbiddenError, NotFoundError } from '@/core/errors/custom-errors'
+import { isDashboardRole, isKomdigiAdminRole, isSuperAdminRole } from '@/core/auth/roles'
 
-export type CmsUser = NonNullable<Awaited<ReturnType<typeof getCmsUser>>>
+export type CmsUser = Awaited<ReturnType<typeof requireCmsUser>>
 
 export async function getCmsUser(userId: string) {
   return prisma.user.findFirst({
@@ -18,24 +19,22 @@ export async function getCmsUser(userId: string) {
   })
 }
 
-// isSuperAdmin removed to avoid hardcoded role checks
-
-export function isKomdigi(user: { department?: { code: string; name: string } | null }) {
-  return user.department?.code === 'KOMDIGI' || !!user.department?.name.includes('Komunikasi & Digitalisasi')
+/** CMS authority follows the final dashboard role, not an organizational unit. */
+export function isKomdigi(user: { roleId?: string | null }) {
+  return isKomdigiAdminRole(user.roleId)
 }
 
 export async function requireCmsUser(userId: string) {
   const user = await getCmsUser(userId)
-  if (!user) {
+  if (!user || !isDashboardRole(user.roleId)) {
     throw new NotFoundError('User tidak ditemukan atau tidak aktif.')
   }
-  return user
+  return { ...user, roleId: user.roleId }
 }
 
 export async function requirePermission(permission: string, userId: string) {
   const user = await requireCmsUser(userId)
-  const isGlobal = await can('system.manage', user)
-  if (!(await can(permission, user)) && !isGlobal) {
+  if (!(await can(permission, user))) {
     throw new ForbiddenError('Tidak memiliki izin untuk aksi ini.')
   }
   return user
@@ -43,18 +42,24 @@ export async function requirePermission(permission: string, userId: string) {
 
 export async function requireCmsUpdate(userId: string) {
   const user = await requirePermission('cms.update', userId)
-  const isGlobal = await can('system.manage', user)
-  if (!isGlobal && !isKomdigi(user)) {
-    throw new ForbiddenError('CMS hanya dapat dikelola oleh Departemen Komdigi.')
+  if (!isSuperAdminRole(user.roleId) && !isKomdigi(user)) {
+    throw new ForbiddenError('CMS hanya dapat dikelola oleh Admin Komdigi.')
+  }
+  return user
+}
+
+export async function requireCmsView(userId: string) {
+  const user = await requirePermission('cms.view', userId)
+  if (!isSuperAdminRole(user.roleId) && !isKomdigi(user)) {
+    throw new ForbiddenError('CMS hanya dapat diakses oleh Admin Komdigi.')
   }
   return user
 }
 
 export async function requirePublisher(userId: string) {
   const user = await requirePermission('post.publish', userId)
-  const isGlobal = await can('system.manage', user)
-  if (!isGlobal && !isKomdigi(user)) {
-    throw new ForbiddenError('Publish artikel hanya dapat dilakukan oleh Publisher Komdigi.')
+  if (!isSuperAdminRole(user.roleId) && !isKomdigi(user)) {
+    throw new ForbiddenError('Publish artikel hanya dapat dilakukan oleh Admin Komdigi.')
   }
   return user
 }
