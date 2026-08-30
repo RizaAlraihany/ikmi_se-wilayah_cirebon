@@ -15,21 +15,45 @@ datasource db {
 enum PostStatus {
   DRAFT
   PENDING_REVIEW
+  REVISION
   APPROVED
+  SCHEDULED
   PUBLISHED
   ARCHIVED
 }
 
 enum ContentPlanStatus {
+  IDE
   PLANNED
   IN_PROGRESS
   READY
+  SCHEDULED
   PUBLISHED
+  CANCELLED
+}
+
+enum PamfletRequestStatus {
+  BARU
+  DITERIMA
+  DIKERJAKAN
+  PERLU_REVISI
+  SELESAI
+  DITOLAK
+  DIBATALKAN
 }
 
 enum RegStatus {
-  PENDING
-  PROCESSED
+  NEW
+  NEEDS_VERIFICATION
+  INCOMPLETE
+  CONTACTED
+  VERIFIED
+  PRABUMI_PARTICIPANT
+  PASSED
+  ACTIVE_MEMBER
+  REJECTED
+  INACTIVE
+  ALUMNI
 }
 
 enum FinanceStatus {
@@ -52,9 +76,29 @@ enum LPJTokenStatus {
 }
 
 enum ProgramStatus {
+  DRAFT
+  PLANNING
+  APPROVED
+  COMMITTEE_FORMATION
+  PREPARATION
+  PRE_EVENT
+  EXECUTION
+  EVALUATION
+  LPJ
+  POSTPONED
+  CANCELLED
+
+  // Legacy statuses are retained so existing Program and Activity records
+  // remain readable during the expand-migrate-contract rollout.
   PLANNED
   ONGOING
   COMPLETED
+}
+
+// Manual override only. Normal Program status is derived from planned dates.
+enum ProgramStatusOverride {
+  POSTPONED
+  CANCELLED
 }
 
 enum EventStatus {
@@ -62,6 +106,25 @@ enum EventStatus {
   ONGOING
   COMPLETED
   CANCELLED
+}
+
+enum EventScheduleState {
+  UPCOMING
+  DUE
+  PAST_DUE
+}
+
+enum EventStatusConfirmationState {
+  NOT_REQUIRED
+  NEEDS_STATUS_CONFIRMATION
+  CONFIRMED
+}
+
+enum BroadcastStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
 }
 
 enum NotificationType {
@@ -81,10 +144,16 @@ enum AuditAction {
   APPROVE
   REJECT
   LOGIN
+  LOGIN_FAILED
   LOGOUT
+  AUTHORIZATION_FAILED
+  STATUS_CHANGE
+  ROLE_CHANGE
+  SECURITY_SETTING_CHANGE
   PUBLISH
   ARCHIVE
   VERIFY
+  DOWNLOAD
 }
 
 enum LetterType {
@@ -93,10 +162,113 @@ enum LetterType {
 }
 
 enum KaryaTulisStatus {
-  PENDING
-  REVISION
+  SUBMITTED
+  UNDER_REVIEW
+  REVISION_REQUIRED
+  RESUBMITTED
+  REJECTED
   APPROVED
+  ARTICLE_DRAFT_CREATED
+  SCHEDULED
   PUBLISHED
+  ARCHIVED
+}
+
+// Domain V2 enums. Legacy enums remain in place until the contract phase.
+enum PeriodStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum OrganizationalUnitStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum OrganizationalUnitType {
+  BPH
+  SECRETARIAT
+  TREASURY
+  DEPARTMENT
+  DIVISION
+}
+
+enum VerificationStatus {
+  DRAFT_DATA
+  NEEDS_VERIFICATION
+  VERIFIED
+}
+
+enum Visibility {
+  PUBLIC
+  INTERNAL
+  MEMBER_ONLY
+  PENGURUS_ONLY
+  BPH_ONLY
+  HIDDEN
+}
+
+enum RegistrationType {
+  GENERAL_REGISTRATION
+  MEMBERSHIP_RECRUITMENT
+  INTERNAL_REGISTRATION
+  EXTERNAL_LINK
+}
+
+enum ProgramRelationshipType {
+  RELATED_TO
+  PART_OF
+  DEPENDS_ON
+  SCHEDULED_WITH
+}
+
+enum AgendaScheduleType {
+  FIXED_DATE
+  RECURRING
+  CONDITIONAL
+  RELATIVE_TO_PROGRAM
+  DEPENDENT_ON_PROGRAM
+}
+
+enum AgendaStatus {
+  DRAFT
+  UNSCHEDULED
+  SCHEDULED
+  COMPLETED
+  POSTPONED
+  CANCELLED
+  ARCHIVED
+}
+
+enum HomepageBannerPhase {
+  BEFORE
+  PRA
+  AFTER
+  GENERAL
+}
+
+enum HomepageBannerStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  PAUSED
+  ARCHIVED
+}
+
+enum MemberStatus {
+  NEW
+  NEEDS_VERIFICATION
+  INCOMPLETE
+  CONTACTED
+  VERIFIED
+  PRABUMI_PARTICIPANT
+  PASSED
+  ACTIVE_MEMBER
+  INACTIVE
+  REJECTED
+  ALUMNI
 }
 
 // -----------------------------------------------------------------------------
@@ -104,18 +276,19 @@ enum KaryaTulisStatus {
 // -----------------------------------------------------------------------------
 
 model User {
-  id              String    @id @default(cuid())
-  name            String
-  email           String    @unique
-  passwordHash    String    @map("password_hash")
-  isActive        Boolean   @default(true) @map("is_active")
-  lastLoginAt     DateTime? @map("last_login_at")
-  roleId          String    @map("role_id")
-  departmentId    String?   @map("department_id")
-  positionId      String?   @map("position_id")
-  photoUrl        String?   @map("photo_url")
-  photoPublicId   String?   @map("photo_public_id")
-  whatsappNumber  String?   @map("whatsapp_number")
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  passwordHash   String    @map("password_hash")
+  isActive       Boolean   @default(true) @map("is_active")
+  lastLoginAt    DateTime? @map("last_login_at")
+  // Non-admin organizational members do not need a dashboard role.
+  roleId         String?   @map("role_id")
+  departmentId   String?   @map("department_id")
+  positionId     String?   @map("position_id")
+  photoUrl       String?   @map("photo_url")
+  photoPublicId  String?   @map("photo_public_id")
+  whatsappNumber String?   @map("whatsapp_number")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -123,17 +296,22 @@ model User {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
-  role          Role           @relation(fields: [roleId], references: [id])
-  department    Department?    @relation(fields: [departmentId], references: [id])
-  position      Position?      @relation(fields: [positionId], references: [id])
-  posts         Post[]
-  auditLogs     AuditLog[]
-  notifications Notification[]
-  contentPlans  ContentPlan[]
-  mediaAssets   MediaAsset[]
-  karyaTulis    KaryaTulis[]
-  lpjTokensGenerated LPJToken[] @relation("GeneratedBy")
-  lpjSubmissions     LPJSubmission[]
+  role                    Role?            @relation(fields: [roleId], references: [id])
+  sessionVersion          Int              @default(1) @map("session_version")
+  department              Department?      @relation(fields: [departmentId], references: [id])
+  position                Position?        @relation(fields: [positionId], references: [id])
+  posts                   Post[]
+  auditLogs               AuditLog[]
+  notifications           Notification[]
+  assignedPamfletRequests PamfletRequest[] @relation("PamfletRequestAssignee")
+  contentPlans            ContentPlan[]
+  mediaAssets             MediaAsset[]
+  karyaTulis              KaryaTulis[]
+  lpjTokensGenerated      LPJToken[]       @relation("GeneratedBy")
+  lpjSubmissions          LPJSubmission[]
+  homepageBannersCreated  HomepageBanner[] @relation("HomepageBannerCreator")
+
+  structureAssignments StructureAssignment[]
 
   @@index([roleId])
   @@index([departmentId])
@@ -192,9 +370,16 @@ model RolePermission {
 }
 
 model Department {
-  id   String @id @default(cuid())
-  name String
-  code String
+  id           String                   @id @default(cuid())
+  name         String
+  code         String
+  description  String?                  @db.Text
+  email        String?
+  headMemberId String?                  @map("head_member_id")
+  periodId     String?                  @map("period_id")
+  status       OrganizationalUnitStatus @default(ACTIVE)
+  unitType     OrganizationalUnitType   @default(DEPARTMENT) @map("unit_type")
+  sortOrder    Int                      @default(0) @map("sort_order")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -202,10 +387,20 @@ model Department {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
-  users     User[]
-  programs  Program[]
-  positions Position[]
+  users            User[]
+  programs         Program[]
+  positions        Position[]
+  agendas          Agenda[]
+  documentArchives DocumentArchive[]
+  headMember       Member?           @relation("OrganizationalUnitHead", fields: [headMemberId], references: [id])
+  period           Period?           @relation(fields: [periodId], references: [id])
 
+  structureAssignments StructureAssignment[]
+
+  @@index([headMemberId])
+  @@index([periodId])
+  @@index([status])
+  @@index([unitType])
   @@map("departments")
 }
 
@@ -213,6 +408,7 @@ model Position {
   id           String  @id @default(cuid())
   name         String
   departmentId String? @map("department_id")
+  sortOrder    Int     @default(0) @map("sort_order")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -220,8 +416,9 @@ model Position {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
-  department Department? @relation(fields: [departmentId], references: [id])
-  users      User[]
+  department           Department?           @relation(fields: [departmentId], references: [id])
+  users                User[]
+  structureAssignments StructureAssignment[]
 
   @@index([departmentId])
   @@map("positions")
@@ -245,24 +442,35 @@ model Category {
 }
 
 model Post {
-  id                String     @id @default(cuid())
-  title             String
-  slug              String     @unique
-  content           String     @db.Text
-  excerpt           String?    @db.Text
-  thumbnailUrl      String?    @map("thumbnail_url")
-  thumbnailPublicId String?    @map("thumbnail_public_id")
-  seoTitle          String?    @map("seo_title")
-  seoDescription    String?    @map("seo_description") @db.Text
-  seoKeywords       String?    @map("seo_keywords") @db.Text
-  status            PostStatus
-  authorId          String     @map("author_id")
-  categoryId        String     @map("category_id")
-  reviewedBy        String?    @map("reviewed_by")
-  reviewedAt        DateTime?  @map("reviewed_at")
-  publishedBy       String?    @map("published_by")
-  publishedAt       DateTime?  @map("published_at")
-  archivedAt        DateTime?  @map("archived_at")
+  id                  String     @id @default(cuid())
+  title               String
+  slug                String     @unique
+  content             String     @db.Text
+  excerpt             String?    @db.Text
+  thumbnailUrl        String?    @map("thumbnail_url")
+  thumbnailPublicId   String?    @map("thumbnail_public_id")
+  ogImageUrl          String?    @map("og_image_url")
+  ogImagePublicId     String?    @map("og_image_public_id")
+  seoTitle            String?    @map("seo_title")
+  seoDescription      String?    @map("seo_description") @db.Text
+  seoKeywords         String?    @map("seo_keywords") @db.Text
+  sourceProvider      String?    @map("source_provider")
+  sourcePostId        String?    @map("source_post_id")
+  sourceUrl           String?    @map("source_url") @db.Text
+  status              PostStatus
+  authorId            String     @map("author_id")
+  authorName          String?    @map("author_name")
+  categoryId          String     @map("category_id")
+  programId           String?    @map("program_id")
+  agendaId            String?    @map("agenda_id")
+  writingSubmissionId String?    @unique @map("writing_submission_id")
+  reviewedBy          String?    @map("reviewed_by")
+  reviewedAt          DateTime?  @map("reviewed_at")
+  revisionNotes       String?    @map("revision_notes") @db.Text
+  publishedBy         String?    @map("published_by")
+  publishedAt         DateTime?  @map("published_at")
+  scheduledAt         DateTime?  @map("scheduled_at")
+  archivedAt          DateTime?  @map("archived_at")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -270,13 +478,20 @@ model Post {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
-  author   User     @relation(fields: [authorId], references: [id])
-  category Category @relation(fields: [categoryId], references: [id])
+  author            User        @relation(fields: [authorId], references: [id])
+  category          Category    @relation(fields: [categoryId], references: [id])
+  program           Program?    @relation(fields: [programId], references: [id])
+  agenda            Agenda?     @relation(fields: [agendaId], references: [id])
+  writingSubmission KaryaTulis? @relation(fields: [writingSubmissionId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([authorId])
   @@index([categoryId])
   @@index([publishedAt])
+  @@index([sourceProvider, sourcePostId])
+  @@unique([sourceProvider, sourcePostId])
+  @@index([programId])
+  @@index([agendaId])
   @@map("posts")
 }
 
@@ -289,8 +504,16 @@ model ContentPlan {
   authorId    String            @map("author_id")
   notes       String?           @db.Text
 
+  contentType  String? @map("content_type")
+  assetUrl     String? @map("asset_url")
+  publishedUrl String? @map("published_url")
+
   // Jika item ini berasal dari request pamflet user
-  pamfletRequestId String? @map("pamflet_request_id")
+  pamfletRequestId String?         @unique @map("pamflet_request_id")
+  pamfletRequest   PamfletRequest? @relation(fields: [pamfletRequestId], references: [id])
+
+  programId String? @map("program_id")
+  agendaId  String? @map("agenda_id")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -298,26 +521,47 @@ model ContentPlan {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
-  author User @relation(fields: [authorId], references: [id])
+  author  User     @relation(fields: [authorId], references: [id])
+  program Program? @relation(fields: [programId], references: [id])
+  agenda  Agenda?  @relation(fields: [agendaId], references: [id])
 
   @@index([authorId])
+  @@index([programId])
+  @@index([agendaId])
   @@index([status])
   @@map("content_plans")
 }
 
 // Karya Tulis Queue (submission dari User, dikelola Komdigi)
 model KaryaTulis {
-  id           String           @id @default(cuid())
-  title        String
-  content      String           @db.Text
-  fileUrl      String?          @map("file_url")
-  filePublicId String?          @map("file_public_id")
-  status       KaryaTulisStatus @default(PENDING)
-  submittedBy  String           @map("submitted_by")
-  reviewNotes  String?          @map("review_notes") @db.Text
-  reviewedBy   String?          @map("reviewed_by")
-  reviewedAt   DateTime?        @map("reviewed_at")
-  publishedAt  DateTime?        @map("published_at")
+  id               String           @id @default(cuid())
+  submissionNumber String           @unique @map("submission_number")
+  title            String
+  content          String?          @db.Text
+  fileUrl          String?          @map("file_url")
+  filePublicId     String?          @map("file_public_id")
+  status           KaryaTulisStatus @default(SUBMITTED)
+
+  // Identitas publik untuk form kirim tulisan (tanpa login)
+  authorName     String?   @map("author_name")
+  authorEmail    String?   @map("author_email")
+  authorWhatsapp String?   @map("author_whatsapp")
+  authorStatus   String?   @map("author_status")
+  authorUnit     String?   @map("author_unit")
+  consentAt      DateTime? @map("consent_at")
+
+  // Metadata tambahan
+  category String?
+  topic    String?
+  summary  String? @db.Text
+
+  submittedBy            String?   @map("submitted_by")
+  reviewNotes            String?   @map("review_notes") @db.Text
+  reviewedBy             String?   @map("reviewed_by")
+  reviewedAt             DateTime? @map("reviewed_at")
+  publishedAt            DateTime? @map("published_at")
+  revisionTokenHash      String?   @unique @map("revision_token_hash")
+  revisionTokenExpiresAt DateTime? @map("revision_token_expires_at")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -325,21 +569,63 @@ model KaryaTulis {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
-  submitter User @relation(fields: [submittedBy], references: [id])
+  submitter    User?               @relation(fields: [submittedBy], references: [id])
+  versions     KaryaTulisVersion[]
+  articleDraft Post?
 
   @@index([status])
   @@index([submittedBy])
   @@map("karya_tulis")
 }
 
-// Request Pamflet dari User → otomatis masuk sebagai item Content Plan Komdigi
+model KaryaTulisVersion {
+  id               String   @id @default(cuid())
+  karyaTulisId     String   @map("karya_tulis_id")
+  versionNumber    Int      @map("version_number")
+  originalFilename String   @map("original_filename")
+  filePublicId     String   @map("file_public_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  uploadedBy       String?  @map("uploaded_by")
+
+  karyaTulis KaryaTulis @relation(fields: [karyaTulisId], references: [id], onDelete: Restrict)
+
+  @@unique([karyaTulisId, versionNumber])
+  @@index([karyaTulisId])
+  @@map("karya_tulis_versions")
+}
+
+// Request Pamflet dari User â†’ otomatis masuk sebagai item Content Plan Komdigi
 model PamfletRequest {
-  id           String  @id @default(cuid())
-  activityName String  @map("activity_name")
-  description  String  @db.Text
-  deadline     DateTime
-  requestedBy  String  @map("requested_by")
-  notes        String? @db.Text
+  id                String @id @default(cuid())
+  requestNumber     String @unique @map("request_number")
+  requesterName     String @map("requester_name")
+  requesterUnit     String @map("requester_unit")
+  requesterWhatsapp String @map("requester_whatsapp")
+
+  programId String? @map("program_id")
+  agendaId  String? @map("agenda_id")
+
+  activityName String    @map("activity_name")
+  theme        String?
+  eventDate    DateTime? @map("event_date")
+  eventTime    String?   @map("event_time")
+  location     String?
+
+  requestType            String   @map("request_type")
+  description            String   @db.Text
+  contactPerson          String?  @map("contact_person")
+  caption                String?  @db.Text
+  deadline               DateTime
+  referenceLink          String?  @map("reference_link")
+  attachmentUrl          String?  @map("attachment_url")
+  attachmentPublicId     String?  @map("attachment_public_id")
+  attachmentOriginalName String?  @map("attachment_original_name")
+  attachmentMimeType     String?  @map("attachment_mime_type")
+  attachmentSize         Int?     @map("attachment_size")
+
+  status         PamfletRequestStatus @default(BARU)
+  requesterNotes String?              @map("requester_notes") @db.Text
+  notes          String?              @db.Text
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -347,7 +633,18 @@ model PamfletRequest {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
-  @@index([requestedBy])
+  program Program? @relation(fields: [programId], references: [id])
+  agenda  Agenda?  @relation(fields: [agendaId], references: [id])
+
+  assigneeId String? @map("assignee_id")
+  assignee   User?   @relation("PamfletRequestAssignee", fields: [assigneeId], references: [id])
+
+  contentPlan ContentPlan?
+
+  @@index([status])
+  @@index([assigneeId])
+  @@index([programId])
+  @@index([agendaId])
   @@map("pamflet_requests")
 }
 
@@ -378,13 +675,68 @@ model MediaAsset {
   @@map("media_assets")
 }
 
+model Period {
+  id           String       @id @default(cuid())
+  name         String
+  cabinetName  String?      @map("cabinet_name")
+  chairmanName String?      @map("chairman_name")
+  startDate    DateTime?    @map("start_date")
+  endDate      DateTime?    @map("end_date")
+  status       PeriodStatus @default(DRAFT)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  organizationalUnits  Department[]
+  programs             Program[]
+  agendas              Agenda[]
+  members              Member[]
+  documentArchives     DocumentArchive[]
+  structureAssignments StructureAssignment[]
+  albums               Album[]
+
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("periods")
+}
+
 model Program {
   id           String        @id @default(cuid())
   name         String
+  slug         String?       @unique
   departmentId String        @map("department_id")
-  budgetPlan   Decimal       @map("budget_plan")
+  budgetPlan   Decimal?      @map("budget_plan")
   description  String        @db.Text
   status       ProgramStatus
+
+  // Domain V2 fields remain nullable only where the source data can genuinely be unknown.
+  periodId             String?                @map("period_id")
+  fullName             String?                @map("full_name")
+  objective            String?                @db.Text
+  targetAudience       String?                @map("target_audience") @db.Text
+  method               String?                @db.Text
+  output               String?                @db.Text
+  picId                String?                @map("pic_id")
+  plannedStart         DateTime?              @map("planned_start")
+  plannedEnd           DateTime?              @map("planned_end")
+  location             String?
+  statusOverride       ProgramStatusOverride? @map("status_override")
+  actualStart          DateTime?              @map("actual_start")
+  actualEnd            DateTime?              @map("actual_end")
+  actualEvidenceUrl    String?                @map("actual_evidence_url")
+  actualNote           String?                @map("actual_note") @db.Text
+  scheduleStatus       String?                @map("schedule_status")
+  plannedBudget        Decimal?               @map("planned_budget")
+  budgetVisibility     Visibility?            @map("budget_visibility")
+  verificationStatus   VerificationStatus     @default(NEEDS_VERIFICATION) @map("verification_status")
+  progress             Int?
+  visibility           Visibility             @default(HIDDEN)
+  campaignEnabled      Boolean                @default(false) @map("campaign_enabled")
+  featured             Boolean                @default(false)
+  isFeatured           Boolean?               @map("is_featured")
+  requiresRegistration Boolean?               @map("requires_registration")
+  registrationType     RegistrationType?      @map("registration_type")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -392,11 +744,28 @@ model Program {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
-  department Department @relation(fields: [departmentId], references: [id])
-  events     Event[]
-  activities Activity[]
+  department          Department            @relation(fields: [departmentId], references: [id])
+  period              Period?               @relation(fields: [periodId], references: [id])
+  pic                 Member?               @relation("ProgramPic", fields: [picId], references: [id])
+  events              Event[]
+  activities          Activity[]
+  relationshipSources ProgramRelationship[] @relation("ProgramRelationshipSource")
+  relationshipTargets ProgramRelationship[] @relation("ProgramRelationshipTarget")
+  agendas             Agenda[]              @relation("AgendaProgram")
+  relativeAgendas     Agenda[]              @relation("AgendaRelativeProgram")
+  homepageBanners     HomepageBanner[]
+  documentArchives    DocumentArchive[]
+  contentPlans        ContentPlan[]
+  pamfletRequests     PamfletRequest[]
+  posts               Post[]
+  albums              Album[]
 
   @@index([departmentId])
+  @@index([periodId])
+  @@index([picId])
+  @@index([statusOverride])
+  @@index([verificationStatus])
+  @@index([visibility])
   @@index([status])
   @@map("programs")
 }
@@ -421,15 +790,82 @@ model Activity {
   @@map("activities")
 }
 
+model ProgramRelationship {
+  id               String                  @id @default(cuid())
+  sourceProgramId  String                  @map("source_program_id")
+  targetProgramId  String                  @map("target_program_id")
+  relationshipType ProgramRelationshipType @map("relationship_type")
+  note             String?                 @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  sourceProgram Program @relation("ProgramRelationshipSource", fields: [sourceProgramId], references: [id])
+  targetProgram Program @relation("ProgramRelationshipTarget", fields: [targetProgramId], references: [id])
+
+  @@unique([sourceProgramId, targetProgramId, relationshipType])
+  @@index([targetProgramId])
+  @@map("program_relationships")
+}
+
+model Agenda {
+  id                   String             @id @default(cuid())
+  slug                 String             @unique
+  periodId             String?            @map("period_id")
+  organizationalUnitId String?            @map("organizational_unit_id")
+  programId            String?            @map("program_id")
+  name                 String
+  description          String?            @db.Text
+  picId                String?            @map("pic_id")
+  scheduleType         AgendaScheduleType @default(FIXED_DATE) @map("schedule_type")
+  startDatetime        DateTime?          @map("start_datetime")
+  endDatetime          DateTime?          @map("end_datetime")
+  recurrenceRule       String?            @map("recurrence_rule") @db.Text
+  relativeToProgramId  String?            @map("relative_to_program_id")
+  relativeOffset       Int?               @map("relative_offset")
+  conditionalNote      String?            @map("conditional_note") @db.Text
+  location             String?
+  visibility           Visibility         @default(HIDDEN)
+  status               AgendaStatus       @default(DRAFT)
+  requiresRegistration Boolean?           @map("requires_registration")
+  registrationType     RegistrationType?  @map("registration_type")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  period             Period?          @relation(fields: [periodId], references: [id])
+  organizationalUnit Department?      @relation(fields: [organizationalUnitId], references: [id])
+  program            Program?         @relation("AgendaProgram", fields: [programId], references: [id])
+  pic                Member?          @relation("AgendaPic", fields: [picId], references: [id])
+  relativeToProgram  Program?         @relation("AgendaRelativeProgram", fields: [relativeToProgramId], references: [id])
+  contentPlans       ContentPlan[]
+  pamfletRequests    PamfletRequest[]
+  posts              Post[]
+  albums             Album[]
+
+  @@index([periodId])
+  @@index([organizationalUnitId])
+  @@index([programId])
+  @@index([picId])
+  @@index([relativeToProgramId])
+  @@index([scheduleType])
+  @@index([visibility])
+  @@index([status])
+  @@map("agendas")
+}
+
 model Event {
-  id          String      @id @default(cuid())
-  programId   String?     @map("program_id")
-  title       String
-  description String      @db.Text
-  location    String
-  startDate   DateTime    @map("start_date")
-  endDate     DateTime    @map("end_date")
-  status      EventStatus
+  id                      String                       @id @default(cuid())
+  programId               String?                      @map("program_id")
+  title                   String
+  description             String                       @db.Text
+  location                String
+  startDate               DateTime                     @map("start_date")
+  endDate                 DateTime                     @map("end_date")
+  scheduleState           EventScheduleState           @default(UPCOMING) @map("schedule_state")
+  statusConfirmationState EventStatusConfirmationState @default(NOT_REQUIRED) @map("status_confirmation_state")
+  status                  EventStatus
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -444,6 +880,25 @@ model Event {
   @@index([startDate])
   @@index([status])
   @@map("events")
+}
+
+model BroadcastDelivery {
+  id                String          @id @default(cuid())
+  broadcastKey      String          @unique @map("broadcast_key")
+  channel           String
+  recipient         String
+  status            BroadcastStatus @default(PENDING)
+  attemptCount      Int             @default(0) @map("attempt_count")
+  providerMessageId String?         @map("provider_message_id")
+  sentAt            DateTime?       @map("sent_at")
+  lastError         String?         @map("last_error") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([channel])
+  @@map("broadcast_deliveries")
 }
 
 model Report {
@@ -474,17 +929,17 @@ model Report {
   @@map("reports")
 }
 
-// LPJ Token — token sekali pakai untuk User submit LPJ
+// LPJ Token â€” token sekali pakai untuk User submit LPJ
 model LPJToken {
-  id            String         @id @default(cuid())
-  token         String         @unique
-  activityName  String         @map("activity_name")
-  description   String?        @db.Text
-  expiredAt     DateTime       @map("expired_at")
-  status        LPJTokenStatus @default(ACTIVE)
-  generatedBy   String         @map("generated_by")
-  usedBy        String?        @map("used_by")
-  usedAt        DateTime?      @map("used_at")
+  id           String         @id @default(cuid())
+  token        String         @unique
+  activityName String         @map("activity_name")
+  description  String?        @db.Text
+  expiredAt    DateTime       @map("expired_at")
+  status       LPJTokenStatus @default(ACTIVE)
+  generatedBy  String         @map("generated_by")
+  usedBy       String?        @map("used_by")
+  usedAt       DateTime?      @map("used_at")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -492,23 +947,23 @@ model LPJToken {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
-  generator    User            @relation("GeneratedBy", fields: [generatedBy], references: [id])
-  submissions  LPJSubmission[]
-  reports      Report[]
+  generator   User            @relation("GeneratedBy", fields: [generatedBy], references: [id])
+  submissions LPJSubmission[]
+  reports     Report[]
 
   @@index([status])
   @@index([expiredAt])
   @@map("lpj_tokens")
 }
 
-// LPJ Submission — record submission via token
+// LPJ Submission â€” record submission via token
 model LPJSubmission {
-  id           String    @id @default(cuid())
-  lpjTokenId   String    @map("lpj_token_id")
-  submittedBy  String    @map("submitted_by")
-  documentUrl  String    @map("document_url")
+  id               String  @id @default(cuid())
+  lpjTokenId       String  @map("lpj_token_id")
+  submittedBy      String  @map("submitted_by")
+  documentUrl      String  @map("document_url")
   documentPublicId String? @map("document_public_id")
-  notes        String?   @db.Text
+  notes            String? @db.Text
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -524,18 +979,26 @@ model LPJSubmission {
   @@map("lpj_submissions")
 }
 
-// Registrasi dari web publik — tanpa approval flow
+// Registrasi dari web publik tanpa approval flow
 model Registration {
-  id       String    @id @default(cuid())
-  fullName String    @map("full_name")
-  campus   String
-  major    String
-  semester String
-  address  String    @db.Text
-  whatsapp String
-  reasons  String    @db.Text
-  status   RegStatus @default(PENDING)
-  notes    String?   @db.Text
+  id                     String    @id @default(cuid())
+  registrationNumber     String?   @unique @map("registration_number")
+  fullName               String    @map("full_name")
+  email                  String?
+  campus                 String
+  major                  String
+  semester               String
+  entryYear              Int?      @map("entry_year")
+  district               String?
+  village                String?
+  address                String    @db.Text
+  whatsapp               String
+  reasons                String    @db.Text
+  organizationExperience String?   @map("organization_experience") @db.Text
+  interests              String?   @db.Text
+  consentAt              DateTime? @map("consent_at")
+  status                 RegStatus @default(NEW)
+  notes                  String?   @db.Text
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -543,21 +1006,95 @@ model Registration {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
+  member Member?
+
   @@index([status])
   @@index([campus])
   @@map("registrations")
 }
 
-// Pengumuman dari Sekretaris — bisa di-blast ke WA semua user
+model Member {
+  id                 String       @id @default(cuid())
+  registrationId     String?      @unique @map("registration_id")
+  registrationNumber String?      @unique @map("registration_number")
+  fullName           String       @map("full_name")
+  email              String?
+  phone              String?
+  campus             String?
+  studyProgram       String?      @map("study_program")
+  entryYear          Int?         @map("entry_year")
+  semester           Int?
+  district           String?
+  village            String?
+  photoUrl           String?      @map("photo_url")
+  photoPublicId      String?      @map("photo_public_id")
+  membershipStatus   MemberStatus @default(NEW) @map("membership_status")
+  joinedAt           DateTime?    @map("joined_at")
+  periodId           String?      @map("period_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  period                    Period?               @relation(fields: [periodId], references: [id])
+  registration              Registration?         @relation(fields: [registrationId], references: [id])
+  headedOrganizationalUnits Department[]          @relation("OrganizationalUnitHead")
+  programsAsPic             Program[]             @relation("ProgramPic")
+  agendasAsPic              Agenda[]              @relation("AgendaPic")
+  structureAssignments      StructureAssignment[]
+
+  @@index([periodId])
+  @@index([membershipStatus])
+  @@index([campus])
+  @@index([studyProgram])
+  @@index([entryYear])
+  @@index([district])
+  @@map("members")
+}
+
+model HomepageBanner {
+  id             String               @id @default(cuid())
+  programId      String?              @map("program_id")
+  internalTitle  String               @map("internal_title")
+  phase          HomepageBannerPhase
+  headline       String
+  supportingText String?              @map("supporting_text") @db.Text
+  desktopImage   String?              @map("desktop_image")
+  mobileImage    String?              @map("mobile_image")
+  ctaLabel       String?              @map("cta_label")
+  ctaUrl         String?              @map("cta_url")
+  startAt        DateTime?            @map("start_at")
+  endAt          DateTime?            @map("end_at")
+  priority       Int                  @default(0)
+  status         HomepageBannerStatus @default(DRAFT)
+  createdById    String?              @map("created_by")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  program   Program? @relation(fields: [programId], references: [id])
+  createdBy User?    @relation("HomepageBannerCreator", fields: [createdById], references: [id])
+
+  @@index([programId])
+  @@index([createdById])
+  @@index([phase])
+  @@index([status])
+  @@index([startAt, endAt])
+  @@index([priority])
+  @@map("homepage_banners")
+}
+
+// Pengumuman dari Sekretaris â€” bisa di-blast ke WA semua user
 model Announcement {
-  id        String   @id @default(cuid())
-  title     String
-  content   String   @db.Text
+  id          String    @id @default(cuid())
+  title       String
+  content     String    @db.Text
   publishedAt DateTime? @map("published_at")
-  isWaBlasted Boolean  @default(false) @map("is_wa_blasted")
+  isWaBlasted Boolean   @default(false) @map("is_wa_blasted")
   blastSentAt DateTime? @map("blast_sent_at")
-  createdBy String?   @map("created_by")
-  updatedBy String?   @map("updated_by")
+  createdBy   String?   @map("created_by")
+  updatedBy   String?   @map("updated_by")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -590,13 +1127,20 @@ model Letter {
 }
 
 model DocumentArchive {
-  id           String   @id @default(cuid())
-  title        String
-  category     String
-  description  String?  @db.Text
-  fileUrl      String   @map("file_url")
-  filePublicId String?  @map("file_public_id")
-  archivedAt   DateTime @map("archived_at")
+  id                   String     @id @default(cuid())
+  title                String
+  category             String
+  description          String?    @db.Text
+  fileUrl              String     @map("file_url")
+  filePublicId         String?    @map("file_public_id")
+  fileName             String?    @map("file_name")
+  fileMimeType         String?    @map("file_mime_type")
+  fileSize             Int?       @map("file_size")
+  archivedAt           DateTime   @map("archived_at")
+  organizationalUnitId String?    @map("organizational_unit_id")
+  periodId             String?    @map("period_id")
+  programId            String?    @map("program_id")
+  visibility           Visibility @default(INTERNAL)
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -604,23 +1148,32 @@ model DocumentArchive {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
+  organizationalUnit Department? @relation(fields: [organizationalUnitId], references: [id])
+  period             Period?     @relation(fields: [periodId], references: [id])
+  program            Program?    @relation(fields: [programId], references: [id])
+
+  @@index([organizationalUnitId])
+  @@index([periodId])
+  @@index([programId])
+  @@index([visibility])
   @@index([category])
   @@index([archivedAt])
+  @@index([deletedAt, category, archivedAt])
   @@map("document_archives")
 }
 
-// Buku Kas — transaksi keuangan (Bendahara)
+// Buku Kas â€” transaksi keuangan (Bendahara)
 model FinanceTransaction {
-  id          String   @id @default(cuid())
-  type        String   // "INCOME" | "EXPENSE"
-  amount      Decimal
-  description String
-  category    String
-  date        DateTime
-  proofUrl    String?  @map("proof_url")
-  proofPublicId String? @map("proof_public_id")
-  createdBy   String?  @map("created_by")
-  updatedBy   String?  @map("updated_by")
+  id            String   @id @default(cuid())
+  type          String // "INCOME" | "EXPENSE"
+  amount        Decimal
+  description   String
+  category      String
+  date          DateTime
+  proofUrl      String?  @map("proof_url")
+  proofPublicId String?  @map("proof_public_id")
+  createdBy     String?  @map("created_by")
+  updatedBy     String?  @map("updated_by")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -653,6 +1206,34 @@ model Notification {
   @@map("notifications")
 }
 
+enum WhatsappMessageStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model WhatsappMessageLog {
+  id                String                @id @default(cuid())
+  recipient         String
+  message           String                @db.Text
+  status            WhatsappMessageStatus @default(PENDING)
+  idempotencyKey    String                @unique @map("idempotency_key")
+  errorMessage      String?               @map("error_message") @db.Text
+  retryCount        Int                   @default(0) @map("retry_count")
+  attemptCount      Int                   @default(0) @map("attempt_count")
+  providerMessageId String?               @map("provider_message_id")
+  sentAt            DateTime?             @map("sent_at")
+  failedAt          DateTime?             @map("failed_at")
+  lastAttemptAt     DateTime?             @map("last_attempt_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("whatsapp_message_logs")
+}
+
 model AuditLog {
   id       String      @id @default(cuid())
   action   AuditAction
@@ -660,7 +1241,7 @@ model AuditLog {
   entityId String      @map("entity_id")
   oldData  String?     @map("old_data") @db.Text
   newData  String?     @map("new_data") @db.Text
-  userId   String      @map("user_id")
+  userId   String?     @map("user_id")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -668,10 +1249,12 @@ model AuditLog {
   createdBy String?   @map("created_by")
   updatedBy String?   @map("updated_by")
 
-  user User @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
 
   @@index([entity, entityId])
   @@index([userId])
+  @@index([action, createdAt])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 
@@ -687,4 +1270,87 @@ model WebConfig {
   updatedBy String?   @map("updated_by")
 
   @@map("web_configs")
+}
+
+model StructureAssignment {
+  id           String  @id @default(cuid())
+  userId       String? @map("user_id")
+  memberId     String? @map("member_id")
+  periodId     String  @map("period_id")
+  departmentId String  @map("department_id")
+  positionId   String  @map("position_id")
+  sortOrder    Int     @default(0) @map("sort_order")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user       User?      @relation(fields: [userId], references: [id])
+  member     Member?    @relation(fields: [memberId], references: [id])
+  period     Period     @relation(fields: [periodId], references: [id])
+  department Department @relation(fields: [departmentId], references: [id])
+  position   Position   @relation(fields: [positionId], references: [id])
+
+  @@index([periodId, departmentId])
+  @@index([periodId, deletedAt])
+  @@index([memberId])
+  @@map("structure_assignments")
+}
+
+// ==========================================
+// MODULE: GALLERY (PHASE 18)
+// ==========================================
+
+model Album {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  description   String?   @db.Text
+  coverImage    String?   @map("cover_image")
+  coverPublicId String?   @map("cover_public_id")
+  isPublic      Boolean   @default(true) @map("is_public")
+  eventDate     DateTime? @map("event_date")
+
+  periodId  String? @map("period_id")
+  programId String? @map("program_id")
+  agendaId  String? @map("agenda_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  period  Period?  @relation(fields: [periodId], references: [id])
+  program Program? @relation(fields: [programId], references: [id])
+  agenda  Agenda?  @relation(fields: [agendaId], references: [id])
+
+  photos Photo[]
+
+  @@index([periodId])
+  @@index([programId])
+  @@index([agendaId])
+  @@index([isPublic, deletedAt, eventDate])
+  @@map("albums")
+}
+
+model Photo {
+  id       String  @id @default(cuid())
+  albumId  String  @map("album_id")
+  imageUrl String  @map("image_url")
+  publicId String? @map("public_id")
+  caption  String? @db.Text
+  altText  String? @map("alt_text")
+  order    Int     @default(0)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+
+  album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@index([albumId])
+  @@map("photos")
 }

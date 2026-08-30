@@ -1,0 +1,1 @@
+ALTER TABLE "posts" ADD COLUMN IF NOT EXISTS "author_name" TEXT;
