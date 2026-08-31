@@ -13,7 +13,6 @@
     "db:seed:dev": "npm run db:seed:generate && tsx prisma/seed.development.ts",
     "db:seed:master": "tsx prisma/seed.master-data.ts",
     "db:seed:export": "tsx prisma/seed.export.ts",
-    "migrate:prd-v2": "tsx scripts/migrate-prd-v2.ts",
     "backup:daily": "node scripts/database-backup.mjs --mode daily",
     "backup:weekly": "node scripts/database-backup.mjs --mode weekly",
     "backup:restore-test": "node scripts/database-restore-test.mjs",

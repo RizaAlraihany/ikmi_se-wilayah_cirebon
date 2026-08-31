@@ -1,120 +1,193 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { ExternalLink, Facebook, Instagram, MapPin, Music2, Youtube } from 'lucide-react'
+import {
+  ArrowUpRight,
+  Facebook,
+  Instagram,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Music2,
+  Youtube,
+} from 'lucide-react'
 import { IKMI_LOGO_URL } from '@/core/brand/assets'
+import { webConfigQueries } from '@/features/web-config/queries'
 
-const footerNav = [
-  { label: 'Tentang Kami', href: '/tentang-kami' },
-  { label: 'Event', href: '/event' },
-  { label: 'Struktur', href: '/struktur' },
-  { label: 'Blog', href: '/blog' },
+const explorationLinks = [
+  { label: 'Tentang IKMI', href: '/tentang-kami' },
+  { label: 'Agenda & Kegiatan', href: '/agenda' },
+  { label: 'Publikasi Terbaru', href: '/publikasi' },
+  { label: 'Hubungi Kami', href: '/kontak' },
+  { label: 'Pendaftaran Anggota', href: '/gabung' },
 ]
 
-const socialLinks = [
-  { icon: Facebook, label: 'Facebook', href: 'https://www.facebook.com/ikmi.crb' },
-  { icon: Instagram, label: 'Instagram', href: 'https://www.instagram.com/ikmi_crb' },
-  { icon: Music2, label: 'TikTok', href: 'https://www.tiktok.com/@ikmi.crb' },
-  { icon: Youtube, label: 'YouTube', href: 'https://www.youtube.com/@ikmisewilayahcirebon' },
-]
+function asExternalUrl(value: string | null) {
+  if (!value) return null
 
-const secretariatMapUrl = 'https://maps.app.goo.gl/uo87mJg9WpV5t6udA'
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : null
+  } catch {
+    return null
+  }
+}
 
-export function PublicFooter() {
+function asWhatsAppUrl(value: string | null) {
+  const number = value?.replace(/\D/g, '')
+  return number && number.length >= 8 && number.length <= 15 ? `https://wa.me/${number}` : null
+}
+
+export async function PublicFooter() {
+  const contact = await webConfigQueries.getPublicContactInfo()
+  const whatsappUrl = asWhatsAppUrl(contact.whatsapp)
+  const addressMapUrl = contact.address
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(contact.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`
+    : null
+  const addressRouteUrl = contact.address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.address)}`
+    : null
+  const socialLinks = [
+    { label: 'Facebook', href: null, icon: Facebook },
+    { label: 'Instagram', href: asExternalUrl(contact.instagram), icon: Instagram },
+    { label: 'TikTok', href: asExternalUrl(contact.tiktok), icon: Music2 },
+    { label: 'YouTube', href: asExternalUrl(contact.youtube), icon: Youtube },
+  ].filter((link): link is { label: string; href: string; icon: typeof Facebook } => Boolean(link.href))
+
   return (
-    <footer
-      className="public-footer relative overflow-hidden px-4 py-8 md:px-6 md:py-12 lg:px-8"
-      aria-label="Footer"
-    >
-      {/* Divider gradient */}
-      <div className="mx-auto max-w-[1200px] pb-8 md:pb-12">
-        <div
-          className="h-px"
-          style={{
-            background:
-              'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
-          }}
-        />
-      </div>
-
-      <div className="mx-auto grid max-w-[1200px] gap-7 md:grid-cols-3 md:gap-10">
-        {/* Kolom 1: Identitas */}
-        <div className="space-y-3 md:space-y-4">
-          <div className="flex items-center gap-3">
-            <Image
-              src={IKMI_LOGO_URL}
-              alt="Logo IKMI Cirebon"
-              width={31}
-              height={40}
-              className="h-9 w-auto object-contain md:h-10"
-            />
-            <p className="font-heading text-sm font-extrabold text-surface">
-              IKMI Se-Wilayah Cirebon
+    <footer className="public-footer-root" aria-label="Footer">
+      <div className="public-container public-footer-inner">
+        <div className="public-footer-grid">
+          <div className="public-footer-brand">
+            <div className="public-footer-logo-row">
+              <Image
+                src={IKMI_LOGO_URL}
+                alt="Logo IKMI Cirebon"
+                width={36}
+                height={45}
+                className="h-10 w-auto shrink-0"
+              />
+              <div>
+                <p className="public-footer-brand-title">IKMI SE-WILAYAH CIREBON</p>
+                <p className="public-footer-motto">“Memayu Ing Jagat”</p>
+              </div>
+            </div>
+            <p className="public-footer-brand-desc">
+              Ikatan Keluarga Mahasiswa Indramayu (IKMI) Se-Wilayah Cirebon adalah organisasi kedaerahan yang berfungsi sebagai wadah silaturahmi, ruang pengembangan intelektual, dan jembatan pengabdian bagi mahasiswa Indramayu di perantauan.
             </p>
           </div>
-          <p className="text-xs leading-6 text-surface/60 md:text-sm md:leading-relaxed">
-            Wadah kolaborasi mahasiswa Indramayu di Cirebon untuk berkontribusi bagi kemajuan daerah.
-          </p>
-        </div>
 
-        {/* Kolom 2: Navigasi Cepat */}
-        <div className="space-y-3 md:space-y-4">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-surface/50 md:text-xs">
-            Navigasi Cepat
-          </p>
-          <nav className="flex flex-col gap-2.5 md:gap-3" aria-label="Navigasi cepat footer">
-            {footerNav.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="text-xs font-medium text-surface/70 transition-colors hover:text-surface md:text-sm"
-              >
-                {item.label}
-              </Link>
-            ))}
+          <nav className="public-footer-nav" aria-label="Eksplorasi">
+            <p className="public-footer-heading">Eksplorasi</p>
+            <ul className="public-footer-links">
+              {explorationLinks.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href} className="public-footer-link group">
+                    <span>{item.label}</span>
+                    <ArrowUpRight
+                      className="h-3.5 w-3.5 shrink-0 opacity-50 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100"
+                      aria-hidden="true"
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </nav>
-        </div>
 
-        {/* Kolom 3: Sosial + Sekretariat */}
-        <div className="space-y-3 md:space-y-4">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-surface/50 md:text-xs">
-            Sosial Media
-          </p>
-          <div className="flex gap-2.5 md:gap-3">
-            {socialLinks.map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all duration-200 hover:scale-110 hover:bg-white/22 hover:text-white md:h-10 md:w-10"
-                aria-label={`Ikuti IKMI di ${s.label}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <s.icon className="h-4 w-4" aria-hidden="true" />
-              </a>
-            ))}
+          <div className="public-footer-contact">
+            <p className="public-footer-heading">Hubungi Kami</p>
+            <div className="public-footer-contact-list">
+              <div className="public-footer-contact-item">
+                <span className="public-footer-contact-type">Email</span>
+                {contact.email ? (
+                  <a href={`mailto:${contact.email}`} className="public-footer-contact-link">
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
+                    <span>{contact.email}</span>
+                  </a>
+                ) : (
+                  <span className="public-footer-contact-hint">Kontak resmi belum dikonfigurasi.</span>
+                )}
+              </div>
+
+              {whatsappUrl ? (
+                <div className="public-footer-contact-item">
+                  <span className="public-footer-contact-type">WhatsApp</span>
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="public-footer-contact-link"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
+                    <span>{contact.whatsapp}</span>
+                  </a>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="public-footer-social">
+              <p className="public-footer-subheading">Media Sosial</p>
+              {socialLinks.length ? (
+                <div className="public-footer-social-icons">
+                  {socialLinks.map(({ label, href, icon: Icon }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="public-footer-social-btn"
+                      aria-label={label}
+                      title={label}
+                    >
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="public-footer-contact-hint">Belum dikonfigurasi.</p>
+              )}
+            </div>
           </div>
-          <a
-            href={secretariatMapUrl}
-            className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-surface/82 transition-colors hover:bg-white/18 hover:text-surface md:text-sm"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Buka lokasi sekretariat IKMI Cirebon di Google Maps"
-          >
-            <MapPin className="h-4 w-4 text-accent" aria-hidden="true" />
-            Sekretariat IKMI
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-          </a>
-          <p className="max-w-xs text-[11px] leading-5 text-surface/50 md:text-xs">
-            Buka titik lokasi sekretariat melalui Google Maps.
-          </p>
-        </div>
-      </div>
 
-      {/* Copyright */}
-      <div className="mx-auto mt-8 max-w-[1200px] border-t border-surface/10 pt-5 text-center md:mt-10 md:pt-6">
-        <p className="text-[11px] text-surface/40 md:text-xs">
-          © 2026 IKMI Se-Wilayah Cirebon. By Departemen Komdigi. All Rights Reserved.
-        </p>
+          <div className="public-footer-location">
+            <p className="public-footer-heading">Sekretariat</p>
+            <div className="public-footer-address-block">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+              <p className="public-footer-address-detail">
+                {contact.address ?? 'Alamat sekretariat belum dikonfigurasi.'}
+              </p>
+            </div>
+
+            {addressMapUrl && addressRouteUrl ? (
+              <div className="public-footer-map-card">
+                <iframe
+                  src={addressMapUrl}
+                  title="Peta lokasi sekretariat"
+                  className="public-footer-map-iframe"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+                <a
+                  href={addressRouteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="public-footer-map-action"
+                >
+                  <span>Buka Rute di Google Maps</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="public-footer-bottom">
+          <p className="public-footer-copyright">
+            © 2026 Departemen Komdigi Ikatan Keluarga Mahasiswa Indramayu Se-Wilayah Cirebon. All Rights Reserved.
+          </p>
+          <div className="public-footer-bottom-meta">
+            <span>Cirebon &amp; Indramayu, Jawa Barat</span>
+          </div>
+        </div>
       </div>
     </footer>
   )
