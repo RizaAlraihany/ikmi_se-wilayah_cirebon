@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, BookOpen, ChevronDown, FileText, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { publicationPath } from '@/features/blog/publication-routes'
 
 type Post = {
   id: string
@@ -123,7 +124,7 @@ export function BlogList({ initialPosts, initialCategory = 'Semua' }: { initialP
         <div className="publication-content-grid grid gap-6 lg:grid-cols-12 lg:gap-8 xl:gap-10">
           <article className="min-w-0 lg:col-span-7">
             <p className="publication-content-kicker">Pilihan terbaru</p>
-            <Link className="publication-featured-card group block" href={`/publikasi/${featuredPost.category.slug}/${featuredPost.slug}`}>
+            <Link className="publication-featured-card group block" href={publicationPath(featuredPost.slug)}>
               <div className="publication-featured-media relative aspect-[4/3] w-full overflow-hidden bg-surface-alt sm:aspect-[16/9]">
                 {featuredPost.thumbnailUrl ? (
                   <Image
@@ -174,7 +175,7 @@ export function BlogList({ initialPosts, initialCategory = 'Semua' }: { initialP
 
               <div className="publication-list grid gap-0">
                 {listPosts.map((post) => (
-                  <Link key={post.id} className="publication-list-card group" href={`/publikasi/${post.category.slug}/${post.slug}`}>
+                  <Link key={post.id} className="publication-list-card group" href={publicationPath(post.slug)}>
                     <div className="publication-list-media relative shrink-0 overflow-hidden bg-surface-alt">
                       {post.thumbnailUrl ? (
                         <Image

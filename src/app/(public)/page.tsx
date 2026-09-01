@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { postQueries } from "@/features/blog/queries";
+import { publicationPath } from "@/features/blog/publication-routes";
 import { deriveAgendaStatus } from "@/features/agendas/domain";
 import { getActivePublicBanners } from "@/features/homepage-banner/queries";
 import { getPublicAgendaOccurrences } from "@/features/public/public-agenda";
@@ -602,7 +603,7 @@ export default async function Home() {
             <div className="hm-pub-clean-grid">
               {/* Hero Article (Kiri) */}
               <Link
-                href={`/publikasi/${posts[0].category.slug}/${posts[0].slug}`}
+                href={publicationPath(posts[0].slug)}
                 className="hm-pub-hero"
               >
                 <div className="hm-pub-hero-media">
@@ -639,7 +640,7 @@ export default async function Home() {
                 {posts.slice(1, 4).map((post) => (
                   <Link
                     key={post.id}
-                    href={`/publikasi/${post.category.slug}/${post.slug}`}
+                    href={publicationPath(post.slug)}
                     className="hm-pub-opini-item"
                   >
                     <div className="hm-pub-opini-thumb">

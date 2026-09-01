@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { ButtonLink } from '@/components/ui/button'
 import { deriveAgendaStatus, agendaStatusLabel, type AgendaDerivedStatus } from '@/features/agendas/domain'
 import { getPublicAgendaBySlug } from '@/features/public/public-agenda'
+import { publicationPath } from '@/features/blog/publication-routes'
 import { publicPlainText } from '@/features/public/public-text'
 import { breadcrumbStructuredData, serializeStructuredData } from '@/core/seo/structured-data'
 import { siteUrl } from '@/core/seo/site'
@@ -145,7 +146,7 @@ export default async function PublicAgendaDetailPage({ params }: Props) {
           {agenda.posts.length ?
             <section aria-labelledby="agenda-publication-heading">
               <h2 id="agenda-publication-heading" className="font-heading text-lg font-extrabold text-primary">Publikasi terkait</h2>
-              <div className="mt-3 divide-y divide-border border-y border-border">{agenda.posts.map((post) => <Link key={post.id} href={`/publikasi/${post.category.slug}/${post.slug}`} className="block py-3 text-sm font-bold text-primary hover:text-accent">
+              <div className="mt-3 divide-y divide-border border-y border-border">{agenda.posts.map((post) => <Link key={post.id} href={publicationPath(post.slug)} className="block py-3 text-sm font-bold text-primary hover:text-accent">
                 <span className="block text-[10px] uppercase tracking-wide text-text-secondary">{post.category.name}</span>{post.title}</Link>)}
               </div>
             </section> : null}

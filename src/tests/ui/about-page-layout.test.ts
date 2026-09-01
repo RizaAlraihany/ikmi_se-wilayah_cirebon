@@ -26,7 +26,7 @@ describe('Tentang page editorial layout', () => {
 
   it('replaces the About kicker with the shared public breadcrumb', () => {
     expect(pageSource).toContain(
-      '<PublicBreadcrumb items={[{ label: "Tentang" }]} />',
+      '<PublicBreadcrumb items={[{ label: "Tentang" }]} tone="inverse" />',
     )
     expect(pageSource).not.toContain(
       '<p className="about-kicker">Tentang IKMI</p>',
@@ -53,27 +53,45 @@ describe('Tentang page editorial layout', () => {
     expect(styles).toContain('.about-closing .about-closing-action')
   })
 
-  it('uses the accessible shared breadcrumb across public content routes', () => {
+  it('uses the accessible shared breadcrumb directly or through the shared public-page hero', () => {
     expect(publicBreadcrumbSource).toContain('aria-label="Breadcrumb"')
     expect(publicBreadcrumbSource).toContain('aria-current={isCurrent')
     expect(publicBreadcrumbSource).toContain('<Home aria-hidden="true" />')
 
-    const routes = [
-      'agenda/page.tsx',
+    const publicPageHeroSource = readFileSync(
+      path.join(process.cwd(), 'src/app/(public)/_components/public-page-hero.tsx'),
+      'utf8',
+    )
+    expect(publicPageHeroSource).toContain('PublicBreadcrumb')
+
+    const heroRoutes = [
+      'agenda/agenda-listing-page.tsx',
       'agenda/[slug]/page.tsx',
       'kalender/page.tsx',
       'kirim-tulisan/page.tsx',
       'kirim-tulisan/revisi/[token]/page.tsx',
-      'kontak/page.tsx',
       'program/page.tsx',
       'program/[slug]/page.tsx',
+    ]
+
+    const directBreadcrumbRoutes = [
+      'kontak/page.tsx',
       'publikasi/page.tsx',
-      'publikasi/[category]/[slug]/page.tsx',
+      'publikasi/publication-detail.tsx',
       'struktur/page.tsx',
       'tentang-kami/page.tsx',
     ]
 
-    for (const route of routes) {
+    for (const route of heroRoutes) {
+      const routeSource = readFileSync(
+        path.join(process.cwd(), 'src/app/(public)', route),
+        'utf8',
+      )
+
+      expect(routeSource).toContain('PublicPageHero')
+    }
+
+    for (const route of directBreadcrumbRoutes) {
       const routeSource = readFileSync(
         path.join(process.cwd(), 'src/app/(public)', route),
         'utf8',

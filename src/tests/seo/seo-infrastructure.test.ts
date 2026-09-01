@@ -80,11 +80,8 @@ describe('Phase 20 — SEO Infrastructure', () => {
 
   describe('canonical — public pages', () => {
     const publicPages = [
-      ['Tentang Kami', 'src/app/(public)/tentang-kami/page.tsx'],
-      ['Program List', 'src/app/(public)/program/page.tsx'],
-      ['Agenda List', 'src/app/(public)/agenda/page.tsx'],
+      ['Kegiatan List', 'src/app/(public)/kegiatan/page.tsx'],
       ['Publikasi List', 'src/app/(public)/publikasi/page.tsx'],
-      ['Kalender', 'src/app/(public)/kalender/page.tsx'],
       ['Kontak', 'src/app/(public)/kontak/page.tsx'],
       ['Struktur', 'src/app/(public)/struktur/page.tsx'],
     ] as const
@@ -96,6 +93,15 @@ describe('Phase 20 — SEO Infrastructure', () => {
       })
     }
 
+    it('keeps /tentang as the v5 entry while reusing the preserved implementation metadata', () => {
+      const route = readSource('src/app/(public)/tentang/page.tsx')
+      const implementation = readSource('src/app/(public)/tentang-kami/page.tsx')
+
+      expect(route).toContain('export { default, metadata }')
+      expect(implementation).toContain('canonical')
+      expect(implementation).toContain('/tentang')
+    })
+
     it('Program detail page has generateMetadata with canonical', () => {
       const source = readSource('src/app/(public)/program/[slug]/page.tsx')
       expect(source).toContain('generateMetadata')
@@ -103,9 +109,10 @@ describe('Phase 20 — SEO Infrastructure', () => {
     })
 
     it('Publication article page has generateMetadata with canonical', () => {
-      const source = readSource('src/app/(public)/publikasi/[category]/[slug]/page.tsx')
+      const source = readSource('src/app/(public)/publikasi/[...segments]/page.tsx')
       expect(source).toContain('generateMetadata')
       expect(source).toContain('canonical')
+      expect(source).toContain('publicationPath(post.slug)')
     })
 
     it('Agenda detail has generateMetadata with canonical', () => {
@@ -118,28 +125,32 @@ describe('Phase 20 — SEO Infrastructure', () => {
   describe('sitemap.ts', () => {
     it('includes static public routes', () => {
       const source = readSource('src/app/sitemap.ts')
-      expect(source).toContain('/tentang-kami')
-      expect(source).not.toContain('/kegiatan')
-      expect(source).toContain('/program')
-      expect(source).toContain('/agenda')
-      expect(source).toContain('/kalender')
+      expect(source).toContain('/tentang')
+      expect(source).toContain('/kegiatan')
       expect(source).toContain('/publikasi')
+      expect(source).not.toContain('/tentang-kami')
+      expect(source).not.toContain('/program')
+      expect(source).not.toContain('/agenda')
+      expect(source).not.toContain('/kalender')
       expect(source).not.toContain('/galeri')
       expect(source).toContain('/gabung')
       expect(source).toContain('/kontak')
     })
 
-    it('includes dynamic Program, Publication, and Agenda URLs', () => {
+    it('includes canonical dynamic Publication URLs without legacy category paths', () => {
       const source = readSource('src/app/sitemap.ts')
       expect(source).toContain('prisma.post.findMany')
-      expect(source).toContain('prisma.program.findMany')
-      expect(source).toContain('prisma.agenda.findMany')
+      expect(source).toContain('publicationPath(post.slug)')
+      expect(source).not.toContain('post.category.slug')
+      expect(source).not.toContain('prisma.program.findMany')
+      expect(source).not.toContain('prisma.agenda.findMany')
       expect(source).not.toContain('prisma.album.findMany')
     })
 
-    it('filters only PUBLIC programs in sitemap', () => {
+    it('does not promote frozen Program or Agenda detail routes', () => {
       const source = readSource('src/app/sitemap.ts')
-      expect(source).toContain("visibility: 'PUBLIC'")
+      expect(source).not.toContain('prisma.program.findMany')
+      expect(source).not.toContain('prisma.agenda.findMany')
     })
 
     it('filters only PUBLISHED posts in sitemap', () => {
@@ -157,9 +168,10 @@ describe('Phase 20 — SEO Infrastructure', () => {
     })
 
     it('article detail has Article JSON-LD', () => {
-      const source = readSource('src/app/(public)/publikasi/[category]/[slug]/page.tsx')
+      const source = readSource('src/app/(public)/publikasi/publication-detail.tsx')
       expect(source).toContain("'@type': 'Article'")
       expect(source).toContain('application/ld+json')
+      expect(source).toContain('publicationPath(post.slug)')
     })
 
     it('program detail has BreadcrumbList JSON-LD', () => {
@@ -168,10 +180,10 @@ describe('Phase 20 — SEO Infrastructure', () => {
       expect(source).toContain('application/ld+json')
     })
 
-    it('agenda detail has BreadcrumbList and Event JSON-LD', () => {
+    it('frozen Agenda detail retains breadcrumb data without legacy Event JSON-LD', () => {
       const source = readSource('src/app/(public)/agenda/[slug]/page.tsx')
       expect(source).toContain('breadcrumbStructuredData')
-      expect(source).toContain("'@type': 'Event'")
+      expect(source).not.toContain("'@type': 'Event'")
     })
 
     it('breadcrumbStructuredData serializes without XSS chars', () => {
@@ -196,7 +208,7 @@ describe('Phase 20 — SEO Infrastructure', () => {
     })
 
     it('publication article has og:type article', () => {
-      const source = readSource('src/app/(public)/publikasi/[category]/[slug]/page.tsx')
+      const source = readSource('src/app/(public)/publikasi/[...segments]/page.tsx')
       expect(source).toContain("type: 'article'")
     })
   })
@@ -214,11 +226,11 @@ describe('Phase 20 — SEO Infrastructure', () => {
       expect(source).toContain('/struktur')
     })
 
-    it('legacy Event URLs redirect permanently to the public Agenda list', () => {
+    it('legacy Event URLs redirect permanently to the v5 Kegiatan list', () => {
       const source = readSource('next.config.ts')
       expect(source).toContain('/event')
       expect(source).toContain('/event/:path*')
-      expect(source).toContain('/agenda')
+      expect(source).toContain('/kegiatan')
       expect(source).toContain('permanent: true')
     })
   })

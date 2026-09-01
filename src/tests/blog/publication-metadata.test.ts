@@ -1,4 +1,4 @@
-import { generateMetadata } from '@/app/(public)/publikasi/[category]/[slug]/page'
+import { generateMetadata } from '@/app/(public)/publikasi/[...segments]/page'
 import { postQueries } from '@/features/blog/queries'
 
 jest.mock('@/features/blog/queries', () => ({
@@ -29,11 +29,11 @@ describe('Publication public metadata', () => {
       author: { name: 'Penulis IKMI', position: null },
     } as never)
 
-    const metadata = await generateMetadata({ params: Promise.resolve({ category: 'artikel', slug: 'judul-artikel-publik' }) })
+    const metadata = await generateMetadata({ params: Promise.resolve({ segments: ['judul-artikel-publik'] }) })
     expect(metadata).toEqual(expect.objectContaining({
       title: 'SEO Title Artikel',
       description: 'Meta description artikel.',
-      alternates: { canonical: '/publikasi/artikel/judul-artikel-publik' },
+      alternates: { canonical: 'https://ikmicirebon.web.id/publikasi/judul-artikel-publik' },
       openGraph: expect.objectContaining({ type: 'article', images: ['https://example.test/og.webp'] }),
       twitter: expect.objectContaining({ card: 'summary_large_image', images: ['https://example.test/og.webp'] }),
     }))

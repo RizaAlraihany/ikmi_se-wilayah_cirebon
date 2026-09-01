@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { ArrowRight, Calendar, MapPin } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { getPublicProgramBySlug, programPlainText } from '@/features/public/public-program'
+import { publicationPath } from '@/features/blog/publication-routes'
 import { deriveProgramStatus, programStatusLabel, type ProgramDerivedStatus } from '@/features/programs/domain'
 import { siteUrl } from '@/core/seo/site'
 import { breadcrumbStructuredData, serializeStructuredData } from '@/core/seo/structured-data'
@@ -219,7 +220,7 @@ export default async function PublicProgramDetailPage({ params }: Props) {
               <h2 id="program-related-heading" className="mt-2 font-heading text-2xl font-extrabold text-primary">Konten terkait</h2>
               <div className="mt-6 divide-y divide-border border-y border-border">
                 {program.posts.map((post) => (
-                  <Link key={post.id} href={`/publikasi/${post.category.slug}/${post.slug}`} className="group grid min-w-0 gap-2 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                  <Link key={post.id} href={publicationPath(post.slug)} className="group grid min-w-0 gap-2 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     <span className="min-w-0"><span className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">{post.category.name}</span><span className="mt-1 block break-words font-heading text-lg font-extrabold text-primary group-hover:text-accent">{post.title}</span></span>
                     <ArrowRight className="h-4 w-4 text-text-muted" aria-hidden="true" />
                   </Link>

@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { PostStatus } from '@prisma/client'
 import { prisma } from '@/core/database/prisma'
 import { siteUrl } from '@/core/seo/site'
+import { publicationPath } from '@/features/blog/publication-routes'
 
 export const revalidate = 3600
 
@@ -43,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [
       ...staticUrls,
       ...posts.map((post) => ({
-        url: `${siteUrl}/publikasi/${post.category.slug}/${post.slug}`,
+        url: `${siteUrl}${publicationPath(post.slug)}`,
         lastModified: post.updatedAt || post.publishedAt || now,
         changeFrequency: 'monthly' as const,
         priority: 0.7,

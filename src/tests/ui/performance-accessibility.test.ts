@@ -59,7 +59,7 @@ describe('Phase 21 — Performance and accessibility', () => {
       'src/app/(public)/page.tsx',
       'src/app/(public)/program/[slug]/page.tsx',
       'src/app/(public)/agenda/[slug]/page.tsx',
-      'src/app/(public)/publikasi/[category]/[slug]/page.tsx',
+      'src/app/(public)/publikasi/[...segments]/page.tsx',
     ]
 
     for (const page of serverPages) {
@@ -70,7 +70,7 @@ describe('Phase 21 — Performance and accessibility', () => {
   it('reserves responsive image space and gives fill images explicit sizes', () => {
     const homepage = readSource('src/app/(public)/page.tsx')
     const program = readSource('src/app/(public)/program/[slug]/page.tsx')
-    const article = readSource('src/app/(public)/publikasi/[category]/[slug]/page.tsx')
+    const article = readSource('src/app/(public)/publikasi/publication-detail.tsx')
     const hero = readSource('src/app/(public)/_components/hero-slideshow.tsx')
 
     expect(homepage).toContain('sizes=')
@@ -78,8 +78,8 @@ describe('Phase 21 — Performance and accessibility', () => {
     expect(program).toContain('<picture>')
     expect(program).not.toContain('sm:hidden" />')
     expect(article).toContain('sizes=')
-    expect(hero).toContain('sizes="100vw"')
-    expect(hero).toContain('<picture>')
+    expect(hero).toContain('sizes="(min-width: 1024px) 62vw, 100vw"')
+    expect(hero).toContain('priority={index === 0}')
   })
 
   it('uses two self-hosted font families with a bounded weight set', () => {

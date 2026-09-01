@@ -65,5 +65,6 @@ describe('BlogList', () => {
 
     expect(screen.getByRole('heading', { name: 'Berita Utama IKMI' })).toHaveClass('publication-card-title')
     expect(screen.getByRole('heading', { name: 'Opini Terbaru Anggota' })).toHaveClass('publication-card-title')
+    expect(screen.getByRole('link', { name: /Berita Utama IKMI/i })).toHaveAttribute('href', '/publikasi/berita-utama')
   })
 })

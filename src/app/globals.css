@@ -1294,6 +1294,9 @@ textarea {
 
 .publication-article-content p {
   text-align: justify;
+  text-justify: inter-word;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
   hyphens: auto;
 }
 

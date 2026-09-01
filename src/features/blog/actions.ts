@@ -4,6 +4,7 @@ import { requireAnyPermission, requirePermission } from '@/core/authorization/gu
 import { blogService } from './services'
 import { bloggerImportService, type BloggerImportSelectionInput } from './blogger-import'
 import { postCreateSchema, postUpdateSchema, type PostCreateInput, type PostUpdateInput } from './schemas'
+import { publicationPath } from './publication-routes'
 import { revalidatePath } from 'next/cache'
 
 
@@ -17,9 +18,10 @@ function revalidateCmsPaths(slug?: string) {
   revalidatePath('/admin/cms/posts')
   revalidatePath('/admin/cms/analytics')
   revalidatePath('/publikasi')
-  revalidatePath('/publikasi/[category]/[slug]', 'page')
+  revalidatePath('/publikasi/[...segments]', 'page')
   revalidatePath('/')
   if (slug) {
+    revalidatePath(publicationPath(slug))
     revalidatePath(`/blog/${slug}`)
   }
 }

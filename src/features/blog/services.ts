@@ -157,7 +157,12 @@ export const blogService = {
       throw new ForbiddenError('Artikel terbit hanya dapat diubah oleh editor Komdigi.')
     }
 
-    const nextSlug = validated.slug ? await resolveUniqueSlug(validated.slug, post.id) : undefined
+    // A published URL is a public contract. Existing editor submissions may
+    // still contain an auto-generated slug after a title edit, so ignore it
+    // once the post is published rather than silently changing the URL.
+    const nextSlug = post.status === PostStatus.PUBLISHED || !validated.slug
+      ? undefined
+      : await resolveUniqueSlug(validated.slug, post.id)
 
     if (validated.categoryId) {
       const category = await prisma.category.findFirst({ where: { id: validated.categoryId, deletedAt: null } })

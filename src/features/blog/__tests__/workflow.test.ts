@@ -27,14 +27,19 @@ jest.mock('@/core/events', () => ({
   },
 }))
 
+jest.mock('../queries', () => ({
+  postQueries: { getPostOwnershipById: jest.fn() },
+}))
+
 import { prisma } from '@/core/database/prisma'
 import { requirePermission, isKomdigi } from '@/features/cms/access'
 import { can } from '@/core/authorization/rbac'
 import { eventBus } from '@/core/events'
+import { postQueries } from '../queries'
 import { blogService } from '../services'
 
 describe('Blog workflow', () => {
-  const actor = { id: 'user-1', departmentId: 'komdigi' }
+  const actor = { id: 'user-1', departmentId: 'komdigi', roleId: 'admin_komdigi' }
   const input = {
     title: 'Artikel Pengujian',
     slug: 'artikel-pengujian',
@@ -78,5 +83,28 @@ describe('Blog workflow', () => {
       authorId: 'user-1',
     })
     expect(result.id).toBe('post-1')
+  })
+
+  it('keeps the slug stable when a published post is edited', async () => {
+    requirePermission.mockResolvedValue(actor)
+    isKomdigi.mockReturnValue(true)
+    postQueries.getPostOwnershipById.mockResolvedValue({
+      id: 'post-published',
+      authorId: actor.id,
+      author: { departmentId: 'komdigi' },
+      status: 'PUBLISHED',
+      slug: 'url-lama',
+    })
+    const tx = {
+      post: { update: jest.fn().mockResolvedValue({ id: 'post-published', slug: 'url-lama' }) },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
+    }
+    prisma.$transaction.mockImplementation(async (callback) => callback(tx))
+
+    await blogService.updatePost({ id: 'post-published', title: 'Judul baru', slug: 'judul-baru' }, actor)
+
+    expect(tx.post.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ title: 'Judul baru', slug: undefined }),
+    }))
   })
 })
