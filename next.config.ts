@@ -53,23 +53,23 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/kegiatan',
-        destination: '/',
+        source: '/agenda',
+        destination: '/kegiatan',
         permanent: true,
       },
       {
         source: '/event',
-        destination: '/agenda',
+        destination: '/kegiatan',
         permanent: true,
       },
       {
         source: '/about',
-        destination: '/tentang-kami',
+        destination: '/tentang',
         permanent: true,
       },
       {
         source: '/event/:path*',
-        destination: '/agenda',
+        destination: '/kegiatan',
         permanent: true,
       },
     ];

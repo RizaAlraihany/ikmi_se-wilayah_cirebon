@@ -273,7 +273,7 @@ export default async function PengurusPage() {
             tone="inverse"
             className="structure-breadcrumb"
             items={[
-              { label: "Tentang", href: "/tentang-kami" },
+              { label: "Tentang", href: "/tentang" },
               { label: "Struktur Pengurus" },
             ]}
           />

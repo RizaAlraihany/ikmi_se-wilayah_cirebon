@@ -7,11 +7,9 @@ export const revalidate = 3600
 
 const staticRoutes = [
   { path: '/', priority: 1 },
-  { path: '/tentang-kami', priority: 0.9 },
+  { path: '/tentang', priority: 0.9 },
   { path: '/struktur', priority: 0.8 },
-  { path: '/program', priority: 0.8 },
-  { path: '/agenda', priority: 0.8 },
-  { path: '/kalender', priority: 0.8 },
+  { path: '/kegiatan', priority: 0.8 },
   { path: '/publikasi', priority: 0.8 },
   { path: '/gabung', priority: 0.7 },
   { path: '/kontak', priority: 0.6 },
@@ -27,8 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   try {
-    const [posts, programs, agendas] = await Promise.all([
-      prisma.post.findMany({
+    const posts = await prisma.post.findMany({
         where: {
           deletedAt: null,
           status: PostStatus.PUBLISHED,
@@ -41,29 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           category: { select: { slug: true } },
         },
         orderBy: { publishedAt: 'desc' },
-      }),
-      prisma.program.findMany({
-        where: {
-          deletedAt: null,
-          visibility: 'PUBLIC',
-          slug: { not: null },
-        },
-        select: {
-          slug: true,
-          updatedAt: true,
-        },
-        orderBy: { updatedAt: 'desc' },
-      }),
-      prisma.agenda.findMany({
-        where: {
-          deletedAt: null,
-          visibility: 'PUBLIC',
-          status: { notIn: ['DRAFT', 'ARCHIVED'] },
-        },
-        select: { slug: true, updatedAt: true },
-        orderBy: { updatedAt: 'desc' },
-      }),
-    ])
+      })
 
     return [
       ...staticUrls,
@@ -72,18 +47,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: post.updatedAt || post.publishedAt || now,
         changeFrequency: 'monthly' as const,
         priority: 0.7,
-      })),
-      ...programs.map((program) => ({
-        url: `${siteUrl}/program/${program.slug}`,
-        lastModified: program.updatedAt || now,
-        changeFrequency: 'monthly' as const,
-        priority: 0.6,
-      })),
-      ...agendas.map((agenda) => ({
-        url: `${siteUrl}/agenda/${agenda.slug}`,
-        lastModified: agenda.updatedAt || now,
-        changeFrequency: 'monthly' as const,
-        priority: 0.6,
       })),
     ]
   } catch {

@@ -31,13 +31,13 @@ type UnknownRecord = Record<string, unknown>;
 
 const quickAccess = [
   {
-    href: "/agenda",
+    href: "/kegiatan",
     label: "Agenda",
     description: "Jadwal terdekat",
     Icon: CalendarDays,
   },
   {
-    href: "/program",
+    href: "/kegiatan",
     label: "Program",
     description: "Lihat ruang partisipasi",
     Icon: Users,
@@ -327,11 +327,15 @@ export default async function Home() {
       ? "Lihat Jejak Kegiatan"
       : "Lihat Detail Kegiatan");
 
-  const campaignCtaHref =
+  const configuredCampaignCtaHref =
     readString(campaignRecord, ["ctaUrl"]) ||
     (featuredActivity?.program.slug
       ? `/program/${featuredActivity.program.slug}`
       : "/program");
+
+  const campaignCtaHref = /^\/program(?:\/|$)/.test(configuredCampaignCtaHref)
+    ? "/kegiatan"
+    : configuredCampaignCtaHref;
 
   return (
     <main id="view-beranda" className="home-page">
@@ -347,7 +351,7 @@ export default async function Home() {
         }}
         secondaryCta={{
           label: "Kenal IKMI",
-          href: "/tentang-kami",
+          href: "/tentang",
         }}
       />
 
@@ -403,7 +407,7 @@ export default async function Home() {
                 </span>
                 <p className="home-profile-quote-text">Memayu Ing Jagat</p>
               </div>
-              <Link href="/tentang-kami" className="home-profile-quote-link">
+              <Link href="/tentang" className="home-profile-quote-link">
                 Selengkapnya tentang IKMI <ArrowRight aria-hidden="true" />
               </Link>
             </blockquote>
@@ -500,7 +504,7 @@ export default async function Home() {
                 </div>
               )}
 
-              <Link href="/agenda" className="hm-text-link">
+              <Link href="/kegiatan" className="hm-text-link">
                 Lihat Semua Agenda
                 <ArrowRight aria-hidden="true" />
               </Link>

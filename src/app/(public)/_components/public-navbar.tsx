@@ -15,7 +15,7 @@ type NavigationItem = NavigationLink | { label: string; children: NavigationLink
 
 const navigation: NavigationItem[] = [
   { label: "Beranda", href: "/" },
-  { label: "Tentang", href: "/tentang-kami" },
+  { label: "Tentang", href: "/tentang" },
   { label: "Publikasi", href: "/publikasi" },
   { label: "Kontak", href: "/kontak" },
 ];

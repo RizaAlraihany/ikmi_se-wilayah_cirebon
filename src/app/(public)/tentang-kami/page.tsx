@@ -98,13 +98,13 @@ export const metadata = {
   description:
     "Profil, sejarah, kabinet, visi dan misi, serta pengurus IKMI Se-Wilayah Cirebon.",
   alternates: {
-    canonical: `${siteUrl}/tentang-kami`,
+    canonical: `${siteUrl}/tentang`,
   },
   openGraph: {
     title: "Tentang IKMI Cirebon",
     description:
       "Profil, sejarah, kabinet, visi dan misi, serta pengurus IKMI Se-Wilayah Cirebon.",
-    url: `${siteUrl}/tentang-kami`,
+    url: `${siteUrl}/tentang`,
     type: "website",
   },
 };
