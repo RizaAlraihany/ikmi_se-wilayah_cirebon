@@ -7,7 +7,7 @@ import { eventBus } from '@/core/events'
 import { isKomdigi, requirePermission, requirePublisher } from '@/features/cms/access'
 import { SessionUser } from '@/core/authorization/rbac'
 import { isSuperAdminRole } from '@/core/auth/roles'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeArticleHtml } from './article-html'
 
 type TxClient = Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>
 
@@ -92,7 +92,7 @@ export const blogService = {
           data: {
             title: validated.title,
             slug: uniqueSlug,
-            content: DOMPurify.sanitize(validated.content),
+            content: sanitizeArticleHtml(validated.content, { normalizeHeadingOne: true }),
             excerpt: validated.excerpt,
             thumbnailUrl: validated.featuredImage || '',
             thumbnailPublicId: validated.featuredImagePublicId || null,
@@ -179,7 +179,9 @@ export const blogService = {
           data: {
             title: validated.title,
             slug: nextSlug,
-            content: validated.content ? DOMPurify.sanitize(validated.content) : undefined,
+            // Existing articles may contain legitimate legacy H1/H4-H6 nodes.
+            // The editor parses them and this update path preserves them.
+            content: validated.content ? sanitizeArticleHtml(validated.content) : undefined,
             excerpt: validated.excerpt,
             thumbnailUrl: validated.featuredImage !== undefined ? validated.featuredImage : undefined,
             thumbnailPublicId: validated.featuredImagePublicId !== undefined ? validated.featuredImagePublicId : undefined,

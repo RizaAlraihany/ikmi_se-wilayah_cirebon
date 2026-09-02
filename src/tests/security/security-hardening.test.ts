@@ -14,10 +14,19 @@
  */
 
 import { readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { resolve } from 'node:path'
 
 function readSource(path: string) {
   return readFileSync(resolve(process.cwd(), path), 'utf8')
+}
+
+function sanitizeInServerProcess(input: string) {
+  const script = 'const Module = require("node:module"); const load = Module._load; Module._load = function(request, parent, isMain) { if (request === "server-only") return {}; return load.call(this, request, parent, isMain); }; const { sanitizeArticleHtml } = require("./src/features/blog/article-html.ts"); console.log(sanitizeArticleHtml(' + JSON.stringify(input) + ')); process.exit(0)'
+  return execFileSync(process.execPath, ['-r', 'tsx/cjs', '--eval', script], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+  }).trim()
 }
 
 describe('Phase 22 — Security Hardening', () => {
@@ -220,9 +229,11 @@ describe('Phase 22 — Security Hardening', () => {
       expect(source).toContain("script-src-attr 'none'")
     })
 
-    it('sanitizes publication HTML before both create and update writes', () => {
-      const source = readSource('src/features/blog/services.ts')
-      expect(source.match(/DOMPurify\.sanitize/g)).toHaveLength(2)
+    it('removes executable publication content while retaining safe article HTML', () => {
+      const html = sanitizeInServerProcess('<p>Konten aman</p><script>alert(1)</script><p onclick="alert(1)">Tetap tampil</p><img src="data:image/png;base64,AAAA" alt="Tidak boleh">')
+      expect(html).toContain('<p>Konten aman</p>')
+      expect(html).toContain('Tetap tampil')
+      expect(html).not.toMatch(/<script|onclick|data:image|<img/i)
     })
 
     it('next.config.ts includes Strict-Transport-Security header', () => {

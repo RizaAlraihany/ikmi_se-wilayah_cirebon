@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { postCreateSchema, postUpdateSchema, type PostCreateInput, type PostUpdateInput } from '@/features/blog/schemas'
-import { createPostAction, updatePostAction, uploadBlogCoverAction } from '@/features/blog/actions'
-import { Editor } from '@/components/ui/editor'
+import { createPostAction, updatePostAction, uploadBlogCoverAction, uploadPostInlineImageAction } from '@/features/blog/actions'
+import { ArticleEditor } from '@/components/ui/editor'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
@@ -136,6 +136,13 @@ export function PostForm({
     setOgUploadMessage('OG image berhasil diupload.')
   }
 
+  const uploadInlineImage = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const result = await uploadPostInlineImageAction(formData)
+    return { url: result.url, error: result.error }
+  }
+
   const onSubmit = async (data: PostCreateInput | PostUpdateInput) => {
     setGlobalError('')
     const result = isEdit
@@ -243,7 +250,7 @@ export function PostForm({
           name="content"
           control={control}
           render={({ field }) => (
-            <Editor value={field.value || ''} onChange={field.onChange} />
+            <ArticleEditor value={field.value || ''} onChange={field.onChange} disabled={isSubmitting} onImageUpload={uploadInlineImage} />
           )}
         />
       </Field>

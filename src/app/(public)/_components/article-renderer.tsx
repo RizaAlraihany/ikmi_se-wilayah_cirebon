@@ -52,7 +52,9 @@ export function ArticleRenderer({ content, title }: { content: string; title: st
         prose-headings:font-heading prose-headings:font-extrabold prose-headings:text-primary
         prose-p:my-4 prose-p:text-text-secondary prose-a:text-accent hover:prose-a:text-primary
         prose-strong:text-primary prose-blockquote:border-l-primary prose-blockquote:bg-surface-alt prose-blockquote:text-primary
-        prose-li:text-text-secondary prose-img:rounded-lg [&>*:first-child]:mt-0"
+        prose-li:text-text-secondary prose-img:rounded-lg [&>*:first-child]:mt-0
+        [&_.article-figure]:my-8 [&_.article-figure_img]:mx-auto [&_.article-figure_img]:w-full [&_.article-figure_img]:rounded-lg
+        [&_.article-figure-caption]:mt-3 [&_.article-figure-caption]:text-center [&_.article-figure-caption]:text-sm [&_.article-figure-caption]:italic [&_.article-figure-caption]:text-muted"
       dangerouslySetInnerHTML={{ __html: normalizedContent }}
     />
   )

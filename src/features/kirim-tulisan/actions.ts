@@ -1,7 +1,7 @@
 'use server'
 
 import { createHash, randomBytes } from 'node:crypto'
-import { KaryaTulisStatus } from '@prisma/client'
+import { KaryaTulisStatus, Prisma } from '@prisma/client'
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
@@ -11,9 +11,10 @@ import { prisma } from '@/core/database/prisma'
 import { ForbiddenError, NotFoundError } from '@/core/errors/custom-errors'
 import { rateLimit } from '@/core/security/rate-limiter'
 import { cloudinaryFolders, storageService } from '@/core/storage/storage-service'
-import { validateDocumentSignature } from '@/core/storage/file-validator'
-import { submitKaryaTulisSchema } from './schemas'
+import { validateDocumentSignature, validateImageSignature } from '@/core/storage/file-validator'
+import { hasMeaningfulDirectWritingContent, submitKaryaTulisSchema } from './schemas'
 import { nextSubmissionNumber, submissionPrefix } from './domain'
+import { sanitizeArticleHtml } from '@/features/blog/article-html'
 
 const revisionNotesSchema = z.string().trim().min(5, 'Catatan revisi minimal 5 karakter.').max(3000, 'Catatan revisi maksimal 3.000 karakter.')
 
@@ -39,6 +40,27 @@ async function validateSubmissionFile(formData: FormData) {
   return { file } as const
 }
 
+export async function uploadWritingInlineImageAction(formData: FormData) {
+  try {
+    const headerList = await headers()
+    const ip = headerList.get('x-forwarded-for') || 'unknown-ip'
+    await rateLimit(`kirim_tulisan_inline_image_${ip}`, 20, 3600)
+
+    const file = formData.get('file')
+    if (!(file instanceof File) || file.size === 0) {
+      return { error: 'File gambar wajib dipilih.' }
+    }
+    const validation = await validateImageSignature(file)
+    if (!validation.valid) return { error: validation.error || 'File gambar tidak valid.' }
+
+    const uploaded = await storageService.uploadImage(file, cloudinaryFolders.writingSubmissions)
+    return { success: true, url: uploaded.secureUrl, publicId: uploaded.publicId }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+    return { error: message.includes('Terlalu banyak') ? message : 'Gambar belum dapat diunggah. Silakan coba lagi.' }
+  }
+}
+
 export async function submitKaryaTulisAction(formData: FormData) {
   try {
     const headerList = await headers()
@@ -51,6 +73,7 @@ export async function submitKaryaTulisAction(formData: FormData) {
       category: formData.get('category'),
       topic: formData.get('topic') || undefined,
       summary: formData.get('summary') || undefined,
+      content: formData.get('content'),
       authorName: formData.get('authorName'),
       authorEmail: formData.get('authorEmail'),
       authorWhatsapp: formData.get('authorWhatsapp'),
@@ -60,9 +83,17 @@ export async function submitKaryaTulisAction(formData: FormData) {
     })
     if (!parsed.success) return { success: false, error: 'Validasi form gagal', fieldErrors: parsed.error.flatten().fieldErrors }
 
-    const validatedFile = await validateSubmissionFile(formData)
-    if ('error' in validatedFile) return { success: false, error: validatedFile.error }
-    const upload = await storageService.uploadPrivateDocument(validatedFile.file, cloudinaryFolders.writingSubmissions)
+    const suppliedFile = formData.get('file')
+    const hasAttachment = suppliedFile instanceof File && suppliedFile.size > 0
+    const validatedFile = hasAttachment ? await validateSubmissionFile(formData) : null
+    if (validatedFile && 'error' in validatedFile) return { success: false, error: validatedFile.error }
+    const hasDirectWriting = hasMeaningfulDirectWritingContent(parsed.data.content)
+    if (!hasDirectWriting && !validatedFile) {
+      return { success: false, error: 'Isi tulisan atau dokumen wajib dikirim.' }
+    }
+    const upload = validatedFile && 'file' in validatedFile
+      ? await storageService.uploadPrivateDocument(validatedFile.file, cloudinaryFolders.writingSubmissions)
+      : null
     const data = parsed.data
 
     try {
@@ -83,25 +114,28 @@ export async function submitKaryaTulisAction(formData: FormData) {
             authorStatus: data.authorStatus,
             authorUnit: data.authorUnit || null,
             consentAt: new Date(),
+            content: hasDirectWriting ? sanitizeArticleHtml(data.content || '', { normalizeHeadingOne: true }) : null,
             fileUrl: null,
-            filePublicId: upload.publicId,
+            filePublicId: upload?.publicId || null,
             status: KaryaTulisStatus.SUBMITTED,
           },
           select: { id: true, submissionNumber: true },
         })
-        await tx.karyaTulisVersion.create({
-          data: {
-            karyaTulisId: submission.id,
-            versionNumber: 1,
-            originalFilename: validatedFile.file.name,
-            filePublicId: upload.publicId,
-          },
-        })
+        if (upload && validatedFile && 'file' in validatedFile) {
+          await tx.karyaTulisVersion.create({
+            data: {
+              karyaTulisId: submission.id,
+              versionNumber: 1,
+              originalFilename: validatedFile.file.name,
+              filePublicId: upload.publicId,
+            },
+          })
+        }
         return submission
       })
       return { success: true, id: created.id, submissionNumber: created.submissionNumber }
     } catch (error) {
-      await storageService.deleteFile(upload.publicId, 'raw').catch(() => undefined)
+      if (upload) await storageService.deleteFile(upload.publicId, 'raw', 'authenticated').catch(() => undefined)
       throw error
     }
   } catch (error) {
@@ -185,7 +219,7 @@ export async function createArticleDraftFromKaryaTulisAction(id: string) {
   const user = await requireWritingReviewAccess()
   const submission = await prisma.karyaTulis.findFirst({
     where: { id, deletedAt: null },
-    select: { id: true, submissionNumber: true, title: true, category: true, summary: true, authorName: true, status: true, articleDraft: { select: { id: true } } },
+    select: { id: true, submissionNumber: true, title: true, content: true, category: true, summary: true, authorName: true, status: true, articleDraft: { select: { id: true } } },
   })
   if (!submission) throw new NotFoundError('Karya Tulis tidak ditemukan.')
   if (submission.articleDraft) return { success: true, postId: submission.articleDraft.id, existing: true }
@@ -195,12 +229,25 @@ export async function createArticleDraftFromKaryaTulisAction(id: string) {
   if (!category) throw new NotFoundError('Kategori publikasi tujuan tidak ditemukan.')
   const baseSlug = submission.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 130) || 'draft-tulisan'
   const slug = `${baseSlug}-${submission.submissionNumber.toLowerCase()}`
-  const result = await prisma.$transaction(async (tx) => {
-    const post = await tx.post.create({ data: { title: submission.title, slug, content: '<p>Naskah sumber siap diformat oleh editor Komdigi.</p>', excerpt: submission.summary, thumbnailUrl: '', status: 'DRAFT', authorId: user.id, authorName: submission.authorName, categoryId: category.id, writingSubmissionId: submission.id, createdBy: user.id }, select: { id: true } })
-    await tx.karyaTulis.update({ where: { id: submission.id }, data: { status: KaryaTulisStatus.ARTICLE_DRAFT_CREATED, updatedBy: user.id } })
-    await tx.auditLog.create({ data: { action: 'CREATE', entity: 'Post', entityId: post.id, userId: user.id, newData: JSON.stringify({ writingSubmissionId: submission.id, status: 'DRAFT' }) } })
-    return post
-  })
+  let result: { id: string }
+  try {
+    result = await prisma.$transaction(async (tx) => {
+      const post = await tx.post.create({ data: { title: submission.title, slug, content: sanitizeArticleHtml(submission.content || ''), excerpt: submission.summary, thumbnailUrl: '', status: 'DRAFT', authorId: user.id, authorName: submission.authorName, categoryId: category.id, writingSubmissionId: submission.id, createdBy: user.id }, select: { id: true } })
+      await tx.karyaTulis.update({ where: { id: submission.id }, data: { status: KaryaTulisStatus.ARTICLE_DRAFT_CREATED, updatedBy: user.id } })
+      await tx.auditLog.create({ data: { action: 'CREATE', entity: 'Post', entityId: post.id, userId: user.id, newData: JSON.stringify({ writingSubmissionId: submission.id, status: 'DRAFT' }) } })
+      return post
+    })
+  } catch (error) {
+    // The unique writingSubmissionId is the final concurrency guard. A
+    // competing approval may create the draft after our first lookup; return
+    // that same draft instead of surfacing a P2002 to the reviewer.
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error
+    const existing = await prisma.post.findFirst({ where: { writingSubmissionId: submission.id }, select: { id: true } })
+    if (!existing) throw error
+    revalidatePath('/admin/kirim-tulisan')
+    revalidatePath('/admin/cms/posts')
+    return { success: true, postId: existing.id, existing: true }
+  }
   revalidatePath('/admin/kirim-tulisan')
   revalidatePath('/admin/cms/posts')
   return { success: true, postId: result.id, existing: false }

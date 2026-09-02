@@ -46,13 +46,15 @@ jest.mock('@upstash/redis', () => {
   }
 })
 
-// The CMS service sanitizes content through a browser-oriented dependency.
-// Its ESM-only transitive dependency is irrelevant to service workflow tests,
-// so keep the sanitizer contract while avoiding a Node/Jest parser mismatch.
+// The current isomorphic-dompurify transitive JSDOM package publishes an ESM
+// helper which Next/Jest does not transform. Unit workflow tests use this DOM
+// fallback; a separate subprocess test executes the real production module.
 jest.mock('isomorphic-dompurify', () => ({
   __esModule: true,
   default: { sanitize: jest.fn((value: string) => value) },
 }))
+
+jest.mock('server-only', () => ({}))
 
 jest.mock('@/core/notifications/wa-service', () => ({
   waService: {

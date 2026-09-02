@@ -17,7 +17,7 @@ export default function KirimTulisanPage() {
       <PublicPageHero
         items={[{ label: 'Kirim Tulisan' }]}
         title="Kirim Tulisan"
-        lead="Unggah opini, artikel, atau kajian dalam format DOCX/PDF. Prosesnya tanpa akun dan langsung masuk ke antrean editorial."
+        lead="Tulis opini, artikel, atau kajian langsung dari halaman ini. Prosesnya tanpa akun dan langsung masuk ke antrean editorial."
         image="https://res.cloudinary.com/dsgldeuuy/image/upload/v1781230548/psda_yufbw9.png"
       />
 
@@ -25,16 +25,16 @@ export default function KirimTulisanPage() {
         <div className="space-y-6">
           <div className="border-t-2 border-accent pt-5">
             <h2 className="font-heading text-lg font-bold text-primary">
-              Sebelum mengunggah
+              Sebelum menulis
             </h2>
             <ul className="mt-4 space-y-3 text-sm text-foreground/80">
               <li className="flex gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <span>Format file yang didukung adalah <strong>DOCX</strong> atau <strong>PDF</strong>.</span>
+                <span>Tulis naskah langsung di editor. Judul dan ringkasan dikelola terpisah dari isi artikel.</span>
               </li>
               <li className="flex gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <span>Ukuran maksimal file dokumen adalah <strong>10 MB</strong>.</span>
+                <span>Gambar di dalam tulisan mendukung format <strong>JPG</strong>, <strong>PNG</strong>, atau <strong>WebP</strong> hingga <strong>2 MB</strong>.</span>
               </li>
               <li className="flex gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />

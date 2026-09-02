@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { submitKaryaTulisSchema, SubmitKaryaTulisInput } from '@/features/kirim-tulisan/schemas'
-import { submitKaryaTulisAction } from '@/features/kirim-tulisan/actions'
+import { submitKaryaTulisAction, uploadWritingInlineImageAction } from '@/features/kirim-tulisan/actions'
+import { ArticleEditor } from '@/components/ui/editor'
 import { Input } from '@/components/ui/input'
 import { Field } from '@/components/ui/field'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ export function KirimTulisanForm() {
     defaultValues: {
       category: 'Opini',
       authorStatus: 'Anggota',
+      content: '',
     },
   })
   const authorStatus = useWatch({ control, name: 'authorStatus' })
@@ -47,23 +49,19 @@ export function KirimTulisanForm() {
   const onSubmit = async (data: SubmitKaryaTulisInput) => {
     setGlobalError('')
 
-    if (!file) {
-      setGlobalError('File dokumen wajib diunggah.')
-      return
-    }
-
     const formData = new FormData()
     formData.append('title', data.title)
     formData.append('category', data.category)
     if (data.topic) formData.append('topic', data.topic)
     if (data.summary) formData.append('summary', data.summary)
+    formData.append('content', data.content || '')
     formData.append('authorName', data.authorName)
     formData.append('authorEmail', data.authorEmail)
     formData.append('authorWhatsapp', data.authorWhatsapp)
     formData.append('authorStatus', data.authorStatus)
     if (data.authorUnit) formData.append('authorUnit', data.authorUnit)
     formData.append('consent', data.consent)
-    formData.append('file', file)
+    if (file) formData.append('file', file)
 
     // Honeypot
     formData.append('bot_field', '')
@@ -77,6 +75,13 @@ export function KirimTulisanForm() {
     } else {
       setGlobalError(result.error || 'Terjadi kesalahan')
     }
+  }
+
+  const uploadInlineImage = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const result = await uploadWritingInlineImageAction(formData)
+    return { url: result.url, error: result.error }
   }
 
   if (success) {
@@ -174,12 +179,29 @@ export function KirimTulisanForm() {
                 placeholder="Ringkasan singkat tentang isi tulisan Anda..."
               />
             </Field>
+
+            <Field label="Isi Tulisan (untuk tulis langsung)" htmlFor="writing-content" error={errors.content?.message}>
+              <Controller
+                name="content"
+                control={control}
+                render={({ field }) => (
+                  <ArticleEditor
+                    id="writing-content"
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    disabled={isSubmitting}
+                    onImageUpload={uploadInlineImage}
+                  />
+                )}
+              />
+              <p className="text-xs text-muted">Gunakan heading untuk bagian tulisan; judul artikel diisi pada kolom Judul Tulisan.</p>
+            </Field>
           </div>
 
           <div className="space-y-4 border-t border-border pt-6">
-            <h3 className="font-heading text-xl font-bold text-primary">Upload Dokumen</h3>
+            <h3 className="font-heading text-xl font-bold text-primary">Lampiran Dokumen (alternatif tulis langsung)</h3>
             <p className="text-sm text-muted mb-2">
-              Format yang didukung: <strong>DOCX, PDF</strong>. Ukuran maksimal: <strong>10MB</strong>.
+              Kirim isi tulisan langsung atau naskah asli dalam format <strong>DOCX</strong> atau <strong>PDF</strong> (maksimal <strong>10MB</strong>). Dokumen disimpan sebagai lampiran dan belum diimpor otomatis.
             </p>
 
             {!file ? (
@@ -223,7 +245,7 @@ export function KirimTulisanForm() {
               <span>Saya berhak mengirim tulisan ini, menyetujui proses penyuntingan, pencantuman nama penulis, dan penggunaan data untuk proses editorial.</span>
             </label>
             {errors.consent ? <p className="text-sm font-medium text-danger" role="alert">{errors.consent.message}</p> : null}
-            <Button type="submit" variant="primary" disabled={isSubmitting || !file} size="md" className="w-full sm:w-auto">
+            <Button type="submit" variant="primary" disabled={isSubmitting} size="md" className="w-full sm:w-auto">
               {isSubmitting ? 'Mengirim Tulisan...' : 'Kirim Tulisan'}
             </Button>
           </div>

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { ARTICLE_MEDIA_CSP_SOURCES, ARTICLE_MEDIA_EXTERNAL_HOSTS } from './src/features/blog/article-media-policy';
 
 // Validation can opt into a separate build directory without touching a running dev server.
 const validationDistDir = process.env.IKMI_NEXT_DIST_DIR;
@@ -11,7 +12,7 @@ const contentSecurityPolicy = [
   `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ""}`,
   "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://res.cloudinary.com https://blogger.googleusercontent.com",
+  `img-src 'self' data: blob: ${ARTICLE_MEDIA_CSP_SOURCES.join(' ')}`,
   "font-src 'self' data:",
   "connect-src 'self'",
   "media-src 'self' https://res.cloudinary.com",
@@ -23,6 +24,9 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Keep JSDOM's runtime assets resolved from its installed package when the
+  // shared server sanitizer is loaded during static page-data collection.
+  serverExternalPackages: ['isomorphic-dompurify'],
   experimental: {
     // Public upload forms accept a 10 MB document plus bounded text fields.
     // The action still validates MIME, extension, signature, and exact file size.
@@ -39,16 +43,7 @@ const nextConfig: NextConfig = {
   ...(validationDistDir ? { distDir: validationDistDir } : {}),
   images: {
     unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'blogger.googleusercontent.com',
-      },
-    ],
+    remotePatterns: ARTICLE_MEDIA_EXTERNAL_HOSTS.map((hostname) => ({ protocol: 'https' as const, hostname })),
   },
   async redirects() {
     return [

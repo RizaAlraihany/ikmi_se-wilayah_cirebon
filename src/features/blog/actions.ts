@@ -105,6 +105,26 @@ export async function approvePostAction(id: string) {
   }
 }
 
+export async function uploadPostInlineImageAction(formData: FormData) {
+  try {
+    const user = await requirePermission('post.create')
+    await rateLimit(`cms:post:inline-image:${user.id}`, 60, 3600)
+
+    const file = formData.get('file')
+    if (!(file instanceof File) || file.size === 0) {
+      return { error: 'File gambar wajib dipilih.' }
+    }
+
+    const validation = await validateImageSignature(file)
+    if (!validation.valid) return { error: validation.error || 'File gambar tidak valid.' }
+
+    const uploaded = await storageService.uploadImage(file, cloudinaryFolders.blog)
+    return { success: true, url: uploaded.secureUrl, publicId: uploaded.publicId }
+  } catch (error) {
+    return { error: safeActionError(error, 'Gambar artikel belum dapat diunggah.', 'post.inline_image_upload') }
+  }
+}
+
 export async function requestPostRevisionAction(id: string, notes: string) {
   try {
     const user = await requirePermission('post.publish')

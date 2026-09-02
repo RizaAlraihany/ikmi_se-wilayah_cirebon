@@ -9,6 +9,7 @@ const valid = {
   authorWhatsapp: '081234567890',
   authorStatus: 'Anggota',
   consent: 'on',
+  content: '<p>Isi tulisan yang cukup untuk dikirim.</p>',
 }
 
 describe('Kirim Tulisan public domain', () => {
@@ -24,5 +25,10 @@ describe('Kirim Tulisan public domain', () => {
     expect(submitKaryaTulisSchema.safeParse({ ...valid, authorStatus: 'Pengurus' }).success).toBe(false)
     expect(submitKaryaTulisSchema.safeParse({ ...valid, authorStatus: 'Pengurus', authorUnit: 'Komdigi' }).success).toBe(true)
     expect(submitKaryaTulisSchema.safeParse({ ...valid, category: 'Berita' }).success).toBe(false)
+  })
+
+  it('keeps schema metadata validation independent from the content-or-file action rule', () => {
+    expect(submitKaryaTulisSchema.safeParse({ ...valid, content: '<p></p>' }).success).toBe(true)
+    expect(submitKaryaTulisSchema.safeParse({ ...valid, content: undefined }).success).toBe(true)
   })
 })
