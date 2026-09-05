@@ -115,16 +115,19 @@ describe('Blog Service', () => {
 
     it('allows only a future schedule from Approved and blocks early scheduled publication', async () => {
       jest.useFakeTimers().setSystemTime(new Date('2026-08-12T05:00:00.000Z'))
-      prismaMock.user.findFirst.mockResolvedValueOnce({ id: 'admin-1', roleId: 'admin_komdigi', department: { code: 'KOMDIGI' } } as any)
-      prismaMock.post.findFirst.mockResolvedValueOnce({ id: 'post-approved', status: PostStatus.APPROVED, author: { departmentId: 'komdigi' } } as any)
-      prismaMock.post.update.mockResolvedValueOnce({ id: 'post-approved', status: PostStatus.SCHEDULED } as any)
-      await blogService.schedulePost('post-approved', new Date('2026-08-13T05:00:00.000Z'), 'admin-1')
-      expect(prismaMock.post.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: PostStatus.SCHEDULED }) }))
+      try {
+        prismaMock.user.findFirst.mockResolvedValueOnce({ id: 'admin-1', roleId: 'admin_komdigi', department: { code: 'KOMDIGI' } } as any)
+        prismaMock.post.findFirst.mockResolvedValueOnce({ id: 'post-approved', status: PostStatus.APPROVED, author: { departmentId: 'komdigi' } } as any)
+        prismaMock.post.update.mockResolvedValueOnce({ id: 'post-approved', status: PostStatus.SCHEDULED } as any)
+        await blogService.schedulePost('post-approved', new Date('2026-08-13T05:00:00.000Z'), 'admin-1')
+        expect(prismaMock.post.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: PostStatus.SCHEDULED }) }))
 
-      prismaMock.user.findFirst.mockResolvedValueOnce({ id: 'admin-1', roleId: 'admin_komdigi', department: { code: 'KOMDIGI' } } as any)
-      prismaMock.post.findFirst.mockResolvedValueOnce({ id: 'post-scheduled', status: PostStatus.SCHEDULED, scheduledAt: new Date('2026-08-13T05:00:00.000Z'), author: { departmentId: 'komdigi' } } as any)
-      await expect(blogService.publishPost('post-scheduled', 'admin-1')).rejects.toBeInstanceOf(ValidationError)
-      jest.useRealTimers()
+        prismaMock.user.findFirst.mockResolvedValueOnce({ id: 'admin-1', roleId: 'admin_komdigi', department: { code: 'KOMDIGI' } } as any)
+        prismaMock.post.findFirst.mockResolvedValueOnce({ id: 'post-scheduled', status: PostStatus.SCHEDULED, scheduledAt: new Date('2026-08-13T05:00:00.000Z'), author: { departmentId: 'komdigi' } } as any)
+        await expect(blogService.publishPost('post-scheduled', 'admin-1')).rejects.toBeInstanceOf(ValidationError)
+      } finally {
+        jest.useRealTimers()
+      }
     })
   })
 })

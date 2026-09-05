@@ -6,6 +6,14 @@ delete process.env.FONNTE_TOKEN
 delete process.env.UPSTASH_REDIS_REST_URL
 delete process.env.UPSTASH_REDIS_REST_TOKEN
 
+// Keep test-local spies and clock state from leaking into the next case when
+// a test exits through an assertion or an exception before its local cleanup.
+afterEach(() => {
+  jest.clearAllTimers()
+  jest.useRealTimers()
+  jest.restoreAllMocks()
+})
+
 jest.mock('next-auth', () => {
   class AuthError extends Error {
     type = 'AuthError'

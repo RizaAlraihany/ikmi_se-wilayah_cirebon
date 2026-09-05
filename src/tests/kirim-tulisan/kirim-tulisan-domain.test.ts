@@ -1,5 +1,5 @@
 import { nextSubmissionNumber, submissionPrefix } from '@/features/kirim-tulisan/domain'
-import { submitKaryaTulisSchema } from '@/features/kirim-tulisan/schemas'
+import { hasMeaningfulDirectWritingContent, submitKaryaTulisSchema } from '@/features/kirim-tulisan/schemas'
 
 const valid = {
   title: 'Kajian Organisasi Mahasiswa',
@@ -30,5 +30,24 @@ describe('Kirim Tulisan public domain', () => {
   it('keeps schema metadata validation independent from the content-or-file action rule', () => {
     expect(submitKaryaTulisSchema.safeParse({ ...valid, content: '<p></p>' }).success).toBe(true)
     expect(submitKaryaTulisSchema.safeParse({ ...valid, content: undefined }).success).toBe(true)
+  })
+
+  it.each([
+    ['one character', '<p>x</p>'],
+    ['nine characters', '<p>abcdefghi</p>'],
+    ['whitespace only', '<p>   </p><h2></h2><p><br /></p>'],
+    ['invalid image only', '<p><img src="data:image/png;base64,AAAA" alt="Gambar" /></p>'],
+    ['unsafe image only', '<p><img src="https://unsafe.example/image.png" alt="Gambar" /></p>'],
+  ])('rejects %s as direct-writing content', (_label, content) => {
+    expect(hasMeaningfulDirectWritingContent(content)).toBe(false)
+  })
+
+  it.each([
+    ['ten characters', '<p>abcdefghij</p>'],
+    ['heading text', '<h2>Bagian artikel yang bermakna</h2>'],
+    ['valid image only', '<figure><img src="https://res.cloudinary.com/ikmi/image/upload/v1/article.png" alt="Dokumentasi" /></figure>'],
+    ['valid image with short text', '<p>x</p><img src="https://res.cloudinary.com/ikmi/image/upload/v1/article.png" alt="Dokumentasi" />'],
+  ])('accepts %s as meaningful direct-writing content', (_label, content) => {
+    expect(hasMeaningfulDirectWritingContent(content)).toBe(true)
   })
 })

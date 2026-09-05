@@ -10,11 +10,13 @@ import { requirePermission } from '@/core/authorization/guards'
 import { prisma } from '@/core/database/prisma'
 import { ForbiddenError, NotFoundError } from '@/core/errors/custom-errors'
 import { rateLimit } from '@/core/security/rate-limiter'
-import { cloudinaryFolders, storageService } from '@/core/storage/storage-service'
+import { cloudinaryFolders, DOCX_IMPORT_ROOT, storageService } from '@/core/storage/storage-service'
 import { validateDocumentSignature, validateImageSignature } from '@/core/storage/file-validator'
 import { hasMeaningfulDirectWritingContent, submitKaryaTulisSchema } from './schemas'
 import { nextSubmissionNumber, submissionPrefix } from './domain'
+import { cleanupStaleDocxImportAssets, discardDocxImportAssets, DocxImportError, finalizeDocxImportAssets, getPersistedDocxImportPublicIds, importDocxSubmission, isDocxImportAssetPersistedAndOwned, sanitizeDocxImportHtml, verifyDocxImportAssetManifest, type DocxImportAsset } from './docx-import'
 import { sanitizeArticleHtml } from '@/features/blog/article-html'
+import { acquireDocxDiscardLock, assertDocxDiscardRateLimit, docxDiscardClientIp, isDocxDiscardConsumed, markDocxDiscardConsumed, releaseDocxDiscardLock } from './docx-discard-security'
 
 const revisionNotesSchema = z.string().trim().min(5, 'Catatan revisi minimal 5 karakter.').max(3000, 'Catatan revisi maksimal 3.000 karakter.')
 
@@ -61,6 +63,98 @@ export async function uploadWritingInlineImageAction(formData: FormData) {
   }
 }
 
+export async function importWritingDocxAction(formData: FormData) {
+  try {
+    const headerList = await headers()
+    const ip = headerList.get('x-forwarded-for') || 'unknown-ip'
+    await rateLimit('kirim_tulisan_docx_import_' + ip, 5, 3600)
+    const file = formData.get('file')
+    if (!(file instanceof File) || file.size === 0) {
+      return { success: false, error: 'File DOCX wajib dipilih.' }
+    }
+    const protectedPublicIds = await getPersistedDocxImportReferences()
+    if (protectedPublicIds) await cleanupStaleDocxImportAssets(protectedPublicIds)
+    return { success: true, ...(await importDocxSubmission(file)) }
+  } catch (error) {
+    if (error instanceof DocxImportError) return { success: false, error: error.message }
+    const message = error instanceof Error ? error.message : ''
+    if (message.includes('Terlalu banyak')) return { success: false, error: message }
+    console.error('Import DOCX error:', error)
+    return { success: false, error: 'Dokumen DOCX belum dapat diimpor. Anda tetap dapat mengirimkannya sebagai lampiran.' }
+  }
+}
+
+async function getPersistedDocxImportReferences(assets?: DocxImportAsset[], sessionId?: string) {
+  try {
+    const [submissions, posts] = await Promise.all([
+      prisma.karyaTulis.findMany({ where: { content: { contains: DOCX_IMPORT_ROOT } }, select: { content: true } }),
+      prisma.post.findMany({ where: { content: { contains: DOCX_IMPORT_ROOT } }, select: { content: true, writingSubmissionId: true } }),
+    ])
+    const persistedPublicIds = [...new Set([
+      ...(submissions || []).flatMap((submission) => getPersistedDocxImportPublicIds(submission.content || '')),
+      ...(posts || []).flatMap((post) => post.writingSubmissionId ? getPersistedDocxImportPublicIds(post.content || '') : []),
+    ])]
+    if (!assets || !sessionId) return persistedPublicIds
+
+    const persistedContents = [
+      ...(submissions || []).map((submission) => submission.content || ''),
+      ...(posts || []).filter((post) => post.writingSubmissionId).map((post) => post.content || ''),
+    ]
+    return assets
+      .filter((asset) => persistedContents.some((content) => isDocxImportAssetPersistedAndOwned(content, asset, sessionId)))
+      .map((asset) => asset.publicId)
+  } catch (error) {
+    // Fail closed for cleanup: an unavailable reference lookup must not turn
+    // a persisted image into a deletion candidate.
+    console.error('DOCX import reference lookup failed:', error)
+    return null
+  }
+}
+
+export async function discardWritingDocxImportAction(sessionId: string, manifestToken: string) {
+  const manifest = verifyDocxImportAssetManifest(manifestToken)
+  if (!manifest || manifest.sessionId !== sessionId) {
+    return { success: false, error: 'Sesi impor DOCX tidak valid atau sudah kedaluwarsa.' }
+  }
+
+  let lockToken: string | null = null
+  try {
+    if (await isDocxDiscardConsumed(manifest.sessionId)) return { success: true, alreadyDiscarded: true }
+
+    const headerList = await headers()
+    await assertDocxDiscardRateLimit(
+      docxDiscardClientIp(headerList.get('x-forwarded-for'), headerList.get('x-real-ip')),
+      manifest,
+      manifestToken,
+    )
+
+    lockToken = await acquireDocxDiscardLock(manifest.sessionId)
+    if (!lockToken) {
+      return { success: false, error: 'Pembersihan gambar sementara sedang diproses. Silakan coba lagi.' }
+    }
+
+    const persistedPublicIds = await getPersistedDocxImportReferences(manifest.assets, manifest.sessionId)
+    if (!persistedPublicIds) {
+      return { success: false, error: 'Referensi tulisan belum dapat diverifikasi. Silakan coba lagi.' }
+    }
+    await discardDocxImportAssets(manifest.sessionId, persistedPublicIds)
+    await markDocxDiscardConsumed(manifest)
+    return { success: true }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Terlalu banyak')) {
+      return { success: false, error: error.message }
+    }
+    console.error('Discard DOCX import images error:', error)
+    return { success: false, error: 'Gambar sementara belum dapat dibersihkan.' }
+  } finally {
+    if (lockToken) {
+      await releaseDocxDiscardLock(manifest.sessionId, lockToken).catch((error) => {
+        console.error('Release DOCX discard lock error:', error)
+      })
+    }
+  }
+}
+
 export async function submitKaryaTulisAction(formData: FormData) {
   try {
     const headerList = await headers()
@@ -87,7 +181,15 @@ export async function submitKaryaTulisAction(formData: FormData) {
     const hasAttachment = suppliedFile instanceof File && suppliedFile.size > 0
     const validatedFile = hasAttachment ? await validateSubmissionFile(formData) : null
     if (validatedFile && 'error' in validatedFile) return { success: false, error: validatedFile.error }
-    const hasDirectWriting = hasMeaningfulDirectWritingContent(parsed.data.content)
+    const rawImportSessionId = formData.get('docxImportSessionId')
+    const rawImportManifest = formData.get('docxImportManifest')
+    const importManifest = rawImportManifest ? verifyDocxImportAssetManifest(rawImportManifest) : null
+    const suppliedSessionId = typeof rawImportSessionId === 'string' ? rawImportSessionId : ''
+    if ((rawImportManifest && !importManifest) || (suppliedSessionId && (!importManifest || importManifest.sessionId !== suppliedSessionId))) {
+      return { success: false, error: 'Sesi impor DOCX tidak valid atau sudah kedaluwarsa.' }
+    }
+    const sanitizedContent = sanitizeDocxImportHtml(parsed.data.content || '', typeof rawImportManifest === 'string' ? rawImportManifest : undefined)
+    const hasDirectWriting = hasMeaningfulDirectWritingContent(sanitizedContent)
     if (!hasDirectWriting && !validatedFile) {
       return { success: false, error: 'Isi tulisan atau dokumen wajib dikirim.' }
     }
@@ -114,7 +216,7 @@ export async function submitKaryaTulisAction(formData: FormData) {
             authorStatus: data.authorStatus,
             authorUnit: data.authorUnit || null,
             consentAt: new Date(),
-            content: hasDirectWriting ? sanitizeArticleHtml(data.content || '', { normalizeHeadingOne: true }) : null,
+            content: hasDirectWriting ? sanitizedContent : null,
             fileUrl: null,
             filePublicId: upload?.publicId || null,
             status: KaryaTulisStatus.SUBMITTED,
@@ -133,6 +235,15 @@ export async function submitKaryaTulisAction(formData: FormData) {
         }
         return submission
       })
+      if (importManifest && typeof rawImportManifest === 'string') {
+        try {
+          await finalizeDocxImportAssets(rawImportManifest, sanitizedContent)
+        } catch (cleanupError) {
+          // Submission is already durable. Reference-aware stale cleanup will
+          // protect the referenced asset and retry removal of its temp tag.
+          console.error('Finalize DOCX import images error:', cleanupError)
+        }
+      }
       return { success: true, id: created.id, submissionNumber: created.submissionNumber }
     } catch (error) {
       if (upload) await storageService.deleteFile(upload.publicId, 'raw', 'authenticated').catch(() => undefined)

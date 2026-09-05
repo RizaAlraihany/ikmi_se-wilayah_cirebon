@@ -11,7 +11,7 @@ function runRealSanitizer(inputs: Array<{ input: string; normalizeHeadingOne?: b
 
 describe('article HTML server sanitization', () => {
   const [unsafeHtml, figureHtml, sameOriginHtml, bloggerHtml, unknownHostHtml, newHtml, legacyHtml] = runRealSanitizer([
-    { input: '<p>Awal</p><img src="data:image/png;base64,AAAA" alt="Data"><img src="javascript:alert(1)" alt="Script"><img src="blob:https://example.test/1" alt="Blob"><img src="https://example-other.test/ok.png" alt="Tidak dipercaya" onerror="alert(1)"><script>alert(1)</script>' },
+    { input: '<p>Awal</p><a href="https://example.com">Tautan aman</a><a href="javascript:alert(1)">Tautan berbahaya</a><img src="data:image/png;base64,AAAA" alt="Data"><img src="javascript:alert(1)" alt="Script"><img src="blob:https://example.test/1" alt="Blob"><img src="https://example-other.test/ok.png" alt="Tidak dipercaya" onerror="alert(1)"><script>alert(1)</script>' },
     { input: '<figure class="article-figure"><img src="https://res.cloudinary.com/ikmi/image/upload/v1/article.png" alt="Dokumentasi kegiatan" onerror="alert(1)"><figcaption class="article-figure-caption">Keterangan gambar</figcaption></figure>' },
     { input: '<img src="/media/article.png" alt="Gambar lokal">' },
     { input: '<img src="https://blogger.googleusercontent.com/img/a/legacy.png" alt="Gambar Blogger">' },
@@ -24,6 +24,7 @@ describe('article HTML server sanitization', () => {
     const html = unsafeHtml
 
     expect(html).toContain('<p>Awal</p>')
+    expect(html).toContain('href="https://example.com"')
     expect(html).not.toMatch(/data:image|javascript:|blob:|onerror|<script/i)
     expect(html).not.toContain('<img')
   })

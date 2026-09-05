@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { submitKaryaTulisSchema, SubmitKaryaTulisInput } from '@/features/kirim-tulisan/schemas'
-import { submitKaryaTulisAction, uploadWritingInlineImageAction } from '@/features/kirim-tulisan/actions'
+import { hasMeaningfulArticleContent } from '@/features/blog/article-html-client'
+import { discardWritingDocxImportAction, importWritingDocxAction, submitKaryaTulisAction, uploadWritingInlineImageAction } from '@/features/kirim-tulisan/actions'
 import { ArticleEditor } from '@/components/ui/editor'
 import { Input } from '@/components/ui/input'
 import { Field } from '@/components/ui/field'
@@ -18,6 +19,11 @@ export function KirimTulisanForm() {
   const [globalError, setGlobalError] = useState<string>('')
   const [success, setSuccess] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importWarnings, setImportWarnings] = useState<string[]>([])
+  const [importSessionId, setImportSessionId] = useState<string | null>(null)
+  const [importAssetManifest, setImportAssetManifest] = useState<string | null>(null)
+  const [importedImageUrls, setImportedImageUrls] = useState<string[]>([])
 
   const {
     register,
@@ -25,6 +31,8 @@ export function KirimTulisanForm() {
     control,
     formState: { errors, isSubmitting },
     reset,
+    getValues,
+    setValue,
   } = useForm<SubmitKaryaTulisInput>({
     resolver: zodResolver(submitKaryaTulisSchema),
     defaultValues: {
@@ -42,8 +50,70 @@ export function KirimTulisanForm() {
     setGlobalError('')
   }
 
-  const removeFile = () => {
+  const removeFile = async () => {
+    const activeSessionId = importSessionId
+    const activeManifest = importAssetManifest
+    const currentContent = getValues('content') || ''
+    const contentStillReferencesImportedImage = importedImageUrls.some((url) => currentContent.includes(url))
+
     setFile(null)
+    setImportWarnings([])
+    setGlobalError('')
+
+    // Keep ownership state while the editor still points at a temporary image.
+    // Removing that session here would leave the user with broken image URLs.
+    if (!activeSessionId || !activeManifest || contentStillReferencesImportedImage) return
+
+    setImportSessionId(null)
+    setImportAssetManifest(null)
+    setImportedImageUrls([])
+    try {
+      const result = await discardWritingDocxImportAction(activeSessionId, activeManifest)
+      if (!result.success) console.error('Gambar impor DOCX yang dibuang belum dapat dibersihkan:', result.error)
+    } catch (cleanupError) {
+      // The temporary tag remains in place when cleanup is unavailable, so the
+      // reference-aware stale sweep can safely retry it later.
+      console.error('Gambar impor DOCX yang dibuang belum dapat dibersihkan:', cleanupError)
+    }
+  }
+
+  const importDocx = async () => {
+    if (!file || !file.name.toLowerCase().endsWith('.docx')) return
+    const current = getValues()
+    if (hasMeaningfulArticleContent(current.content) || current.title?.trim() || current.summary?.trim()) {
+      if (!window.confirm('Impor DOCX akan mengganti judul, ringkasan, dan isi editor saat ini. Lanjutkan?')) return
+    }
+    setGlobalError('')
+    setIsImporting(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      const result = await importWritingDocxAction(formData)
+      if (!result.success || !('html' in result)) {
+        setGlobalError(result.error || 'Dokumen DOCX belum dapat diimpor.')
+        return
+      }
+      const previousImportSessionId = importSessionId
+      const previousImportManifest = importAssetManifest
+      setValue('title', result.title || '', { shouldDirty: true, shouldValidate: true })
+      setValue('summary', result.excerpt || '', { shouldDirty: true, shouldValidate: true })
+      setValue('content', result.html, { shouldDirty: true, shouldValidate: true })
+      setImportWarnings(result.warnings)
+      setImportSessionId(result.importSessionId)
+      setImportAssetManifest(result.importAssetManifest)
+      setImportedImageUrls(result.importedImages?.map((image) => image.url) || [])
+      if (previousImportSessionId && previousImportManifest && previousImportSessionId !== result.importSessionId) {
+        void discardWritingDocxImportAction(previousImportSessionId, previousImportManifest).then((cleanupResult) => {
+          if (!cleanupResult.success) console.error('Gambar impor DOCX lama belum dapat dibersihkan:', cleanupResult.error)
+        }).catch((cleanupError) => {
+          console.error('Gambar impor DOCX lama belum dapat dibersihkan:', cleanupError)
+        })
+      }
+    } catch {
+      setGlobalError('Dokumen DOCX belum dapat diimpor. Anda tetap dapat mengirimkannya sebagai lampiran.')
+    } finally {
+      setIsImporting(false)
+    }
   }
 
   const onSubmit = async (data: SubmitKaryaTulisInput) => {
@@ -61,6 +131,8 @@ export function KirimTulisanForm() {
     formData.append('authorStatus', data.authorStatus)
     if (data.authorUnit) formData.append('authorUnit', data.authorUnit)
     formData.append('consent', data.consent)
+    if (importSessionId) formData.append('docxImportSessionId', importSessionId)
+    if (importAssetManifest) formData.append('docxImportManifest', importAssetManifest)
     if (file) formData.append('file', file)
 
     // Honeypot
@@ -72,6 +144,10 @@ export function KirimTulisanForm() {
       setSuccess(result.submissionNumber ?? 'Terkirim')
       reset()
       setFile(null)
+      setImportWarnings([])
+      setImportSessionId(null)
+      setImportAssetManifest(null)
+      setImportedImageUrls([])
     } else {
       setGlobalError(result.error || 'Terjadi kesalahan')
     }
@@ -189,7 +265,7 @@ export function KirimTulisanForm() {
                     id="writing-content"
                     value={field.value || ''}
                     onChange={field.onChange}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isImporting}
                     onImageUpload={uploadInlineImage}
                   />
                 )}
@@ -201,7 +277,7 @@ export function KirimTulisanForm() {
           <div className="space-y-4 border-t border-border pt-6">
             <h3 className="font-heading text-xl font-bold text-primary">Lampiran Dokumen (alternatif tulis langsung)</h3>
             <p className="text-sm text-muted mb-2">
-              Kirim isi tulisan langsung atau naskah asli dalam format <strong>DOCX</strong> atau <strong>PDF</strong> (maksimal <strong>10MB</strong>). Dokumen disimpan sebagai lampiran dan belum diimpor otomatis.
+              Kirim isi tulisan langsung atau naskah asli dalam format <strong>DOCX</strong> atau <strong>PDF</strong> (maksimal <strong>10MB</strong>). DOCX dapat diimpor secara opsional ke editor; semua dokumen tetap disimpan sebagai lampiran.
             </p>
 
             {!file ? (
@@ -214,7 +290,7 @@ export function KirimTulisanForm() {
                       className="relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 hover:text-primary/80"
                     >
                       <span>Pilih file</span>
-                      <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled={isSubmitting} />
+                      <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled={isSubmitting || isImporting} />
                     </label>
                     <p className="pl-1">atau drag and drop</p>
                   </div>
@@ -232,20 +308,24 @@ export function KirimTulisanForm() {
                     <p className="text-xs text-muted">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
                 </div>
-                <Button type="button" variant="ghost" size="icon" onClick={removeFile} disabled={isSubmitting} className="text-muted hover:text-destructive shrink-0">
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  {file.name.toLowerCase().endsWith('.docx') ? <Button type="button" variant="secondary" size="sm" onClick={() => void importDocx()} disabled={isSubmitting || isImporting}>{isImporting ? 'Mengimpor...' : 'Impor ke editor'}</Button> : null}
+                  <Button type="button" variant="ghost" size="icon" aria-label="Hapus lampiran" onClick={() => void removeFile()} disabled={isSubmitting || isImporting} className="text-muted hover:text-destructive shrink-0">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
+            {importWarnings.length > 0 ? <div className="rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm text-foreground" role="status"><p className="font-semibold">Catatan impor</p><ul className="mt-2 list-disc space-y-1 pl-5">{importWarnings.map((warning, index) => <li key={warning + '-' + index}>{warning}</li>)}</ul></div> : null}
           </div>
 
           <div className="flex flex-col gap-4 border-t border-border pt-4 sm:flex-row sm:items-start sm:justify-between">
             <label className="mb-5 flex items-start gap-3 text-sm leading-6 text-text-secondary sm:mr-auto sm:max-w-xl">
-              <input type="checkbox" {...register('consent')} className="mt-1 h-5 w-5 shrink-0 accent-primary" />
+              <input type="checkbox" value="on" {...register('consent')} className="mt-1 h-5 w-5 shrink-0 accent-primary" />
               <span>Saya berhak mengirim tulisan ini, menyetujui proses penyuntingan, pencantuman nama penulis, dan penggunaan data untuk proses editorial.</span>
             </label>
             {errors.consent ? <p className="text-sm font-medium text-danger" role="alert">{errors.consent.message}</p> : null}
-            <Button type="submit" variant="primary" disabled={isSubmitting} size="md" className="w-full sm:w-auto">
+            <Button type="submit" variant="primary" disabled={isSubmitting || isImporting} size="md" className="w-full sm:w-auto">
               {isSubmitting ? 'Mengirim Tulisan...' : 'Kirim Tulisan'}
             </Button>
           </div>

@@ -18,6 +18,19 @@ class CacheService {
     return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer))
   }
 
+  private isSecurityStoreAvailable() {
+    return Boolean(redis && !this.isRedisDisabled)
+  }
+
+  private securityFallbackAllowed() {
+    return process.env.NODE_ENV !== 'production'
+  }
+
+  private securityStoreUnavailable(key: string): never {
+    logger.error('Redis security store unavailable; refusing security-sensitive cache operation', { key })
+    throw new Error('Security cache unavailable')
+  }
+
   async set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
     if (redis && !this.isRedisDisabled) {
       try {
@@ -101,6 +114,77 @@ class CacheService {
     const newValue = (item.value as number) + 1
     this.store.set(key, { value: newValue, expiry: item.expiry })
     return newValue
+  }
+
+  /** Atomically creates a short-lived security key when it does not exist. */
+  async setIfAbsent(key: string, value: string, ttlSeconds: number): Promise<boolean> {
+    if (this.isSecurityStoreAvailable()) {
+      try {
+        const result = await this.executeWithTimeout(redis!.set(key, value, { nx: true, ex: ttlSeconds }), 500)
+        return result === 'OK'
+      } catch {
+        if (!this.securityFallbackAllowed()) return this.securityStoreUnavailable(key)
+        logger.warn('Redis security set-if-absent failed / timed out, falling back to memory cache', { key })
+      }
+    } else if (!this.securityFallbackAllowed()) {
+      return this.securityStoreUnavailable(key)
+    }
+
+    const item = this.store.get(key)
+    const now = Date.now()
+    if (item && (!item.expiry || item.expiry > now)) return false
+    this.store.set(key, { value, expiry: now + ttlSeconds * 1000 })
+    return true
+  }
+
+  /** Reads a security key without silently weakening the distributed guard in production. */
+  async getSecurity<T>(key: string): Promise<T | null> {
+    if (this.isSecurityStoreAvailable()) {
+      try {
+        const data = await this.executeWithTimeout(redis!.get<T>(key), 500)
+        return data ?? null
+      } catch {
+        if (!this.securityFallbackAllowed()) return this.securityStoreUnavailable(key)
+        logger.warn('Redis security get failed / timed out, falling back to memory cache', { key })
+      }
+    } else if (!this.securityFallbackAllowed()) {
+      return this.securityStoreUnavailable(key)
+    }
+
+    const item = this.store.get(key)
+    if (!item) return null
+    if (item.expiry && Date.now() > item.expiry) {
+      this.store.delete(key)
+      return null
+    }
+    return item.value as T
+  }
+
+  /** Atomically removes a security key only when it still belongs to this operation. */
+  async deleteIfValue(key: string, expectedValue: string): Promise<boolean> {
+    if (this.isSecurityStoreAvailable()) {
+      try {
+        const result = await this.executeWithTimeout(
+          redis!.eval<[string], number>(
+            'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end',
+            [key],
+            [expectedValue],
+          ),
+          500,
+        )
+        return result === 1
+      } catch {
+        if (!this.securityFallbackAllowed()) return this.securityStoreUnavailable(key)
+        logger.warn('Redis security compare-delete failed / timed out, falling back to memory cache', { key })
+      }
+    } else if (!this.securityFallbackAllowed()) {
+      return this.securityStoreUnavailable(key)
+    }
+
+    const item = this.store.get(key)
+    if (!item || (item.expiry && Date.now() > item.expiry) || item.value !== expectedValue) return false
+    this.store.delete(key)
+    return true
   }
 }
 

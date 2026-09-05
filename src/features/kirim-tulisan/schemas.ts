@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { articleHtmlToText } from '@/features/blog/article-html-client'
+import { isAllowedArticleImageUrl } from '@/features/blog/article-media-policy'
 
 export const submitKaryaTulisSchema = z.object({
   title: z.string().min(5, 'Judul tulisan minimal 5 karakter').max(150, 'Judul terlalu panjang'),
@@ -31,5 +32,20 @@ export const submitKaryaTulisSchema = z.object({
 export type SubmitKaryaTulisInput = z.infer<typeof submitKaryaTulisSchema>
 
 export function hasMeaningfulDirectWritingContent(value: string | undefined) {
-  return articleHtmlToText(value || '').length >= 10
+  const html = value || ''
+  const meaningfulText = articleHtmlToText(html).length >= 10
+
+  if (meaningfulText) return true
+
+  const imagePattern = /<img\b([^>]*)>/gi
+  for (const match of html.matchAll(imagePattern)) {
+    const attributes = match[1] || ''
+    const sourceMatch = attributes.match(/\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i)
+    const altMatch = attributes.match(/\balt\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i)
+    const source = sourceMatch?.[1] || sourceMatch?.[2] || sourceMatch?.[3] || ''
+    const alt = (altMatch?.[1] || altMatch?.[2] || altMatch?.[3] || '').trim()
+    if (alt && isAllowedArticleImageUrl(source)) return true
+  }
+
+  return false
 }
