@@ -1,6 +1,6 @@
 'use client'
 
-import { PamfletRequestStatus } from '@prisma/client'
+import type { PamfletRequestStatus } from '@prisma/client'
 import { CalendarPlus, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -28,9 +28,9 @@ type CreateContentPlanDialogProps = {
 }
 
 const convertibleStatuses: PamfletRequestStatus[] = [
-  PamfletRequestStatus.DITERIMA,
-  PamfletRequestStatus.DIKERJAKAN,
-  PamfletRequestStatus.SELESAI,
+  'DITERIMA',
+  'DIKERJAKAN',
+  'SELESAI',
 ]
 
 const deadlineFormatter = new Intl.DateTimeFormat('id-ID', {

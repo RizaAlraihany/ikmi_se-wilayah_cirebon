@@ -1,15 +1,27 @@
-import NextAuth from 'next-auth'
-import { NextResponse } from 'next/server'
-import { authConfig } from './core/auth/auth.config'
+import { NextResponse, type NextRequest } from 'next/server'
 import { logger } from './core/monitoring/logger'
-import { isAuthenticatedDashboardUser } from './core/auth/roles'
 
-const { auth } = NextAuth(authConfig)
+const sessionCookiePrefixes = [
+  'authjs.session-token',
+  '__Secure-authjs.session-token',
+]
 
-export default auth((req) => {
+function hasSessionCookie(req: Request) {
+  return req.headers.get('cookie')?.split(';').some((part) => {
+    const name = part.trim().split('=', 1)[0]
+    return sessionCookiePrefixes.some((prefix) => name === prefix || name.startsWith(`${prefix}.`))
+  }) ?? false
+}
+
+/**
+ * The proxy intentionally performs routing-only session presence checks.
+ * Authoritative JWT verification, active-user/sessionVersion validation, and
+ * role authorization stay on the Node server in the dashboard guards/actions.
+ */
+export default function proxy(req: NextRequest) {
   const startedAt = Date.now()
   const hostname = (req.headers.get('host') ?? req.nextUrl.hostname).split(':')[0].toLowerCase()
-  const isLoggedIn = isAuthenticatedDashboardUser(req.auth?.user)
+  const isLoggedIn = hasSessionCookie(req)
   const isAuthRoute = req.nextUrl.pathname.startsWith('/login')
   const isDashboardRoute =
     req.nextUrl.pathname.startsWith('/dashboard') ||
@@ -40,7 +52,6 @@ export default auth((req) => {
       method: req.method,
       path: req.nextUrl.pathname,
       status,
-      userId: req.auth?.user?.id,
       durationMs: Date.now() - startedAt,
     })
   }
@@ -103,10 +114,6 @@ export default auth((req) => {
   }
 
   if (isAuthRoute) {
-    if (isLoggedIn) {
-      logRequest(302)
-      return withNoIndex(NextResponse.redirect(new URL('/admin', req.nextUrl)))
-    }
     logRequest(200)
     return withNoIndex(NextResponse.next())
   }
@@ -135,7 +142,7 @@ export default auth((req) => {
 
   logRequest(200)
   return
-})
+}
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],

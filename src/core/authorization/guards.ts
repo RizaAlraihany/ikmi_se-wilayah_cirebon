@@ -4,7 +4,7 @@ import { prisma } from '@/core/database/prisma'
 import { ForbiddenError, UnauthorizedError } from '@/core/errors/custom-errors'
 import { getDashboardRouteRequirement } from './dashboard-route-permissions'
 import { can, type SessionUser } from './rbac'
-import { isDashboardRole } from '@/core/auth/roles'
+import { isDashboardRole, SUPER_ADMIN_ROLE_IDS, type DashboardRoleId } from '@/core/auth/roles'
 import { serializeAuditData } from '@/features/audit/audit-data'
 
 export interface ActiveSessionUser extends SessionUser {
@@ -88,6 +88,33 @@ export async function requirePermissionForUser(
     throw new ForbiddenError('Anda tidak memiliki izin untuk menjalankan aksi ini.')
   }
   return activeUser
+}
+
+/** Role boundary for service-layer operations that must not be widened by a
+ * legacy permission grant. The database user is always reloaded first. */
+export async function requireRoleForUser(
+  user: SessionUser | string,
+  roles: readonly DashboardRoleId[],
+): Promise<SessionUser> {
+  const activeUser = typeof user === 'string' ? await requireActiveUser(user) : await requireActiveUser(user.id)
+  return assertAllowedRole(activeUser, roles)
+}
+
+async function assertAllowedRole(user: SessionUser, roles: readonly DashboardRoleId[]): Promise<SessionUser> {
+  if (!roles.includes(user.roleId as DashboardRoleId)) {
+    await auditAuthorizationFailure(user.id, `dashboard.role:${roles.join('|')}`)
+    throw new ForbiddenError('Role Anda tidak dapat menjalankan aksi ini.')
+  }
+  return user
+}
+
+export async function requireSuperAdminForUser(user: SessionUser | string): Promise<SessionUser> {
+  return requireRoleForUser(user, SUPER_ADMIN_ROLE_IDS)
+}
+
+export async function requireSuperAdmin(): Promise<SessionUser> {
+  const user = await requireAuth()
+  return assertAllowedRole(user, SUPER_ADMIN_ROLE_IDS)
 }
 
 export async function requireAnyPermission(permissions: readonly string[]): Promise<SessionUser> {

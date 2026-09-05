@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { ZodError } from 'zod'
-import { auth } from '@/core/auth/auth'
+import { requireAuth } from '@/core/authorization/guards'
 import { AppError } from '@/core/errors/custom-errors'
 import { parseJakartaCampaignDatetime } from './domain'
 import { homepageBannerService } from './services'
@@ -37,8 +37,8 @@ function safeActionError(error: unknown) {
 }
 
 async function currentActorId() {
-  const session = await auth()
-  return session?.user?.id ?? null
+  const actor = await requireAuth()
+  return actor.id
 }
 
 function revalidateCampaignRoutes() {
@@ -47,10 +47,8 @@ function revalidateCampaignRoutes() {
 }
 
 export async function createHomepageBanner(formData: FormData) {
-  const actorId = await currentActorId()
-  if (!actorId) return { success: false as const, error: 'Anda harus masuk terlebih dahulu.' }
-
   try {
+    const actorId = await currentActorId()
     const banner = await homepageBannerService.create(campaignFormInput(formData), actorId)
     revalidateCampaignRoutes()
     return { success: true as const, data: { id: banner.id } }
@@ -60,10 +58,8 @@ export async function createHomepageBanner(formData: FormData) {
 }
 
 export async function updateHomepageBanner(id: string, formData: FormData) {
-  const actorId = await currentActorId()
-  if (!actorId) return { success: false as const, error: 'Anda harus masuk terlebih dahulu.' }
-
   try {
+    const actorId = await currentActorId()
     const banner = await homepageBannerService.update(id, campaignFormInput(formData), actorId)
     revalidateCampaignRoutes()
     return { success: true as const, data: { id: banner.id } }
@@ -73,10 +69,8 @@ export async function updateHomepageBanner(id: string, formData: FormData) {
 }
 
 export async function archiveHomepageBanner(id: string) {
-  const actorId = await currentActorId()
-  if (!actorId) return { success: false as const, error: 'Anda harus masuk terlebih dahulu.' }
-
   try {
+    const actorId = await currentActorId()
     await homepageBannerService.archive(id, actorId)
     revalidateCampaignRoutes()
     return { success: true as const }

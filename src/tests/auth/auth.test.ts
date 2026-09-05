@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { authConfig } from '@/core/auth/auth.config'
+import { authEdgeConfig } from '@/core/auth/auth.edge.config'
 import { DASHBOARD_ROLE_IDS, isAuthenticatedDashboardUser } from '@/core/auth/roles'
 import { prismaMock } from '../prisma-mock'
 import bcrypt from 'bcryptjs'
@@ -172,6 +173,28 @@ describe('Authentication Flow', () => {
       httpOnly: true,
       sameSite: 'lax',
     })
+    expect(authEdgeConfig.providers).toEqual([])
+  })
+
+  it('keeps the client session limited to non-sensitive identity fields', async () => {
+    const result = await authConfig.callbacks?.session?.({
+      session: { user: { name: 'Admin', email: 'admin@example.test' } },
+      token: {
+        id: 'admin-1',
+        roleId: 'admin_komdigi',
+        departmentId: null,
+        positionId: null,
+        sessionVersion: 4,
+        passwordHash: 'must-not-leak',
+      } as any,
+    } as any)
+
+    expect(result?.user).toMatchObject({
+      id: 'admin-1',
+      roleId: 'admin_komdigi',
+      sessionVersion: 4,
+    })
+    expect(result?.user).not.toHaveProperty('passwordHash')
   })
 
   it('does not treat an empty auth object or legacy role as a logged-in dashboard user', () => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { ContentPlanStatus } from '@prisma/client'
+import type { ContentPlanStatus as PrismaContentPlanStatus } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Alert } from '@/components/ui/alert'
@@ -24,7 +24,7 @@ export type ContentPlanFormData = {
   title: string
   platform: string
   publishDate: Date
-  status: ContentPlanStatus
+  status: PrismaContentPlanStatus
   authorId: string
   contentType: string | null
   programId: string | null
@@ -35,6 +35,11 @@ export type ContentPlanFormData = {
   assetUrl: string | null
   publishedUrl: string | null
 }
+
+const CONTENT_PLAN_STATUS = {
+  PLANNED: 'PLANNED' as PrismaContentPlanStatus,
+  CANCELLED: 'CANCELLED' as PrismaContentPlanStatus,
+} as const
 
 interface Props {
   authors: { id: string; name: string }[]
@@ -50,7 +55,7 @@ export function ContentPlanForm({ authors, programs, agendas, defaultDate, initi
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [cancelOpen, setCancelOpen] = useState(false)
-  const [status, setStatus] = useState<ContentPlanStatus>(initialData?.status || ContentPlanStatus.PLANNED)
+  const [status, setStatus] = useState<PrismaContentPlanStatus>(initialData?.status || CONTENT_PLAN_STATUS.PLANNED)
   const dateToUse = initialData?.publishDate || defaultDate
   const canPublish = initialData?.status === 'READY' || initialData?.status === 'SCHEDULED' || initialData?.status === 'PUBLISHED'
 
@@ -75,7 +80,7 @@ export function ContentPlanForm({ authors, programs, agendas, defaultDate, initi
     if (!initialData) return
     setError(null)
     setLoading(true)
-    const result = await updateContentPlanStatusAction(initialData.id, ContentPlanStatus.CANCELLED)
+    const result = await updateContentPlanStatusAction(initialData.id, CONTENT_PLAN_STATUS.CANCELLED)
     if (result.success) {
       setCancelOpen(false)
       onSuccess?.()
@@ -170,7 +175,7 @@ export function ContentPlanForm({ authors, programs, agendas, defaultDate, initi
         {initialData ? (
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Status" htmlFor="plan-status" required>
-              <Select id="plan-status" name="status" required value={status} onChange={(event) => setStatus(event.target.value as ContentPlanStatus)}>
+              <Select id="plan-status" name="status" required value={status} onChange={(event) => setStatus(event.target.value as PrismaContentPlanStatus)}>
                 {statusOptions.map((item) => <option key={item} value={item}>{contentPlanStatusLabel(item)}</option>)}
               </Select>
             </Field>
@@ -178,7 +183,7 @@ export function ContentPlanForm({ authors, programs, agendas, defaultDate, initi
               <Input id="plan-published-url" name="publishedUrl" type="text" inputMode="url" maxLength={2048} required={status === 'PUBLISHED'} defaultValue={initialData.publishedUrl || ''} placeholder="https://..." />
             </Field>
           </div>
-        ) : <input type="hidden" name="status" value={ContentPlanStatus.PLANNED} />}
+        ) : <input type="hidden" name="status" value={CONTENT_PLAN_STATUS.PLANNED} />}
 
         <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
           <div>{initialData && !['PUBLISHED', 'CANCELLED'].includes(initialData.status) ? <Button type="button" variant="danger" onClick={() => setCancelOpen(true)} disabled={loading}>Batalkan Konten</Button> : null}</div>

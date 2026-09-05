@@ -13,12 +13,14 @@ import { Alert } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { ListboxSelect } from '@/components/ui/listbox-select'
 import { Textarea } from '@/components/ui/textarea'
-import { PostStatus } from '@prisma/client'
+import type { PostStatus } from '@prisma/client'
 
 type CategoryOption = {
   id: string
   name: string
 }
+
+const POST_STATUS_REVISION = 'REVISION' as PostStatus
 
 type InitialPost = {
   id: string
@@ -169,7 +171,7 @@ export function PostForm({
       <input type="hidden" {...register('featuredImagePublicId')} />
       <input type="hidden" {...register('ogImagePublicId')} />
 
-      {initialPost?.status === PostStatus.REVISION && initialPost.revisionNotes ? (
+      {initialPost?.status === POST_STATUS_REVISION && initialPost.revisionNotes ? (
         <Alert tone="warning" title="Perlu revisi">{initialPost.revisionNotes}</Alert>
       ) : null}
 

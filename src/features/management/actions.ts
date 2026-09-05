@@ -5,6 +5,7 @@ import { prisma } from '@/core/database/prisma'
 import { revalidatePath } from 'next/cache'
 import { safeActionError } from '@/core/errors/safe-action-error'
 import { updatePengurusSchema, UpdatePengurusInput } from './schemas'
+import { isDashboardRole, isSuperAdminRole } from '@/core/auth/roles'
 
 export async function updatePengurusAction(id: string, input: UpdatePengurusInput) {
   try {
@@ -13,6 +14,9 @@ export async function updatePengurusAction(id: string, input: UpdatePengurusInpu
 
     const current = await prisma.user.findUnique({ where: { id } })
     if (!current) return { error: 'Pengurus tidak ditemukan.' }
+    if (isDashboardRole(current.roleId) && !isSuperAdminRole(actor.roleId)) {
+      return { error: 'Akun dashboard hanya dapat dikelola oleh Super Admin.' }
+    }
 
     const updated = await prisma.user.update({
       where: { id },
@@ -59,6 +63,9 @@ export async function deletePengurusAction(id: string) {
       include: { role: true, department: true, position: true },
     })
     if (!current || current.deletedAt) return { error: 'Pengurus tidak ditemukan.' }
+    if (isDashboardRole(current.roleId) && !isSuperAdminRole(actor.roleId)) {
+      return { error: 'Akun dashboard hanya dapat dikelola oleh Super Admin.' }
+    }
 
     await prisma.user.update({
       where: { id },

@@ -4,6 +4,7 @@ import {
   requireAuth,
   requireDashboardRouteAccess,
   requirePermission,
+  requireSuperAdmin,
 } from '@/core/authorization/guards'
 import { can } from '@/core/authorization/rbac'
 import { ForbiddenError, UnauthorizedError } from '@/core/errors/custom-errors'
@@ -100,5 +101,19 @@ describe('authorization guards', () => {
     expect(canMock).not.toHaveBeenCalled()
     await expect(requireDashboardRouteAccess('/admin/cms/posts')).resolves.toEqual(komdigiUser)
     expect(canMock).toHaveBeenCalledWith('post.view', komdigiUser)
+  })
+
+  it('keeps account management explicitly Super Admin only', async () => {
+    canMock.mockResolvedValue(true)
+
+    await expect(requireSuperAdmin()).rejects.toBeInstanceOf(ForbiddenError)
+    expect(canMock).not.toHaveBeenCalled()
+
+    jest.clearAllMocks()
+    const superAdmin = { ...activeUser, roleId: 'super_admin' }
+    authMock.mockResolvedValue({ user: { id: superAdmin.id } })
+    prismaMock.user.findFirst.mockResolvedValue(superAdmin as never)
+
+    await expect(requireSuperAdmin()).resolves.toEqual(superAdmin)
   })
 })

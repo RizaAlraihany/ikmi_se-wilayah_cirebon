@@ -1,6 +1,11 @@
-import { ForbiddenError, ValidationError } from '@/core/errors/custom-errors'
+import { ForbiddenError, UnauthorizedError, ValidationError } from '@/core/errors/custom-errors'
 import { requireAuth } from '@/core/authorization/guards'
 import { requireCmsUpdate, requireCmsView } from '@/features/cms/access'
+import {
+  archiveHomepageBanner,
+  createHomepageBanner,
+  updateHomepageBanner,
+} from '@/features/homepage-banner/actions'
 import {
   deriveCampaignState,
   formatJakartaCampaignDatetime,
@@ -22,6 +27,7 @@ jest.mock('@/features/cms/access', () => ({
   requireCmsUpdate: jest.fn(),
   requireCmsView: jest.fn(),
 }))
+jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 
 const requireAuthMock = jest.mocked(requireAuth)
 const requireCmsUpdateMock = jest.mocked(requireCmsUpdate)
@@ -188,5 +194,69 @@ describe('Homepage Campaign lifecycle and security', () => {
     expect(JSON.stringify(activePublicBannerWhere(now))).toContain('campaignEnabled')
     expect(JSON.stringify(activePublicBannerWhere(now))).toContain('PUBLIC')
     expect(JSON.stringify(activePublicBannerWhere(now))).not.toContain('PAUSED')
+  })
+
+  it.each([
+    ['super_admin', { id: 'super-admin-1', roleId: 'super_admin' }],
+    ['admin_komdigi', { id: 'admin-komdigi-1', roleId: 'admin_komdigi' }],
+  ] as const)('%s can invoke every homepage banner mutation with a valid session', async (_role, currentActor) => {
+    requireAuthMock.mockResolvedValue(currentActor as never)
+    const createSpy = jest.spyOn(homepageBannerService, 'create').mockResolvedValue({ id: 'banner-created' } as never)
+    const updateSpy = jest.spyOn(homepageBannerService, 'update').mockResolvedValue({ id: 'banner-updated' } as never)
+    const archiveSpy = jest.spyOn(homepageBannerService, 'archive').mockResolvedValue(undefined)
+
+    try {
+      const formData = new FormData()
+      await expect(createHomepageBanner(formData)).resolves.toEqual({ success: true, data: { id: 'banner-created' } })
+      await expect(updateHomepageBanner('banner-1', formData)).resolves.toEqual({ success: true, data: { id: 'banner-updated' } })
+      await expect(archiveHomepageBanner('banner-1')).resolves.toEqual({ success: true })
+      expect(createSpy).toHaveBeenCalledWith(expect.anything(), currentActor.id)
+      expect(updateSpy).toHaveBeenCalledWith('banner-1', expect.anything(), currentActor.id)
+      expect(archiveSpy).toHaveBeenCalledWith('banner-1', currentActor.id)
+    } finally {
+      createSpy.mockRestore()
+      updateSpy.mockRestore()
+      archiveSpy.mockRestore()
+    }
+  })
+
+  it('denies every homepage banner mutation to admin_organization', async () => {
+    const organizationActor = { id: 'admin-organization-1', roleId: 'admin_organization' }
+    requireAuthMock.mockResolvedValue(organizationActor as never)
+    requireCmsUpdateMock.mockRejectedValue(new ForbiddenError())
+    const formData = new FormData()
+
+    await expect(createHomepageBanner(formData)).resolves.toEqual({ success: false, error: 'Forbidden Access' })
+    await expect(updateHomepageBanner('banner-1', formData)).resolves.toEqual({ success: false, error: 'Forbidden Access' })
+    await expect(archiveHomepageBanner('banner-1')).resolves.toEqual({ success: false, error: 'Forbidden Access' })
+    expect(prismaMock.homepageBanner.create).not.toHaveBeenCalled()
+    expect(prismaMock.homepageBanner.update).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['unauthenticated', new UnauthorizedError('Anda harus masuk terlebih dahulu.')],
+    ['stale sessionVersion', new UnauthorizedError('Sesi sudah tidak berlaku.')],
+  ])('rejects every homepage banner mutation for %s auth context', async (_context, authError) => {
+    requireAuthMock.mockRejectedValue(authError)
+    const formData = new FormData()
+
+    await expect(createHomepageBanner(formData)).resolves.toEqual({ success: false, error: authError.message })
+    await expect(updateHomepageBanner('banner-1', formData)).resolves.toEqual({ success: false, error: authError.message })
+    await expect(archiveHomepageBanner('banner-1')).resolves.toEqual({ success: false, error: authError.message })
+    expect(requireCmsUpdateMock).not.toHaveBeenCalled()
+    expect(prismaMock.homepageBanner.create).not.toHaveBeenCalled()
+    expect(prismaMock.homepageBanner.update).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['inactive user', 'Pengguna tidak aktif.'],
+    ['deleted user', 'Pengguna tidak ditemukan.'],
+    ['missing user', 'Pengguna tidak ditemukan.'],
+  ])('rejects banner creation for %s auth context', async (_context, message) => {
+    requireAuthMock.mockRejectedValue(new UnauthorizedError(message))
+
+    await expect(createHomepageBanner(new FormData())).resolves.toEqual({ success: false, error: message })
+    expect(requireCmsUpdateMock).not.toHaveBeenCalled()
+    expect(prismaMock.homepageBanner.create).not.toHaveBeenCalled()
   })
 })

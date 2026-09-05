@@ -11,8 +11,8 @@ import {
 } from '../security/login-rate-limit'
 import { RateLimitError } from '../security/rate-limiter'
 import { authService } from '@/features/auth/services'
+import { authEdgeConfig } from './auth.edge.config'
 
-const isProduction = env.NODE_ENV === 'production'
 const INVALID_LOGIN_HASH = '$2a$12$vKiSfRPXVLwC6bAdcKyDluCRmv9IKgKyQNO8hIsXNN5BqU35pMFtK'
 
 class LoginRateLimitedError extends CredentialsSignin {
@@ -20,6 +20,7 @@ class LoginRateLimitedError extends CredentialsSignin {
 }
 
 export const authConfig = {
+  ...authEdgeConfig,
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -90,48 +91,6 @@ export const authConfig = {
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-        token.roleId = user.roleId
-        token.departmentId = user.departmentId
-        token.positionId = user.positionId
-        token.sessionVersion = user.sessionVersion
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id as string
-        session.user.roleId = token.roleId as string
-        session.user.departmentId = token.departmentId as string | null
-        session.user.positionId = token.positionId as string | null
-        session.user.sessionVersion = token.sessionVersion as number | undefined
-      }
-      return session
-    },
-  },
-  pages: {
-    signIn: '/login',
-  },
-  session: {
-    strategy: 'jwt',
-    // Short-lived sessions bound the lifetime of a pre-revocation JWT.
-    maxAge: 8 * 60 * 60,
-    updateAge: 60 * 60,
-  },
-  cookies: {
-    sessionToken: {
-      name: isProduction ? '__Secure-authjs.session-token' : 'authjs.session-token',
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: isProduction,
-      },
-    },
-  },
   events: {
     async signIn({ user }) {
       if (user.id) await authService.logLoginEvent(user.id).catch(() => undefined)

@@ -2,6 +2,7 @@ import { auth, signIn, signOut } from '@/core/auth/auth'
 import { loginAction, logoutAction } from '@/features/auth/actions'
 import { authService } from '@/features/auth/services'
 import { CredentialsSignin } from 'next-auth'
+import { redirect } from 'next/navigation'
 
 jest.mock('@/core/auth/auth', () => ({
   auth: jest.fn(),
@@ -81,5 +82,20 @@ describe('login action', () => {
     await expect(
       loginAction({ email: 'admin@example.test', password: 'wrong-password' }),
     ).resolves.toEqual({ error: 'Terlalu banyak percobaan login. Silakan coba lagi nanti.' })
+  })
+
+  it('uses the fixed dashboard destination instead of accepting an external callback', async () => {
+    await loginAction({
+      email: 'admin@example.test',
+      password: 'correct-password',
+      callbackUrl: 'https://evil.example',
+    } as never)
+
+    expect(signIn).toHaveBeenCalledWith('credentials', {
+      email: 'admin@example.test',
+      password: 'correct-password',
+      redirect: false,
+    })
+    expect(redirect).toHaveBeenCalledWith('/admin')
   })
 })

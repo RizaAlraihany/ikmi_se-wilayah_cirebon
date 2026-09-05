@@ -1,18 +1,17 @@
 import { userRepository } from './repository'
 import { UserCreateInput, UserUpdateInput } from './schemas'
 import { prisma } from '@/core/database/prisma'
-import { ForbiddenError, ValidationError, NotFoundError } from '@/core/errors/custom-errors'
+import { ValidationError, NotFoundError } from '@/core/errors/custom-errors'
 import bcrypt from 'bcryptjs'
 import { Prisma } from '@prisma/client'
-import { requirePermissionForUser } from '@/core/authorization/guards'
-import { can } from '@/core/authorization/rbac'
+import { requireSuperAdminForUser } from '@/core/authorization/guards'
 import { serializeAuditData } from '@/features/audit/audit-data'
 
 type TxClient = Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>
 
 export const userService = {
   async createUser(data: UserCreateInput, adminId: string) {
-    await requirePermissionForUser(adminId, 'user.create')
+    await requireSuperAdminForUser(adminId)
 
     // 1. Validate email uniqueness
     const existing = await userRepository.findByEmail(data.email)
@@ -57,16 +56,13 @@ export const userService = {
   },
 
   async updateUser(data: UserUpdateInput, adminId: string) {
-    const actor = await requirePermissionForUser(adminId, 'user.update')
+    await requireSuperAdminForUser(adminId)
     const user = await userRepository.findActive({ where: { id: data.id } }).then(res => res[0])
     if (!user) {
       throw new NotFoundError('Pengguna tidak ditemukan.')
     }
 
     const roleChanged = data.roleId !== undefined && data.roleId !== user.roleId
-    if (roleChanged && !(await can('system.manage', actor))) {
-      throw new ForbiddenError('Perubahan role hanya dapat dilakukan oleh Super Admin.')
-    }
 
     if (data.email && data.email !== user.email) {
       const existing = await userRepository.findByEmail(data.email)
@@ -130,7 +126,7 @@ export const userService = {
   },
 
   async deleteUser(id: string, adminId: string) {
-    await requirePermissionForUser(adminId, 'user.delete')
+    await requireSuperAdminForUser(adminId)
     if (id === adminId) {
       throw new ValidationError('Anda tidak dapat menghapus akun sendiri.')
     }
