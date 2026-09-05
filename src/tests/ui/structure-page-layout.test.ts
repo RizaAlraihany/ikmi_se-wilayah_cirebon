@@ -21,7 +21,7 @@ describe('public structure page layout', () => {
       'Kenali orang-orang di balik gerak IKMI Se-Wilayah Cirebon.',
     )
     expect(pageSource).toContain('structure-summary')
-    expect(pageSource).toContain("period?.name ?? 'Belum ditetapkan'")
+    expect(pageSource).toMatch(/period\?\.name \?\? ['"]Belum ditetapkan['"]/)
     expect(pageSource).toContain('sortedGroups.length')
     expect(pageSource).toContain('totalOfficerCount')
     expect(cardSource).toContain('<span>{member.unitName}</span>')
@@ -64,8 +64,8 @@ describe('public structure page layout', () => {
     )
     expect(cssSource).toContain('rgba(0, 23, 105, 0.28)')
     expect(cssSource).toContain('inset 0 1px 0 rgba(255, 255, 255, 0.24)')
-    expect(cssSource).toContain(
-      'backdrop-filter: blur(var(--glass-blur-interactive)) saturate(var(--glass-saturate))',
+    expect(cssSource).toMatch(
+      /backdrop-filter:\s*blur\(var\(--glass-blur-interactive\)\)\s*saturate\(var\(--glass-saturate\)\)/,
     )
   })
 

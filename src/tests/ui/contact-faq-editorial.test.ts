@@ -27,25 +27,27 @@ describe('Contact and homepage FAQ editorial presentation', () => {
     expect(styles).toContain('.contact-correspondence-scope')
   })
 
-  it('uses the reference FAQ copy and native disclosures without static contact identities', () => {
-    expect(homeSource).toContain('Sering Ditanyakan (FAQ)')
+  it('uses the current FAQ copy and native disclosures without static contact identities', () => {
+    expect(homeSource).toContain('Pertanyaan yang Sering Ditanyakan')
     expect(homeSource).toContain('Apa itu IKMI Se-Wilayah Cirebon?')
     expect(homeSource).toContain('Apa itu PRABUMI?')
     expect(homeSource).toContain('Gunakan halaman Kontak untuk melihat kanal resmi organisasi')
-    expect(homeSource).toContain('className="home-faq-item-icon"')
+    expect(homeSource).toContain('className="hm-faq-open-grid"')
+    expect(homeSource).toContain('className="hm-faq-rubric-item"')
     expect(homeSource).not.toContain('open={index === 0}')
-    expect(styles).toContain('#view-beranda .home-faq-list')
-    expect(styles).toContain('grid-template-columns: 1.6rem minmax(0, 1fr) auto')
+    expect(styles).toContain('.hm-faq-open-grid')
+    expect(styles).toContain('.hm-faq-rubric-item summary')
+    expect(styles).toContain('grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)')
   })
 
   it('keeps complete public headings compact through responsive type sizes', () => {
     expect(styles).toContain('.public-shell main :is(h1, h2, h3)')
-    expect(styles).toContain('max-width: 100% !important')
-    expect(styles).toContain('overflow: visible')
-    expect(styles).toContain('overflow-wrap: normal')
-    expect(styles).toContain('font-size: clamp(1.5rem, 5.8vw, 3rem) !important')
-    expect(styles).toContain('font-size: clamp(1.25rem, 4.6vw, 2rem) !important')
-    expect(styles).toContain('font-size: clamp(1rem, 3.6vw, 1.25rem) !important')
+    expect(styles).toMatch(/max-width:\s*100%/)
+    expect(styles).toMatch(/overflow:\s*visible/)
+    expect(styles).toMatch(/overflow-wrap:\s*normal/)
+    expect(styles).toContain('font-size: clamp(1.5rem, 5.8vw, 3rem)')
+    expect(styles).toContain('font-size: clamp(1.25rem, 4.6vw, 2rem)')
+    expect(styles).toContain('font-size: clamp(1rem, 3.6vw, 1.25rem)')
 
     const typographyAuthority = styles.slice(styles.indexOf('/* Public typography authority'))
     expect(typographyAuthority).not.toContain('line-clamp')

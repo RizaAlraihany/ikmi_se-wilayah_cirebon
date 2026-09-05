@@ -40,12 +40,13 @@ describe('PublicNavbar', () => {
     expect(header).not.toHaveClass('is-scrolled')
   })
 
-  it('keeps Kegiatan and its child routes out of the primary navigation', () => {
+  it('keeps the primary navigation on current public destinations', () => {
     const { container } = render(<PublicNavbar />)
     const desktopNavigation = container.querySelector('nav[aria-label="Navigasi utama"]')
 
-    expect(desktopNavigation?.querySelector('a[href="/tentang-kami"]')).toBeInTheDocument()
+    expect(desktopNavigation?.querySelector('a[href="/tentang"]')).toBeInTheDocument()
     expect(desktopNavigation?.querySelector('a[href="/publikasi"]')).toBeInTheDocument()
+    expect(desktopNavigation?.querySelector('a[href="/kontak"]')).toBeInTheDocument()
     expect(desktopNavigation?.querySelector('a[href="/galeri"]')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Buka menu Kegiatan' })).not.toBeInTheDocument()
     expect(desktopNavigation?.querySelector('a[href="/program"]')).not.toBeInTheDocument()
