@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 function source(path: string) {
@@ -14,6 +14,7 @@ describe('public activity routes', () => {
     expect(page).toContain("canonical: `${siteUrl}/kegiatan`")
     expect(page).not.toContain('permanentRedirect')
     expect(nextConfig).toContain("source: '/agenda'")
+    expect(nextConfig).toContain("source: '/agenda/:path*'")
     expect(nextConfig).toContain("destination: '/kegiatan'")
   })
 
@@ -35,6 +36,29 @@ describe('public activity routes', () => {
 
     expect(page).toContain("permanentRedirect('/kegiatan')")
     expect(page).not.toContain('AgendaListingPage')
+    expect(page).not.toContain('canonical')
+    expect(page).not.toContain('openGraph')
+  })
+
+  it('uses modal interaction for the listing and keeps historical Agenda detail URLs redirect-only', () => {
+    const listing = source('src/app/(public)/agenda/agenda-listing-page.tsx')
+    const interaction = source('src/app/(public)/agenda/agenda-listing-interaction.tsx')
+    const legacyDetail = source('src/app/(public)/agenda/[slug]/page.tsx')
+    const homepage = source('src/app/(public)/page.tsx')
+    const calendar = source('src/app/(public)/_components/calendar-ui.tsx')
+    const footer = source('src/app/(public)/_components/public-footer.tsx')
+
+    expect(listing).toContain('AgendaListingInteraction')
+    expect(interaction).toContain('aria-haspopup="dialog"')
+    expect(interaction).toContain('<Dialog')
+    expect(listing).not.toContain('/agenda/')
+    expect(homepage).not.toContain('/agenda/${agenda.slug}')
+    expect(calendar).not.toContain('/agenda/${event.slug}')
+    expect(calendar).toContain('<Link href="/kegiatan">{inner}</Link>')
+    expect(footer).toContain("{ label: 'Agenda & Kegiatan', href: '/kegiatan' }")
+    expect(legacyDetail).toContain("permanentRedirect('/kegiatan')")
+    expect(legacyDetail).not.toContain('generateMetadata')
+    expect(existsSync(resolve(process.cwd(), 'src/app/(public)/kegiatan/[slug]/page.tsx'))).toBe(false)
   })
 
   it('keeps the frozen Program compatibility detail bounded to its public DTO', () => {

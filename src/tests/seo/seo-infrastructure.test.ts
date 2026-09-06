@@ -115,10 +115,11 @@ describe('Phase 20 — SEO Infrastructure', () => {
       expect(source).toContain('publicationPath(post.slug)')
     })
 
-    it('Agenda detail has generateMetadata with canonical', () => {
+    it('keeps historical Agenda detail URLs as compatibility redirects without canonical metadata', () => {
       const source = readSource('src/app/(public)/agenda/[slug]/page.tsx')
-      expect(source).toContain('generateMetadata')
-      expect(source).toContain('canonical')
+      expect(source).toContain("permanentRedirect('/kegiatan')")
+      expect(source).not.toContain('generateMetadata')
+      expect(source).not.toContain('canonical')
     })
   })
 
@@ -180,10 +181,10 @@ describe('Phase 20 — SEO Infrastructure', () => {
       expect(source).toContain('application/ld+json')
     })
 
-    it('frozen Agenda detail retains breadcrumb data without legacy Event JSON-LD', () => {
+    it('does not expose Agenda detail structured data after the modal cutover', () => {
       const source = readSource('src/app/(public)/agenda/[slug]/page.tsx')
-      expect(source).toContain('breadcrumbStructuredData')
-      expect(source).not.toContain("'@type': 'Event'")
+      expect(source).toContain("permanentRedirect('/kegiatan')")
+      expect(source).not.toContain('application/ld+json')
     })
 
     it('breadcrumbStructuredData serializes without XSS chars', () => {

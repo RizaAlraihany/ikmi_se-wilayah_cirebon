@@ -1,20 +1,24 @@
 import { ForbiddenError, ValidationError } from '@/core/errors/custom-errors'
-import { requirePermissionForUser } from '@/core/authorization/guards'
+import { requirePermissionForUser, requireRoleForUser } from '@/core/authorization/guards'
 import { can } from '@/core/authorization/rbac'
 import { agendaService, agendaSlugFromName } from '@/features/agendas/services'
 import { prismaMock } from '../prisma-mock'
 
-jest.mock('@/core/authorization/guards', () => ({ requirePermissionForUser: jest.fn() }))
+jest.mock('@/core/authorization/guards', () => ({
+  requirePermissionForUser: jest.fn(),
+  requireRoleForUser: jest.fn(),
+}))
 jest.mock('@/core/authorization/rbac', () => ({ can: jest.fn() }))
 
 const requirePermissionForUserMock = jest.mocked(requirePermissionForUser)
+const requireRoleForUserMock = jest.mocked(requireRoleForUser)
 const canMock = jest.mocked(can)
 const actor = {
   id: 'admin-organization-1',
   name: 'Admin Organisasi',
   email: 'admin@example.test',
   roleId: 'admin_organization',
-  departmentId: null,
+  departmentId: 'unit-1',
   positionId: null,
   sessionVersion: 1,
 }
@@ -43,6 +47,7 @@ const validInput = {
 describe('Agenda security and storage invariants', () => {
   beforeEach(() => {
     requirePermissionForUserMock.mockResolvedValue(actor as never)
+    requireRoleForUserMock.mockResolvedValue(actor as never)
     canMock.mockResolvedValue(true)
   })
 

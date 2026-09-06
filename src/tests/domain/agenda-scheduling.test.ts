@@ -85,4 +85,17 @@ describe('agenda schedule domain', () => {
       endDatetime: new Date('2026-08-10T11:00:00.000Z'),
     }, new Date('2026-08-10T12:00:00.000Z'))).toBe('SELESAI')
   })
+
+  it('derives each expanded recurring occurrence from its concrete timestamps', () => {
+    const occurrence = {
+      status: 'SCHEDULED',
+      scheduleType: 'FIXED_DATE',
+      startDatetime: new Date('2026-08-10T09:00:00.000Z'),
+      endDatetime: new Date('2026-08-10T11:00:00.000Z'),
+    }
+
+    expect(deriveAgendaStatus(occurrence, new Date('2026-08-10T08:00:00.000Z'))).toBe('AKAN_DATANG')
+    expect(deriveAgendaStatus(occurrence, new Date('2026-08-10T10:00:00.000Z'))).toBe('BERJALAN')
+    expect(deriveAgendaStatus(occurrence, new Date('2026-08-10T12:00:00.000Z'))).toBe('SELESAI')
+  })
 })

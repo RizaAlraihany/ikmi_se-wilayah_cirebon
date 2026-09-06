@@ -15,7 +15,7 @@ import { webConfigQueries } from '@/features/web-config/queries'
 
 const explorationLinks = [
   { label: 'Tentang IKMI', href: '/tentang-kami' },
-  { label: 'Agenda & Kegiatan', href: '/agenda' },
+  { label: 'Agenda & Kegiatan', href: '/kegiatan' },
   { label: 'Publikasi Terbaru', href: '/publikasi' },
   { label: 'Hubungi Kami', href: '/kontak' },
   { label: 'Pendaftaran Anggota', href: '/gabung' },

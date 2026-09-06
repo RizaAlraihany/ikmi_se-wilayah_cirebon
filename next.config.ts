@@ -53,6 +53,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/agenda/:path*',
+        destination: '/kegiatan',
+        permanent: true,
+      },
+      {
         source: '/event',
         destination: '/kegiatan',
         permanent: true,

@@ -470,7 +470,7 @@ export default async function Home() {
                     return (
                       <li key={agenda.id}>
                         <Link
-                          href={`/agenda/${agenda.slug}`}
+                          href="/kegiatan"
                           className="hm-agenda-row"
                         >
                           <time

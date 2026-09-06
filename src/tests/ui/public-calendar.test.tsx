@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { buildCalendarGrid } from '@/features/public/calendar-domain'
-import { CalendarFilters, MobileCalendar } from '@/app/(public)/_components/calendar-ui'
+import { CalendarFilters, DesktopCalendarGrid, MobileCalendar } from '@/app/(public)/_components/calendar-ui'
 import type { CalendarEvent } from '@/features/public/calendar-domain'
 
 const push = jest.fn()
@@ -32,6 +32,7 @@ const events: CalendarEvent[] = [
     location: null,
     unitName: 'Sekretariat',
     status: 'CANCELLED',
+    slug: 'agenda-bersama',
   },
 ]
 
@@ -82,5 +83,20 @@ describe('public calendar mobile interaction', () => {
 
     await user.click(screen.getByRole('button', { name: 'Agenda', pressed: false }))
     expect(push).toHaveBeenCalledWith('?year=2026&month=7&date=2026-08-10&type=agenda', { scroll: false })
+  })
+
+  it('sends desktop Agenda calendar items to the canonical listing', () => {
+    render(
+      <DesktopCalendarGrid
+        year={2026}
+        month={7}
+        days={[new Date('2026-08-10T00:00:00.000Z')]}
+        eventsByDate={new Map([['2026-08-10', [events[1]!]]])}
+        today="2026-08-11"
+        selectedType="agenda"
+      />,
+    )
+
+    expect(screen.getByTitle('Agenda Bersama').closest('a')).toHaveAttribute('href', '/kegiatan')
   })
 })

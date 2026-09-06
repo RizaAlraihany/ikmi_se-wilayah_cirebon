@@ -66,7 +66,6 @@ describe('Tentang page editorial layout', () => {
 
     const heroRoutes = [
       'agenda/agenda-listing-page.tsx',
-      'agenda/[slug]/page.tsx',
       'kalender/page.tsx',
       'kirim-tulisan/page.tsx',
       'kirim-tulisan/revisi/[token]/page.tsx',

@@ -1,15 +1,20 @@
-import { requirePermissionForUser } from '@/core/authorization/guards'
-import { can, type SessionUser } from '@/core/authorization/rbac'
+import { requirePermissionForUser, requireRoleForUser } from '@/core/authorization/guards'
+import { ORGANIZATION_DASHBOARD_ROLE_IDS } from '@/core/auth/roles'
+import { type SessionUser } from '@/core/authorization/rbac'
 import { prisma } from '@/core/database/prisma'
 import { ForbiddenError, NotFoundError, ValidationError } from '@/core/errors/custom-errors'
 import { agendaSchema, type AgendaInput } from './schemas'
 
 async function requireAgendaActor(actorId: string) {
-  return requirePermissionForUser(actorId, 'calendar.manage')
+  const actor = await requireRoleForUser(actorId, ORGANIZATION_DASHBOARD_ROLE_IDS)
+  return requirePermissionForUser(actor, 'calendar.manage')
 }
 
 async function assertAgendaUnitScope(actor: SessionUser, organizationalUnitId: string) {
-  const isGlobal = (await can('system.manage', actor)) || (await can('lpj.verify_bph', actor))
+  // Agenda ownership follows the canonical role boundary. Legacy broad
+  // permissions must not turn an organization administrator into a
+  // cross-unit actor; only Super Admin is global.
+  const isGlobal = actor.roleId === 'super_admin'
   if (!isGlobal && actor.departmentId !== organizationalUnitId) {
     throw new ForbiddenError('Anda hanya dapat mengelola Agenda unit organisasi Anda.')
   }

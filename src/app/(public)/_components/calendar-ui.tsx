@@ -196,7 +196,7 @@ function EventChip({ event }: { event: CalendarEvent }) {
     return <Link href={`/program/${event.slug}`}>{inner}</Link>
   }
   if (event.type === 'agenda' && event.slug) {
-    return <Link href={`/agenda/${event.slug}`}>{inner}</Link>
+    return <Link href="/kegiatan">{inner}</Link>
   }
   return inner
 }
@@ -374,7 +374,7 @@ function MobileEventCard({ event }: { event: CalendarEvent }) {
     return <Link href={`/program/${event.slug}`}>{inner}</Link>
   }
   if (event.type === 'agenda' && event.slug) {
-    return <Link href={`/agenda/${event.slug}`}>{inner}</Link>
+    return <Link href="/kegiatan">{inner}</Link>
   }
   return inner
 }

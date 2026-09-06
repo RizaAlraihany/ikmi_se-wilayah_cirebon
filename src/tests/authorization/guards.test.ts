@@ -4,6 +4,7 @@ import {
   requireAuth,
   requireDashboardRouteAccess,
   requirePermission,
+  requireRoleForUser,
   requireSuperAdmin,
 } from '@/core/authorization/guards'
 import { can } from '@/core/authorization/rbac'
@@ -115,5 +116,16 @@ describe('authorization guards', () => {
     prismaMock.user.findFirst.mockResolvedValue(superAdmin as never)
 
     await expect(requireSuperAdmin()).resolves.toEqual(superAdmin)
+  })
+
+  it('enforces the centralized Organization role boundary independently of permissions', async () => {
+    canMock.mockResolvedValue(true)
+
+    await expect(requireRoleForUser(activeUser, ['super_admin', 'admin_organization'])).resolves.toEqual(activeUser)
+
+    const komdigiUser = { ...activeUser, roleId: 'admin_komdigi' }
+    prismaMock.user.findFirst.mockResolvedValue(komdigiUser as never)
+    await expect(requireRoleForUser(komdigiUser, ['super_admin', 'admin_organization'])).rejects.toBeInstanceOf(ForbiddenError)
+    expect(canMock).not.toHaveBeenCalled()
   })
 })
