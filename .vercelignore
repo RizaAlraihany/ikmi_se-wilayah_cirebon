@@ -1,0 +1,14 @@
+.git
+.codex
+.vercel
+node_modules
+.next
+.next-*
+.swc
+.vscode
+coverage
+*.log
+.env
+.env.*
+!.env.example
+docs
