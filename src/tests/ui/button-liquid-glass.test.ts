@@ -42,6 +42,8 @@ describe('IKMI blue actions', () => {
     expect(button).toContain('focus-visible:outline')
     expect(button).toContain('disabled:pointer-events-none')
     expect(home).toContain('className="quick-link"')
+    expect(home).toContain('quickAccess.map(({ id, href, label, description, Icon })')
+    expect(home).toContain('<Link key={id} href={href}')
     expect(home).toContain('className="hm-text-link"')
     expect(home).not.toContain('ikmi-liquid-blue')
     expect(calendar).toContain('aria-pressed={selectedType === type}')

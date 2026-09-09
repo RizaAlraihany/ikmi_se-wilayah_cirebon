@@ -32,24 +32,28 @@ type UnknownRecord = Record<string, unknown>;
 
 const quickAccess = [
   {
+    id: "agenda",
     href: "/kegiatan",
     label: "Agenda",
     description: "Jadwal terdekat",
     Icon: CalendarDays,
   },
   {
+    id: "program",
     href: "/kegiatan",
     label: "Program",
     description: "Lihat ruang partisipasi",
     Icon: Users,
   },
   {
+    id: "join",
     href: "/#gabung",
     label: "Gabung IKMI",
     description: "Pendaftaran anggota",
     Icon: UserPlus,
   },
   {
+    id: "publication",
     href: "/publikasi",
     label: "Publikasi",
     description: "Berita & gagasan",
@@ -363,8 +367,8 @@ export default async function Home() {
         aria-label="Akses cepat"
       >
         <div className="quick-access-shell">
-          {quickAccess.map(({ href, label, description, Icon }) => (
-            <Link key={href} href={href} className="quick-link">
+          {quickAccess.map(({ id, href, label, description, Icon }) => (
+            <Link key={id} href={href} className="quick-link">
               <span className="quick-icon" aria-hidden="true">
                 <Icon />
               </span>
