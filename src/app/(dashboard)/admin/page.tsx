@@ -25,6 +25,10 @@ import { contentPlanQueries } from '@/features/content-plan/queries'
 import { getPamfletRequests } from '@/features/request-pamflet/admin-actions'
 import { getKaryaTulisQueue } from '@/features/kirim-tulisan/actions'
 import { ButtonLink } from '@/components/ui/button'
+import { logger } from '@/core/monitoring/logger'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 type RoleDashboard = {
   title: string
@@ -53,6 +57,15 @@ const roleGroups = {
 }
 
 export default async function AdminDashboardPage() {
+  try {
+    return await renderAdminDashboardPage()
+  } catch (error) {
+    logger.error(error, { scope: 'dashboard.admin', phase: 'render' })
+    throw error
+  }
+}
+
+async function renderAdminDashboardPage() {
   const actor = await requireAuth()
   const currentUser = await userQueries.getUserById(actor.id)
   const roleId = actor.roleId

@@ -19,6 +19,10 @@ import {
   type DashboardNavGroup,
 } from './dashboard-navigation'
 import { DashboardProfileDropdown } from './dashboard-profile-dropdown'
+import { logger } from '@/core/monitoring/logger'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export const metadata: Metadata = {
   title: 'Ruang Kerja Admin IKMI Cirebon',
@@ -49,24 +53,33 @@ export default async function DashboardLayout({
     sessionUser = await requireAuth()
   } catch (error) {
     if (error instanceof UnauthorizedError) redirect('/login')
+    logger.error(error, { scope: 'dashboard.layout', phase: 'auth' })
     throw error
   }
 
-  const unreadCount = await notificationQueries.getUnreadCount(sessionUser.id)
-  const initialNotifications = await notificationQueries.getUserNotifications(sessionUser.id, 0, 10)
+  let unreadCount: number
+  let initialNotifications: Awaited<ReturnType<typeof notificationQueries.getUserNotifications>>
+  let authorizedNavGroups: { label: string; items: DashboardVisibleNavItem[] }[]
+  try {
+    unreadCount = await notificationQueries.getUnreadCount(sessionUser.id)
+    initialNotifications = await notificationQueries.getUserNotifications(sessionUser.id, 0, 10)
 
-  const authorizedNavGroups = await Promise.all(
-    dashboardNavigationGroups.map(async (group) => {
-      const filteredItems = await Promise.all(
-        group.items.map(async (item) => ((await hasNavAccess(item, sessionUser)) ? stripPermission(item) : null)),
-      )
+    authorizedNavGroups = await Promise.all(
+      dashboardNavigationGroups.map(async (group) => {
+        const filteredItems = await Promise.all(
+          group.items.map(async (item) => ((await hasNavAccess(item, sessionUser)) ? stripPermission(item) : null)),
+        )
 
-      return {
-        label: group.label,
-        items: filteredItems.filter(Boolean) as DashboardVisibleNavItem[],
-      }
-    }),
-  )
+        return {
+          label: group.label,
+          items: filteredItems.filter(Boolean) as DashboardVisibleNavItem[],
+        }
+      }),
+    )
+  } catch (error) {
+    logger.error(error, { scope: 'dashboard.layout', phase: 'data-load', userId: sessionUser.id })
+    throw error
+  }
 
   const activeNavGroups = authorizedNavGroups.filter((group) => group.items.length > 0) as DashboardNavGroup[]
 
