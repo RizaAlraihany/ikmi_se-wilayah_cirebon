@@ -35,7 +35,7 @@
     "cloudinary": "^2.5.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
-    "isomorphic-dompurify": "^3.19.0",
+    "isomorphic-dompurify": "2.26.0",
     "jszip": "3.10.1",
     "lucide-react": "^0.469.0",
     "mammoth": "1.11.0",
