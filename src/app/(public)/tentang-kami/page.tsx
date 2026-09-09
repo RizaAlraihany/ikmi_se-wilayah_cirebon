@@ -412,10 +412,7 @@ function getPublicMissionCopy(
 
   const normalized = dynamicMission.replace(/\s+/g, " ").trim();
 
-  // Public About needs concise, scannable mission copy.
-  // Short CMS copy remains authoritative; long formal copy falls back
-  // to the compact editorial summary used in the mockup.
-  return normalized.length <= 135 ? normalized : fallback;
+  return normalized || fallback;
 }
 
 function SectionHeading({
@@ -523,7 +520,8 @@ export default async function TentangPage() {
     aboutRecord?.fallbackCabinet,
   ) as CabinetFallback | null;
 
-  const cabinet = normalizeCabinet(period, fallbackCabinet);
+  const periodCabinet = period ? asRecord(webConfig[`cabinet:${period.id}`]) : null;
+  const cabinet = normalizeCabinet(period ? { ...period, cabinet: periodCabinet } : null, fallbackCabinet);
 
   const heroImage =
     readMediaUrl(mediaRecord, [
@@ -848,7 +846,9 @@ export default async function TentangPage() {
             </div>
 
             <div className="about-missions" aria-label="Daftar misi kabinet">
-              {MISSION_META.map((mission, index) => (
+              {cabinet.missions.map((missionText, index) => {
+                const mission = MISSION_META[index] ?? { title: `Misi ${index + 1}`, short: missionText };
+                return (
                 <div className="about-reveal about-mission" key={mission.title}>
                   <span className="about-mission-number">
                     {String(index + 1).padStart(2, "0")}
@@ -864,7 +864,7 @@ export default async function TentangPage() {
                     </p>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             <div className="about-reveal">

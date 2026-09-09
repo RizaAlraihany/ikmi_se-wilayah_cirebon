@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, type OrganizationalUnitType } from '@prisma/client'
 import { assertMasterDataSeedAllowed } from './bootstrap'
-import { masterDataSeed } from './master-data.generated'
+import masterDataSeed from './structure-master-data.json'
 
 const prisma = new PrismaClient()
 
@@ -10,15 +10,24 @@ async function main() {
   for (const department of masterDataSeed.departments) {
     await prisma.department.upsert({
       where: { id: department.id },
-      update: { name: department.name, code: department.code },
-      create: department,
+      update: {
+        name: department.name,
+        code: department.code,
+        unitType: department.unitType as OrganizationalUnitType,
+        sortOrder: department.sortOrder,
+      },
+      create: { ...department, unitType: department.unitType as OrganizationalUnitType },
     })
   }
 
   for (const position of masterDataSeed.positions) {
     await prisma.position.upsert({
       where: { id: position.id },
-      update: { name: position.name, departmentId: position.departmentId },
+      update: {
+        name: position.name,
+        departmentId: position.departmentId,
+        sortOrder: position.sortOrder,
+      },
       create: position,
     })
   }

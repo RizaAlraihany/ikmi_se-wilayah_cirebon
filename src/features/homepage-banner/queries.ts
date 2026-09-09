@@ -10,6 +10,15 @@ async function requireCampaignViewer() {
   return actor
 }
 
+export async function getCampaignPublicationOptions() {
+  await requireCampaignViewer()
+  return prisma.post.findMany({
+    where: { status: 'PUBLISHED', deletedAt: null, publishedAt: { lte: new Date() } },
+    select: { id: true, title: true, slug: true },
+    orderBy: { publishedAt: 'desc' },
+  })
+}
+
 export async function getHomepageBanners(params?: {
   status?: HomepageBannerStatus
   phase?: 'BEFORE' | 'PRA' | 'AFTER' | 'GENERAL'

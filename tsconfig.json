@@ -29,16 +29,23 @@
     }
   },
   "include": [
-    "**/*.mts",
-    "**/*.ts",
-    "**/*.tsx",
     ".next/dev/types/**/*.ts",
     ".next/types/**/*.ts",
-    "next-env.d.ts"
+    "jest.setup.ts",
+    "next-env.d.ts",
+    "next.config.ts",
+    "prisma/**/*.ts",
+    "scripts/**/*.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     ".next-*/**",
-    "docs/Prototype/**"
+    "docs/**",
+    ".codex/**",
+    "prisma/seed.export.ts",
+    "prisma/seed.development.ts"
   ]
 }

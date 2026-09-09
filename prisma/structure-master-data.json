@@ -1,0 +1,199 @@
+{
+  "departments": [
+    {
+      "id": "BPH",
+      "code": "BPH",
+      "name": "Badan Pengurus Harian",
+      "unitType": "BPH",
+      "sortOrder": 10
+    },
+    {
+      "id": "KAD",
+      "code": "KAD",
+      "name": "Kaderisasi",
+      "unitType": "DEPARTMENT",
+      "sortOrder": 40
+    },
+    {
+      "id": "KAJ",
+      "code": "KAJ",
+      "name": "Kajian & Advokasi",
+      "unitType": "DEPARTMENT",
+      "sortOrder": 50
+    },
+    {
+      "id": "PSDA",
+      "code": "PSDA",
+      "name": "Pengembangan Sumber Daya Anggota",
+      "unitType": "DEPARTMENT",
+      "sortOrder": 60
+    },
+    {
+      "id": "EKRAF",
+      "code": "EKRAF",
+      "name": "Ekonomi Kreatif",
+      "unitType": "DEPARTMENT",
+      "sortOrder": 70
+    },
+    {
+      "id": "KOMDIGI",
+      "code": "KOMDIGI",
+      "name": "Komunikasi & Digitalisasi",
+      "unitType": "DEPARTMENT",
+      "sortOrder": 80
+    },
+    {
+      "id": "HPM",
+      "code": "HPM",
+      "name": "Hubungan & Pengabdian Masyarakat",
+      "unitType": "DEPARTMENT",
+      "sortOrder": 90
+    }
+  ],
+  "positions": [
+    {
+      "id": "ketum",
+      "name": "Ketua Umum",
+      "departmentId": "BPH",
+      "sortOrder": 10
+    },
+    {
+      "id": "waketum",
+      "name": "Wakil Ketua Umum",
+      "departmentId": "BPH",
+      "sortOrder": 20
+    },
+    {
+      "id": "sekum_1",
+      "name": "Sekretaris Umum I",
+      "departmentId": "BPH",
+      "sortOrder": 30
+    },
+    {
+      "id": "sekum_2",
+      "name": "Sekretaris Umum II",
+      "departmentId": "BPH",
+      "sortOrder": 40
+    },
+    {
+      "id": "bendum_1",
+      "name": "Bendahara Umum I",
+      "departmentId": "BPH",
+      "sortOrder": 50
+    },
+    {
+      "id": "bendum_2",
+      "name": "Bendahara Umum II",
+      "departmentId": "BPH",
+      "sortOrder": 60
+    },
+    {
+      "id": "kadep_kad",
+      "name": "Ketua Departemen Kaderisasi",
+      "departmentId": "KAD",
+      "sortOrder": 10
+    },
+    {
+      "id": "sekdep_kad",
+      "name": "Sekretaris Departemen Kaderisasi",
+      "departmentId": "KAD",
+      "sortOrder": 20
+    },
+    {
+      "id": "anggota_kad",
+      "name": "Anggota Departemen Kaderisasi",
+      "departmentId": "KAD",
+      "sortOrder": 30
+    },
+    {
+      "id": "kadep_kaj",
+      "name": "Ketua Departemen Kajian & Advokasi",
+      "departmentId": "KAJ",
+      "sortOrder": 10
+    },
+    {
+      "id": "sekdep_kaj",
+      "name": "Sekretaris Departemen Kajian & Advokasi",
+      "departmentId": "KAJ",
+      "sortOrder": 20
+    },
+    {
+      "id": "anggota_kaj",
+      "name": "Anggota Departemen Kajian & Advokasi",
+      "departmentId": "KAJ",
+      "sortOrder": 30
+    },
+    {
+      "id": "kadep_psda",
+      "name": "Ketua Departemen Pengembangan Sumber Daya Anggota",
+      "departmentId": "PSDA",
+      "sortOrder": 10
+    },
+    {
+      "id": "sekdep_psda",
+      "name": "Sekretaris Departemen Pengembangan Sumber Daya Anggota",
+      "departmentId": "PSDA",
+      "sortOrder": 20
+    },
+    {
+      "id": "anggota_psda",
+      "name": "Anggota Departemen Pengembangan Sumber Daya Anggota",
+      "departmentId": "PSDA",
+      "sortOrder": 30
+    },
+    {
+      "id": "kadep_ekraf",
+      "name": "Ketua Departemen Ekonomi Kreatif",
+      "departmentId": "EKRAF",
+      "sortOrder": 10
+    },
+    {
+      "id": "sekdep_ekraf",
+      "name": "Sekretaris Departemen Ekonomi Kreatif",
+      "departmentId": "EKRAF",
+      "sortOrder": 20
+    },
+    {
+      "id": "anggota_ekraf",
+      "name": "Anggota Departemen Ekonomi Kreatif",
+      "departmentId": "EKRAF",
+      "sortOrder": 30
+    },
+    {
+      "id": "kadep_komdigi",
+      "name": "Ketua Departemen Komunikasi & Digitalisasi",
+      "departmentId": "KOMDIGI",
+      "sortOrder": 10
+    },
+    {
+      "id": "sekdep_komdigi",
+      "name": "Sekretaris Departemen Komunikasi & Digitalisasi",
+      "departmentId": "KOMDIGI",
+      "sortOrder": 20
+    },
+    {
+      "id": "anggota_komdigi",
+      "name": "Anggota Departemen Komunikasi & Digitalisasi",
+      "departmentId": "KOMDIGI",
+      "sortOrder": 30
+    },
+    {
+      "id": "kadep_hpm",
+      "name": "Ketua Departemen Hubungan & Pengabdian Masyarakat",
+      "departmentId": "HPM",
+      "sortOrder": 10
+    },
+    {
+      "id": "sekdep_hpm",
+      "name": "Sekretaris Departemen Hubungan & Pengabdian Masyarakat",
+      "departmentId": "HPM",
+      "sortOrder": 20
+    },
+    {
+      "id": "anggota_hpm",
+      "name": "Anggota Departemen Hubungan & Pengabdian Masyarakat",
+      "departmentId": "HPM",
+      "sortOrder": 30
+    }
+  ]
+}

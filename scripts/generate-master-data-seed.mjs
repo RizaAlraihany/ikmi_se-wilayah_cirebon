@@ -1,12 +1,14 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+import JSZip from 'jszip'
 
 const repoRoot = process.cwd()
 const sourceWorkbook = path.join(repoRoot, 'docs', 'database', 'Master-Data.xlsx')
 const outputFile = path.join(repoRoot, 'prisma', 'master-data.generated.ts')
-const workDir = path.join(os.tmpdir(), 'ikmi-master-data-generator')
+let workDir
+const structureMasterData = JSON.parse(fs.readFileSync(new URL('../prisma/structure-master-data.json', import.meta.url), 'utf8'))
 
 const departmentAliases = {
   'Sekretaris Umum': 'BPH',
@@ -37,6 +39,10 @@ const departmentNames = {
   KOMDIGI: 'Komunikasi & Digitalisasi',
   HPM: 'Hubungan & Pengabdian Masyarakat',
 }
+
+const departmentMetadata = Object.fromEntries(structureMasterData.departments.map((unit) => [unit.id, unit]))
+
+const positionSortOrders = Object.fromEntries(structureMasterData.positions.map((position) => [position.id, position.sortOrder]))
 
 const bphPositionMap = {
   'ketua umum': { roleId: 'super_admin', departmentId: 'BPH', positionId: 'ketum' },
@@ -77,15 +83,16 @@ const monthMap = {
   Desember: 11,
 }
 
-function ps(command) {
-  return execFileSync('powershell.exe', ['-NoProfile', '-Command', command], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  })
-}
-
-function extractWorkbook() {
-  ps(`$tmp = ${JSON.stringify(workDir)}; if (Test-Path $tmp) { Remove-Item -LiteralPath $tmp -Recurse -Force }; New-Item -ItemType Directory -Path $tmp | Out-Null; Copy-Item -LiteralPath ${JSON.stringify(sourceWorkbook)} -Destination (Join-Path $tmp 'Master-Data.zip'); Expand-Archive -LiteralPath (Join-Path $tmp 'Master-Data.zip') -DestinationPath $tmp`)
+async function extractWorkbook() {
+  const zip = await JSZip.loadAsync(fs.readFileSync(sourceWorkbook))
+  workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ikmi-master-data-'))
+  for (const entry of Object.values(zip.files)) {
+    if (entry.dir || !/^xl\/[\w/.-]+\.(xml|rels)$/.test(entry.name)) continue
+    const target = path.resolve(workDir, entry.name)
+    if (!target.startsWith(workDir + path.sep)) throw new Error('Invalid workbook entry')
+    fs.mkdirSync(path.dirname(target), { recursive: true })
+    fs.writeFileSync(target, await entry.async('nodebuffer'))
+  }
 }
 
 function decodeXml(value = '') {
@@ -303,7 +310,7 @@ function contentPlanDate(month, day) {
   return new Date(Date.UTC(2026, monthIndex, Number(day))).toISOString()
 }
 
-function buildData(tables) {
+export function buildData(tables) {
   const prokerRows = tables['departement &prokerr'].slice(1)
   const memberTable = tables['db-Anggota']
   const memberHeaders = getHeaderMap(memberTable[0])
@@ -356,11 +363,15 @@ function buildData(tables) {
     ...programs.map((program) => program.departmentId),
     ...members.map((member) => member.departmentId),
   ])
-  const departments = [...departmentIds].sort().map((id) => ({
-    id,
-    code: id,
-    name: departmentNames[id] ?? id,
-  }))
+  const departments = [...departmentIds]
+    .sort((left, right) => (departmentMetadata[left]?.sortOrder ?? 999) - (departmentMetadata[right]?.sortOrder ?? 999) || left.localeCompare(right))
+    .map((id) => ({
+      id,
+      code: id,
+      name: departmentNames[id] ?? id,
+      unitType: departmentMetadata[id]?.unitType ?? 'DEPARTMENT',
+      sortOrder: departmentMetadata[id]?.sortOrder ?? 999,
+    }))
 
   const positionsById = new Map()
   for (const member of members) {
@@ -369,10 +380,20 @@ function buildData(tables) {
         id: member.positionId,
         name: member.positionName,
         departmentId: member.departmentId,
+        sortOrder: positionSortOrders[member.positionId] ?? (
+          member.positionId.startsWith('kadep_') ? 10
+            : member.positionId.startsWith('sekdep_') ? 20
+              : member.positionId.startsWith('anggota_') ? 30
+                : 999
+        ),
       })
     }
   }
-  const positions = [...positionsById.values()].sort((a, b) => a.id.localeCompare(b.id))
+  const positions = [...positionsById.values()].sort((a, b) =>
+    (departmentMetadata[a.departmentId]?.sortOrder ?? 999) - (departmentMetadata[b.departmentId]?.sortOrder ?? 999) ||
+    a.sortOrder - b.sortOrder ||
+    a.id.localeCompare(b.id),
+  )
 
   const events = calendarRows
     .map((row, index) => {
@@ -428,7 +449,8 @@ function buildData(tables) {
   return { departments, positions, programs, members, events, contentPlans }
 }
 
-extractWorkbook()
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+await extractWorkbook()
 const sharedStrings = getSharedStrings()
 const tables = Object.fromEntries(
   getSheets().map((sheet) => [sheet.name, parseSheet(sheet.file, sharedStrings).map((row) => row.map(normalizeText))]),
@@ -453,3 +475,4 @@ console.log(
     2,
   ),
 )
+}

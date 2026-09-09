@@ -3,15 +3,8 @@ import { registrationService } from '@/features/registration/services'
 import { canTransitionRegistration } from '@/features/registration/domain'
 import { prismaMock } from '../prisma-mock'
 import { eventBus } from '@/core/events/event-bus'
-import { registrationRepository } from '@/features/registration/repository'
 import { requirePermissionForUser } from '@/core/authorization/guards'
 
-jest.mock('@/features/registration/repository', () => ({
-  registrationRepository: {
-    create: jest.fn(),
-    findById: jest.fn()
-  }
-}))
 
 jest.mock('@/core/authorization/guards', () => ({
   requirePermissionForUser: jest.fn(),
@@ -35,7 +28,7 @@ describe('Registration Service', () => {
   })
 
   it('should submit registration and emit events', async () => {
-    prismaMock.registration.findFirst.mockResolvedValueOnce(null)
+    prismaMock.registration.findMany.mockResolvedValueOnce([])
     prismaMock.registration.create.mockResolvedValueOnce({
       id: 'reg-1',
       registrationNumber: 'REG-2026-0001',
@@ -68,9 +61,9 @@ describe('Registration Service', () => {
   })
 
   it('should update registration status', async () => {
-    ;(registrationRepository.findById as jest.Mock).mockResolvedValueOnce({
+    prismaMock.registration.findFirst.mockResolvedValueOnce({
       id: 'reg-1', status: 'PASSED', registrationNumber: 'REG-2026-0001', fullName: 'John Doe', email: 'john@example.test', campus: 'CIREBON', major: 'Teknik', semester: '1', entryYear: 2026, district: 'Kesambi', village: 'Karyamulya', address: 'Test', whatsapp: '0812', reasons: 'Test', deletedAt: null,
-    })
+    } as any)
 
     prismaMock.registration.update.mockResolvedValueOnce({ id: 'reg-1', status: 'ACTIVE_MEMBER', registrationNumber: 'REG-2026-0001', fullName: 'John Doe', email: 'john@example.test', campus: 'CIREBON', major: 'Teknik', semester: '1', entryYear: 2026, district: 'Kesambi', village: 'Karyamulya', whatsapp: '0812' } as any)
 

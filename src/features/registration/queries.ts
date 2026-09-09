@@ -4,6 +4,8 @@ import { requireRegistrationReviewAccess } from './access'
 export const registrationQueries = {
   async getPaginatedRegistrations(page: number = 1, limit: number = 10, search?: string) {
     await requireRegistrationReviewAccess()
+    page = Number.isSafeInteger(page) && page > 0 ? page : 1
+    limit = Number.isSafeInteger(limit) && limit > 0 ? Math.min(limit, 100) : 10
     const skip = (page - 1) * limit
 
     const where = search ? {

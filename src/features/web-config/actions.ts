@@ -19,6 +19,9 @@ export async function upsertWebConfigAction(data: WebConfigInput) {
     revalidatePath('/admin/cms/settings')
     revalidatePath('/')
     revalidatePath('/tentang-kami')
+    revalidatePath('/tentang')
+    revalidatePath('/struktur')
+    revalidatePath('/kontak')
     revalidatePath('/publikasi')
     return { success: true }
   } catch (error) {

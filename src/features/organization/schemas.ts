@@ -26,11 +26,13 @@ export const organizationalUnitSchema = z.object({
   periodId: blankToNull,
   status: z.enum(['ACTIVE', 'INACTIVE', 'ARCHIVED']),
   unitType: z.enum(['BPH', 'SECRETARIAT', 'TREASURY', 'DEPARTMENT', 'DIVISION']),
+  sortOrder: z.coerce.number().int().min(0).max(10000).default(0),
 })
 
 export const organizationalPositionSchema = z.object({
   name: z.string().trim().min(2, 'Nama jabatan minimal 2 karakter'),
   departmentId: blankToNull,
+  sortOrder: z.coerce.number().int().min(0).max(10000).default(0),
 })
 
 export type PeriodInput = z.input<typeof periodSchema>

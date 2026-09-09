@@ -1,7 +1,10 @@
 import { prisma } from '@/core/database/prisma'
+import { requireOrganizationAccess } from './access'
+import { cabinetConfigKey, cabinetSchema } from './cabinet'
 
 export const organizationQueries = {
   async getOverview() {
+    await requireOrganizationAccess('organization.view')
     const [periods, units, members] = await Promise.all([
       prisma.period.findMany({
         where: { deletedAt: null },
@@ -23,6 +26,15 @@ export const organizationQueries = {
       }),
     ])
 
-    return { periods, units, members }
+    const configs = await prisma.webConfig.findMany({ where: { key: { in: periods.map((period) => cabinetConfigKey(period.id)) }, deletedAt: null }, select: { key: true, valueJson: true } })
+    return { periods: periods.map((period) => {
+      const config = configs.find((entry) => entry.key === cabinetConfigKey(period.id))
+      try {
+        const cabinet = config ? cabinetSchema.safeParse(JSON.parse(config.valueJson)) : null
+        return { ...period, cabinet: cabinet?.success ? cabinet.data : null }
+      } catch {
+        return { ...period, cabinet: null }
+      }
+    }), units, members }
   },
 }

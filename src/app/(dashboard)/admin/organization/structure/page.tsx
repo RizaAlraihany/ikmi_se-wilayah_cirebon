@@ -1,10 +1,10 @@
 import { prisma } from '@/core/database/prisma'
 import { Metadata } from 'next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { requirePermission } from '@/core/authorization/guards'
-import { isOrganizationAdminRole, isSuperAdminRole } from '@/core/auth/roles'
-import { ForbiddenError } from '@/core/errors/custom-errors'
+import { requirePermission, requireRoleForUser } from '@/core/authorization/guards'
+import { ORGANIZATION_DASHBOARD_ROLE_IDS } from '@/core/auth/roles'
 import { Badge } from '@/components/ui/badge'
+import { getCurrentStructurePeriod } from '@/features/public/public-structure'
 import { AssignStructureForm } from './assign-structure-form'
 import { RemoveAssignmentButton } from './remove-assignment-button'
 
@@ -14,13 +14,9 @@ export const metadata: Metadata = {
 
 export default async function AdminStructurePage() {
   const actor = await requirePermission('structure.manage')
-  if (!isOrganizationAdminRole(actor.roleId) && !isSuperAdminRole(actor.roleId)) {
-    throw new ForbiddenError('Struktur organisasi hanya dapat dikelola oleh Admin Organisasi.')
-  }
+  const authorizedActor = await requireRoleForUser(actor, ORGANIZATION_DASHBOARD_ROLE_IDS)
 
-  const activePeriod = await prisma.period.findFirst({
-    where: { status: 'ACTIVE' },
-  })
+  const activePeriod = await getCurrentStructurePeriod()
 
   if (!activePeriod) {
     return (
@@ -35,9 +31,17 @@ export default async function AdminStructurePage() {
     )
   }
 
+  const scopedDepartmentId = authorizedActor.roleId === 'super_admin'
+    ? undefined
+    : authorizedActor.departmentId ?? '__no_authorized_unit__'
+
   const [assignments, departments, positions, users, members] = await Promise.all([
     prisma.structureAssignment.findMany({
-      where: { periodId: activePeriod.id, deletedAt: null },
+      where: {
+        periodId: activePeriod.id,
+        deletedAt: null,
+        ...(scopedDepartmentId ? { departmentId: scopedDepartmentId } : {}),
+      },
       select: {
         id: true,
         user: { select: { id: true, name: true, email: true, photoUrl: true } },
@@ -53,12 +57,25 @@ export default async function AdminStructurePage() {
       ]
     }),
     prisma.department.findMany({
-      where: { periodId: activePeriod.id, status: 'ACTIVE', deletedAt: null },
+      where: {
+        periodId: activePeriod.id,
+        status: 'ACTIVE',
+        deletedAt: null,
+        ...(scopedDepartmentId ? { id: scopedDepartmentId } : {}),
+      },
       select: { id: true, name: true, sortOrder: true },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     }),
     prisma.position.findMany({
-      where: { deletedAt: null, department: { periodId: activePeriod.id, status: 'ACTIVE', deletedAt: null } },
+      where: {
+        deletedAt: null,
+        department: {
+          periodId: activePeriod.id,
+          status: 'ACTIVE',
+          deletedAt: null,
+          ...(scopedDepartmentId ? { id: scopedDepartmentId } : {}),
+        },
+      },
       select: { id: true, name: true, departmentId: true, sortOrder: true },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     }),

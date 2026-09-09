@@ -10,7 +10,8 @@
     "prisma:validate": "prisma validate --schema prisma/schema.prisma",
     "db:seed": "npm run db:seed:dev",
     "db:seed:generate": "node scripts/generate-master-data-seed.mjs",
-    "db:seed:dev": "npm run db:seed:generate && tsx prisma/seed.development.ts",
+    "db:seed:dev": "tsx prisma/seed.p0.ts",
+    "db:seed:workbook": "npm run db:seed:generate && tsx prisma/seed.development.ts",
     "db:seed:master": "tsx prisma/seed.master-data.ts",
     "db:seed:export": "tsx prisma/seed.export.ts",
     "backup:daily": "node scripts/database-backup.mjs --mode daily",
@@ -23,11 +24,11 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^6.4.0",
-    "@tiptap/extension-image": "^2.27.2",
-    "@tiptap/extension-link": "^2.27.2",
-    "@tiptap/pm": "^2.27.2",
-    "@tiptap/react": "^2.27.2",
-    "@tiptap/starter-kit": "^2.27.2",
+    "@tiptap/extension-image": "^3.31.3",
+    "@tiptap/extension-link": "^3.31.3",
+    "@tiptap/pm": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
     "@upstash/redis": "^1.34.3",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
@@ -38,7 +39,7 @@
     "jszip": "3.10.1",
     "lucide-react": "^0.469.0",
     "mammoth": "1.11.0",
-    "next": "^15.3.0",
+    "next": "^15.5.25",
     "next-auth": "^5.0.0-beta.32",
     "parse5": "7.3.0",
     "radix-ui": "^1.6.7",
@@ -62,7 +63,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "^15.3.0",
+    "eslint-config-next": "^15.5.25",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "jest-mock-extended": "^4.0.1",
@@ -73,6 +74,10 @@
     "typescript": "^5"
   },
   "overrides": {
-    "linkify-it": "5.0.2"
+    "linkify-it": "5.0.2",
+    "postcss": "8.5.28",
+    "sharp": "0.35.4",
+    "deepmerge-ts": "8.0.2",
+    "js-yaml": "5.4.1"
   }
 }

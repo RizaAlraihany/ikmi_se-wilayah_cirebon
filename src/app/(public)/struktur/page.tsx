@@ -74,53 +74,6 @@ function readMediaUrl(
   return null;
 }
 
-function getUnitPriority(group: StructureGroup) {
-  const key = `${group.code} ${group.name}`.toLowerCase();
-
-  if (
-    group.unitType === "BPH" ||
-    key.includes("bph") ||
-    key.includes("pengurus harian")
-  ) {
-    return 0;
-  }
-  if (key.includes("kaderisasi")) return 10;
-  if (key.includes("psda") || key.includes("sumber daya anggota")) return 20;
-  if (key.includes("advokasi") || key.includes("kajian strategis")) return 30;
-  if (key.includes("ekonomi kreatif") || key.includes("ekotif")) return 40;
-  if (
-    key.includes("komunikasi") ||
-    key.includes("digitalisasi") ||
-    key.includes("komdigi")
-  ) {
-    return 50;
-  }
-  if (
-    key.includes("hubungan") ||
-    key.includes("pengabdian masyarakat") ||
-    key.includes("hpm")
-  ) {
-    return 60;
-  }
-
-  return 100;
-}
-
-function getPositionPriority(positionName: string) {
-  const key = positionName.toLowerCase();
-
-  if (key.includes("ketua umum")) return 0;
-  if (key.includes("wakil ketua")) return 5;
-  if (key.includes("sekretaris umum")) return 10;
-  if (key.includes("bendahara umum")) return 20;
-  if (key.includes("kepala departemen") || key.includes("ketua departemen"))
-    return 30;
-  if (key.includes("sekretaris")) return 40;
-  if (key.includes("anggota")) return 60;
-
-  return 50;
-}
-
 export default async function PengurusPage() {
   const [structure, webConfig] = await Promise.all([
     getActivePublicStructure(),
@@ -188,37 +141,23 @@ export default async function PengurusPage() {
     return result;
   }, []);
 
-  const sortedGroups = groups
-    .map((group) => ({
-      ...group,
-      members: [...group.members].sort(
-        (a, b) =>
-          getPositionPriority(a.positionName) -
-            getPositionPriority(b.positionName) ||
-          a.name.localeCompare(b.name, "id"),
-      ),
-      photoUrl:
-        group.photoUrl ??
-        readMediaUrl(configuredDepartmentPhotos, [
-          group.id,
-          group.code,
-          group.name,
-        ]) ??
-        null,
-    }))
-    .sort(
-      (a, b) =>
-        getUnitPriority(a) - getUnitPriority(b) ||
-        a.name.localeCompare(b.name, "id"),
-    );
+  // getActivePublicStructure already applies the database-backed unit,
+  // position, and assignment ordering. Keep that order instead of deriving a
+  // second hierarchy from labels in the public page.
+  const sortedGroups = groups.map((group) => ({
+    ...group,
+    photoUrl:
+      group.photoUrl ??
+      readMediaUrl(configuredDepartmentPhotos, [
+        group.id,
+        group.code,
+        group.name,
+      ]) ??
+      null,
+  }));
 
   const bph =
-    sortedGroups.find(
-      (group) =>
-        group.unitType === "BPH" ||
-        group.code.toLowerCase() === "bph" ||
-        group.name.toLowerCase().includes("pengurus harian"),
-    ) ?? null;
+    sortedGroups.find((group) => group.unitType === "BPH") ?? null;
 
   const departments = sortedGroups.filter((group) => group.id !== bph?.id);
 

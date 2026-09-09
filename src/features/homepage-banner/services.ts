@@ -38,11 +38,21 @@ function storageData(data: HomepageBannerInput) {
   }
 }
 
+async function validatePublication(data: HomepageBannerInput) {
+  if (data.phase !== 'AFTER' || !data.ctaUrl) return
+  const match = /^\/publikasi\/([^/?#]+)$/.exec(data.ctaUrl)
+  if (!match || !await prisma.post.findFirst({
+    where: { slug: match[1], status: 'PUBLISHED', deletedAt: null, publishedAt: { lte: new Date() } },
+    select: { id: true },
+  })) throw new ValidationError('Banner setelah kegiatan harus menautkan publikasi yang sudah terbit.')
+}
+
 export const homepageBannerService = {
   async create(input: unknown, actorId: string) {
     const actor = await requireCmsUpdate(actorId)
     const data = homepageBannerSchema.parse(input)
     await validateProgram(data.programId)
+    await validatePublication(data)
     const stored = storageData(data)
 
     return prisma.$transaction(async (tx) => {
@@ -66,6 +76,7 @@ export const homepageBannerService = {
     const current = await prisma.homepageBanner.findFirst({ where: { id, deletedAt: null } })
     if (!current) throw new NotFoundError('Banner campaign tidak ditemukan.')
     await validateProgram(data.programId)
+    await validatePublication(data)
     const stored = storageData(data)
 
     return prisma.$transaction(async (tx) => {

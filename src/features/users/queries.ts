@@ -2,6 +2,8 @@ import { prisma } from '@/core/database/prisma'
 
 export const userQueries = {
   async getPaginatedUsers(page: number = 1, limit: number = 10, search?: string) {
+    page = Number.isSafeInteger(page) && page > 0 ? page : 1
+    limit = Number.isSafeInteger(limit) && limit > 0 ? Math.min(limit, 100) : 10
     const skip = (page - 1) * limit
 
     const where = {
@@ -75,6 +77,6 @@ export const userQueries = {
   },
 
   async getDepartments() {
-    return prisma.department.findMany({ orderBy: { name: 'asc' } })
+    return prisma.department.findMany({ where: { deletedAt: null, status: 'ACTIVE' }, orderBy: { name: 'asc' } })
   }
 }

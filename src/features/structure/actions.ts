@@ -3,9 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { assignStructureSchema, AssignStructureInput } from './schemas'
 import { structureService } from './services'
-import { requirePermission } from '@/core/authorization/guards'
-import { isOrganizationAdminRole, isSuperAdminRole } from '@/core/auth/roles'
-import { ForbiddenError } from '@/core/errors/custom-errors'
+import { ORGANIZATION_DASHBOARD_ROLE_IDS } from '@/core/auth/roles'
+import { requirePermission, requireRoleForUser } from '@/core/authorization/guards'
 import { safeActionError } from '@/core/errors/safe-action-error'
 
 function actionErrorMessage(error: unknown) {
@@ -14,10 +13,7 @@ function actionErrorMessage(error: unknown) {
 
 async function requireStructureManager() {
   const user = await requirePermission('structure.manage')
-  if (!isOrganizationAdminRole(user.roleId) && !isSuperAdminRole(user.roleId)) {
-    throw new ForbiddenError('Struktur organisasi hanya dapat dikelola oleh Admin Organisasi.')
-  }
-  return user
+  return requireRoleForUser(user, ORGANIZATION_DASHBOARD_ROLE_IDS)
 }
 export async function assignStructureAction(periodId: string, data: AssignStructureInput) {
   try {

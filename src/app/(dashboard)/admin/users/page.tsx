@@ -1,6 +1,6 @@
-import { Plus, Search, Trash2, Edit, Users } from 'lucide-react'
+import { Plus, Search, Edit, Users } from 'lucide-react'
 import { userQueries } from '@/features/users/queries'
-import { deleteUserAction } from '@/features/users/actions'
+import { DeleteUserButton } from './delete-user-button'
 import { Button, ButtonLink } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -55,17 +55,9 @@ export default async function AdminUsersPage({
                         <td className="px-4 py-4"><Badge tone={user.isActive ? 'success' : 'danger'}>{user.isActive ? 'Aktif' : 'Nonaktif'}</Badge></td>
                         <td className="px-4 py-4">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" aria-label={`Edit ${user.name}`}>
-                              <Edit className="h-4 w-4" aria-hidden="true" />
-                            </Button>
-                            <form action={async () => {
-                              'use server'
-                              await deleteUserAction(user.id)
-                            }}>
-                              <Button type="submit" variant="ghost" size="icon" aria-label={`Hapus ${user.name}`}>
-                                <Trash2 className="h-4 w-4" aria-hidden="true" />
-                              </Button>
-                            </form>
+                            <ButtonLink href={`/admin/users/${user.id}`} variant="ghost" size="icon" aria-label={`Edit ${user.name}`}>
+                              <Edit className="h-4 w-4" aria-hidden="true" /></ButtonLink>
+                            <DeleteUserButton id={user.id} name={user.name} />
                           </div>
                         </td>
                       </tr>
@@ -87,7 +79,7 @@ export default async function AdminUsersPage({
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Badge>{user.role?.name || '-'}</Badge>
-                        <Badge>{user.department?.name || '-'}</Badge>
+                        <Badge>{user.department?.name || '-'}</Badge><ButtonLink href={`/admin/users/${user.id}`} variant="ghost" size="sm">Edit</ButtonLink><DeleteUserButton id={user.id} name={user.name} />
                       </div>
                     </CardContent>
                   </Card>
@@ -96,7 +88,7 @@ export default async function AdminUsersPage({
             </>
           )}
 
-          <Pagination page={meta.page} totalPages={meta.totalPages} total={meta.total} />
+          <Pagination search={q} page={meta.page} totalPages={meta.totalPages} total={meta.total} />
         </CardContent>
       </Card>
     </div>
@@ -115,13 +107,13 @@ function PageHeader({ title, description, action }: { title: string; description
   )
 }
 
-function Pagination({ page, totalPages, total }: { page: number; totalPages: number; total: number }) {
+function Pagination({ page, totalPages, total, search }: { search: string; page: number; totalPages: number; total: number }) {
   return (
     <div className="flex flex-col gap-3 border-t border-line pt-4 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
       <span>Halaman {page} dari {totalPages || 1} ({total} data)</span>
       <div className="flex gap-2">
-        <Button variant="secondary" size="sm" disabled={page <= 1}>Sebelumnya</Button>
-        <Button variant="secondary" size="sm" disabled={page >= totalPages}>Berikutnya</Button>
+        {page > 1 ? <ButtonLink href={`?page=${page - 1}&q=${encodeURIComponent(search)}`} variant="secondary" size="sm">Sebelumnya</ButtonLink> : <Button variant="secondary" size="sm" disabled>Sebelumnya</Button>}
+        {page < totalPages ? <ButtonLink href={`?page=${page + 1}&q=${encodeURIComponent(search)}`} variant="secondary" size="sm">Berikutnya</ButtonLink> : <Button variant="secondary" size="sm" disabled>Berikutnya</Button>}
       </div>
     </div>
   )

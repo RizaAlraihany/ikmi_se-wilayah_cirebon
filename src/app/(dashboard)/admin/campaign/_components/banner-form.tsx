@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { archiveHomepageBanner, createHomepageBanner, updateHomepageBanner } from '@/features/homepage-banner/actions'
 import { formatJakartaCampaignDatetime } from '@/features/homepage-banner/domain'
+import { uploadWebConfigImageAction } from '@/features/web-config/actions'
 
 type BannerFormData = {
   id: string
@@ -34,13 +35,35 @@ type ProgramOption = { id: string; name: string }
 interface Props {
   banner?: BannerFormData
   programs: ProgramOption[]
+  publications: { id: string; title: string; slug: string }[]
 }
 
-export function BannerForm({ banner, programs }: Props) {
+export function BannerForm({ banner, programs, publications }: Props) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
+  const [desktopImage, setDesktopImage] = useState(banner?.desktopImage || '')
+  const [mobileImage, setMobileImage] = useState(banner?.mobileImage || '')
+  const [ctaUrl, setCtaUrl] = useState(banner?.ctaUrl || '')
+  const [ctaLabel, setCtaLabel] = useState(banner?.ctaLabel || '')
+
+  async function uploadImage(file: File | undefined, target: 'desktop' | 'mobile') {
+    if (!file) return
+    setLoading(true)
+    setError(null)
+    try {
+      const data = new FormData()
+      data.set('file', file)
+      const result = await uploadWebConfigImageAction(data)
+      if (result.url) (target === 'desktop' ? setDesktopImage : setMobileImage)(result.url)
+      else setError(result.error || 'Gambar belum dapat diunggah.')
+    } catch {
+      setError('Gambar belum dapat diunggah. Silakan coba lagi.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -88,10 +111,10 @@ export function BannerForm({ banner, programs }: Props) {
               <Input id="internalTitle" name="internalTitle" required minLength={3} maxLength={120} defaultValue={banner?.internalTitle} placeholder="Contoh: Pra-PRABUMI Agustus" />
             </Field>
             <Field label="Fase campaign" htmlFor="phase" required>
-              <Select id="phase" name="phase" required defaultValue={banner?.phase || 'GENERAL'}>
-                <option value="GENERAL">Umum</option>
+              <Select id="phase" name="phase" required defaultValue={banner?.phase || 'BEFORE'}>
+                {banner?.phase === 'GENERAL' ? <option value="GENERAL">Umum (arsip lama)</option> : null}
                 <option value="BEFORE">Sebelum kegiatan</option>
-                <option value="PRA">Pra-kegiatan</option>
+                <option value="PRA">Sedang berlangsung</option>
                 <option value="AFTER">Setelah kegiatan</option>
               </Select>
             </Field>
@@ -109,10 +132,12 @@ export function BannerForm({ banner, programs }: Props) {
           <p className="mt-1 text-sm leading-6 text-text-secondary">Gunakan URL HTTPS Cloudinary. Gambar mobile terpisah mencegah crop utama terpotong pada layar 360–430px.</p>
           <div className="mt-6 grid gap-5 md:grid-cols-2">
             <Field label="Gambar desktop" htmlFor="desktopImage" required description="Disarankan rasio lebar 16:8.">
-              <Input id="desktopImage" name="desktopImage" type="text" inputMode="url" required maxLength={2048} defaultValue={banner?.desktopImage || ''} placeholder="https://res.cloudinary.com/..." />
+              <Input id="desktopImage" name="desktopImage" type="text" inputMode="url" required maxLength={2048} value={desktopImage} onChange={(event) => setDesktopImage(event.target.value)} placeholder="https://res.cloudinary.com/..." />
+              <Input aria-label="Unggah gambar desktop" type="file" accept="image/png,image/jpeg,image/webp" disabled={loading} onChange={(event) => void uploadImage(event.target.files?.[0], 'desktop')} />
             </Field>
             <Field label="Gambar mobile" htmlFor="mobileImage" required description="Disarankan rasio potret 4:5.">
-              <Input id="mobileImage" name="mobileImage" type="text" inputMode="url" required maxLength={2048} defaultValue={banner?.mobileImage || ''} placeholder="https://res.cloudinary.com/..." />
+              <Input id="mobileImage" name="mobileImage" type="text" inputMode="url" required maxLength={2048} value={mobileImage} onChange={(event) => setMobileImage(event.target.value)} placeholder="https://res.cloudinary.com/..." />
+              <Input aria-label="Unggah gambar mobile" type="file" accept="image/png,image/jpeg,image/webp" disabled={loading} onChange={(event) => void uploadImage(event.target.files?.[0], 'mobile')} />
             </Field>
           </div>
         </section>
@@ -122,10 +147,16 @@ export function BannerForm({ banner, programs }: Props) {
           <p className="mt-1 text-sm leading-6 text-text-secondary">CTA bersifat opsional, tetapi label dan URL harus diisi bersama.</p>
           <div className="mt-6 grid gap-5 md:grid-cols-2">
             <Field label="Label CTA" htmlFor="ctaLabel">
-              <Input id="ctaLabel" name="ctaLabel" maxLength={48} defaultValue={banner?.ctaLabel || ''} placeholder="Contoh: Lihat Program" />
+              <Input id="ctaLabel" name="ctaLabel" maxLength={48} value={ctaLabel} onChange={(event) => setCtaLabel(event.target.value)} placeholder="Contoh: Baca Berita Acara" />
             </Field>
-            <Field label="URL CTA" htmlFor="ctaUrl" description="Path internal seperti /program/prabumi atau URL HTTPS.">
-              <Input id="ctaUrl" name="ctaUrl" type="text" inputMode="url" maxLength={2048} defaultValue={banner?.ctaUrl || ''} placeholder="/program/nama-program" />
+            <Field label="URL CTA" htmlFor="ctaUrl" description="Untuk setelah kegiatan, pilih publikasi yang sudah terbit.">
+              <Input id="ctaUrl" name="ctaUrl" type="text" inputMode="url" maxLength={2048} value={ctaUrl} onChange={(event) => setCtaUrl(event.target.value)} placeholder="/publikasi/berita-acara" />
+            </Field>
+            <Field label="Publikasi tujuan" htmlFor="publicationSlug">
+              <Select id="publicationSlug" value={publications.some((post) => `/publikasi/${post.slug}` === ctaUrl) ? ctaUrl : ''} onChange={(event) => { setCtaUrl(event.target.value); if (event.target.value) setCtaLabel('Baca Berita Acara') }}>
+                <option value="">Pilih publikasi</option>
+                {publications.map((post) => <option key={post.id} value={`/publikasi/${post.slug}`}>{post.title}</option>)}
+              </Select>
             </Field>
             <Field label="Program terkait" htmlFor="programId" description="Hanya Program PUBLIC dengan campaign diaktifkan yang dapat dipilih." className="md:col-span-2">
               <Select id="programId" name="programId" defaultValue={banner?.programId || ''}>

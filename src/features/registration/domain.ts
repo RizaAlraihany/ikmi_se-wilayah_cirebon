@@ -13,5 +13,5 @@ export const REGISTRATION_TRANSITIONS: Record<RegStatus, RegStatus[]> = {
 }
 
 export function canTransitionRegistration(from: RegStatus, to: RegStatus) {
-  return REGISTRATION_TRANSITIONS[from].includes(to)
+  return REGISTRATION_TRANSITIONS[from]?.includes(to) ?? false
 }

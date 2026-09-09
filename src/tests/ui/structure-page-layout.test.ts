@@ -17,6 +17,8 @@ describe('public structure page layout', () => {
 
   it('keeps the original public structure information', () => {
     expect(pageSource).toContain('<h1>Struktur Pengurus</h1>')
+    expect(pageSource).toContain('alternates: { canonical: "/struktur" }')
+    expect(pageSource).toContain('type: "website"')
     expect(pageSource).toContain(
       'Kenali orang-orang di balik gerak IKMI Se-Wilayah Cirebon.',
     )

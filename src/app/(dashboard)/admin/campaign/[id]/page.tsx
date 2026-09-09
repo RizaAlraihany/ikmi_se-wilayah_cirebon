@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getCampaignProgramOptions, getHomepageBannerById } from '@/features/homepage-banner/queries'
+import { getCampaignProgramOptions, getCampaignPublicationOptions, getHomepageBannerById } from '@/features/homepage-banner/queries'
 import { BannerForm } from '../_components/banner-form'
 
 export const metadata = {
@@ -12,9 +12,10 @@ interface Props {
 
 export default async function EditCampaignPage({ params }: Props) {
   const resolvedParams = await params
-  const [banner, programs] = await Promise.all([
+  const [banner, programs, publications] = await Promise.all([
     getHomepageBannerById(resolvedParams.id),
     getCampaignProgramOptions(),
+    getCampaignPublicationOptions(),
   ])
 
   if (!banner) {
@@ -31,7 +32,7 @@ export default async function EditCampaignPage({ params }: Props) {
         </p>
       </div>
 
-      <BannerForm banner={banner} programs={programs} />
+      <BannerForm banner={banner} programs={programs} publications={publications} />
     </div>
   )
 }

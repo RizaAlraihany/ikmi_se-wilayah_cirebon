@@ -99,6 +99,8 @@ export const articleEditorExtensions = [
   // toolbar below intentionally exposes only H2 and H3 to authors.
   StarterKit.configure({
     heading: { levels: [1, 2, 3, 4, 5, 6] },
+    link: false,
+    underline: false,
   }),
   Link.configure({
     openOnClick: false,
@@ -145,6 +147,7 @@ export function ArticleEditor({ id, value, onChange, disabled = false, onImageUp
   const latestValue = useRef(value)
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: articleEditorExtensions,
     content: value,
     editable: !disabled,
@@ -164,7 +167,7 @@ export function ArticleEditor({ id, value, onChange, disabled = false, onImageUp
 
   useEffect(() => {
     if (!editor || value === latestValue.current) return
-    editor.commands.setContent(value, false)
+    editor.commands.setContent(value, { emitUpdate: false })
     latestValue.current = value
   }, [editor, value])
 

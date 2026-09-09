@@ -1,12 +1,12 @@
 import { BannerForm } from '../_components/banner-form'
-import { getCampaignProgramOptions } from '@/features/homepage-banner/queries'
+import { getCampaignProgramOptions, getCampaignPublicationOptions } from '@/features/homepage-banner/queries'
 
 export const metadata = {
   title: 'Buat Campaign Banner | Admin Komdigi',
 }
 
 export default async function CreateCampaignPage() {
-  const programs = await getCampaignProgramOptions()
+  const [programs, publications] = await Promise.all([getCampaignProgramOptions(), getCampaignPublicationOptions()])
   return (
     <div className="space-y-8">
       <div>
@@ -17,7 +17,7 @@ export default async function CreateCampaignPage() {
         </p>
       </div>
 
-      <BannerForm programs={programs} />
+      <BannerForm programs={programs} publications={publications} />
     </div>
   )
 }

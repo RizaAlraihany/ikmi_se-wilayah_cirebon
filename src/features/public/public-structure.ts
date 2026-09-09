@@ -12,27 +12,17 @@ const unitTypePriority = {
   DIVISION: 40,
 } as const
 
-function positionPriority(name: string) {
-  const normalized = name.toLocaleLowerCase('id-ID')
-
-  if (normalized.includes('ketua umum')) return 0
-  if (normalized.includes('wakil ketua')) return 10
-  if (normalized.includes('sekretaris umum')) return 20
-  if (normalized.includes('bendahara umum')) return 30
-  if (normalized.includes('ketua departemen') || normalized.includes('kepala departemen')) return 40
-  if (normalized.includes('sekretaris departemen')) return 50
-  if (normalized.includes('anggota')) return 60
-
-  return 70
+export async function getCurrentStructurePeriod() {
+  return prisma.period.findFirst({
+    where: { status: 'ACTIVE', deletedAt: null },
+    select: { id: true, name: true, cabinetName: true },
+    orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+  })
 }
 
 /** Public structure deliberately exposes only name, photo, position, and unit. */
 export async function getActivePublicStructure() {
-  const period = await prisma.period.findFirst({
-    where: { status: 'ACTIVE', deletedAt: null },
-    select: { id: true, name: true, cabinetName: true },
-    orderBy: { updatedAt: 'desc' },
-  })
+  const period = await getCurrentStructurePeriod()
   if (!period) return { period: null, assignments: [] }
 
   const [records, archivedLegacyAssignments, legacyOfficers] = await Promise.all([
@@ -42,8 +32,19 @@ export async function getActivePublicStructure() {
         deletedAt: null,
         department: { periodId: period.id, status: 'ACTIVE', deletedAt: null },
         position: { deletedAt: null },
+        OR: [
+          { member: { is: { membershipStatus: 'ACTIVE_MEMBER', deletedAt: null } } },
+          { memberId: null, user: { is: { isActive: true, deletedAt: null } } },
+        ],
       },
       select: publicStructureAssignmentSelect,
+      orderBy: [
+        { department: { sortOrder: 'asc' } },
+        { department: { name: 'asc' } },
+        { position: { sortOrder: 'asc' } },
+        { sortOrder: 'asc' },
+        { id: 'asc' },
+      ],
     }),
     prisma.structureAssignment.findMany({
       where: {
@@ -134,9 +135,9 @@ export async function getActivePublicStructure() {
       left.department.sortOrder - right.department.sortOrder ||
       left.department.name.localeCompare(right.department.name, 'id-ID') ||
       left.position.sortOrder - right.position.sortOrder ||
-      positionPriority(left.position.name) - positionPriority(right.position.name) ||
       left.sortOrder - right.sortOrder ||
-      left.person.name.localeCompare(right.person.name, 'id-ID'),
+      left.person.name.localeCompare(right.person.name, 'id-ID') ||
+      left.id.localeCompare(right.id, 'id-ID'),
   )
 
   return { period, assignments: completeAssignments }

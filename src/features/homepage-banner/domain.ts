@@ -40,7 +40,7 @@ export function campaignStateLabel(state: CampaignState) {
 export function campaignPhaseLabel(phase: string) {
   const labels: Record<string, string> = {
     BEFORE: 'Sebelum kegiatan',
-    PRA: 'Pra-kegiatan',
+    PRA: 'Sedang berlangsung',
     AFTER: 'Setelah kegiatan',
     GENERAL: 'Umum',
   }
@@ -77,6 +77,7 @@ export function formatJakartaCampaignDatetime(value: Date | null | undefined) {
 
 export function isSafeCampaignImageUrl(value: string | null | undefined) {
   if (!value) return false
+  if (/[\\\u0000-\u0020]/.test(value)) return false
   if (value.startsWith('/') && !value.startsWith('//')) return true
   try {
     const url = new URL(value)
@@ -88,6 +89,7 @@ export function isSafeCampaignImageUrl(value: string | null | undefined) {
 
 export function isSafeCampaignCtaUrl(value: string | null | undefined) {
   if (!value) return false
+  if (/[\\\u0000-\u0020]/.test(value)) return false
   if (value.startsWith('/') && !value.startsWith('//')) return true
   try {
     return new URL(value).protocol === 'https:'

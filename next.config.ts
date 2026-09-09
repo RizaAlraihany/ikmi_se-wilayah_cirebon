@@ -34,12 +34,6 @@ const nextConfig: NextConfig = {
     // widen `allowedOrigins` because every browser mutation is first-party.
     serverActions: { bodySizeLimit: '11mb' },
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true, // we can optionally ignore ts errors if needed but let's stick to eslint first
-  },
   ...(validationDistDir ? { distDir: validationDistDir } : {}),
   images: {
     unoptimized: true,

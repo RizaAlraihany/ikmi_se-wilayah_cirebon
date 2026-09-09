@@ -1,4 +1,3 @@
-import { registrationRepository } from './repository'
 import { RegistrationCreateInput } from './schemas'
 import { RegStatus } from '@prisma/client'
 import { prisma } from '@/core/database/prisma'
@@ -18,8 +17,11 @@ export const registrationService = {
     const prefix = `REG-${year}-`
     const registration = await prisma.$transaction(async (tx: TxClient) => {
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${prefix}))`
-      const latest = await tx.registration.findFirst({ where: { registrationNumber: { startsWith: prefix } }, orderBy: { registrationNumber: 'desc' }, select: { registrationNumber: true } })
-      const previous = latest?.registrationNumber ? Number(latest.registrationNumber.slice(prefix.length)) : 0
+      const numbers = await tx.registration.findMany({ where: { registrationNumber: { startsWith: prefix } }, select: { registrationNumber: true } })
+      const previous = numbers.reduce((max, row) => {
+        const value = Number(row.registrationNumber?.slice(prefix.length))
+        return Number.isSafeInteger(value) ? Math.max(max, value) : max
+      }, 0)
       const registrationNumber = `${prefix}${String(Number.isSafeInteger(previous) ? previous + 1 : 1).padStart(4, '0')}`
       return tx.registration.create({ data: {
       registrationNumber,
@@ -48,12 +50,15 @@ export const registrationService = {
   async updateStatus(id: string, status: RegStatus, adminId: string) {
     const actor = await requirePermissionForUser(adminId, 'registration.review')
     if (!isOrganizationAdminRole(actor.roleId) && !isSuperAdminRole(actor.roleId)) throw new ForbiddenError('Pendaftaran hanya dapat diproses Admin Organisasi.')
-    const registration = await registrationRepository.findById(id)
+    let shouldSendInvite = false
+    const updated = await prisma.$transaction(async (tx: TxClient) => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`registration:${id}`}))`
+    const registration = await tx.registration.findFirst({ where: { id, deletedAt: null } })
     if (!registration || registration.deletedAt) throw new NotFoundError('Pendaftaran tidak ditemukan.')
 
+    if (registration.status === status) return registration
     if (!canTransitionRegistration(registration.status, status)) throw new ValidationError('Transisi status pendaftaran tidak valid.')
-    const shouldSendInvite = status === RegStatus.ACTIVE_MEMBER && registration.status !== RegStatus.ACTIVE_MEMBER
-    const updated = await prisma.$transaction(async (tx: TxClient) => {
+    shouldSendInvite = status === RegStatus.ACTIVE_MEMBER
       const next = await tx.registration.update({ where: { id }, data: { status, updatedBy: actor.id } })
       if (status === RegStatus.ACTIVE_MEMBER) {
         const semester = Number.parseInt(next.semester.replace(/\D/g, ''), 10)
@@ -86,9 +91,11 @@ export const registrationService = {
             district: next.district,
             village: next.village,
             membershipStatus: 'ACTIVE_MEMBER',
-            joinedAt: new Date(),
           },
         })
+      }
+      if (status === RegStatus.INACTIVE || status === RegStatus.ALUMNI) {
+        await tx.member.updateMany({ where: { registrationId: next.id, deletedAt: null }, data: { membershipStatus: status } })
       }
       await tx.auditLog.create({
         data: {
