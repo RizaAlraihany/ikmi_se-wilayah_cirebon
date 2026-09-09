@@ -24,9 +24,6 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  // Keep JSDOM's runtime assets resolved from its installed package when the
-  // shared server sanitizer is loaded during static page-data collection.
-  serverExternalPackages: ['isomorphic-dompurify'],
   experimental: {
     // Public upload forms accept a 10 MB document plus bounded text fields.
     // The action still validates MIME, extension, signature, and exact file size.
