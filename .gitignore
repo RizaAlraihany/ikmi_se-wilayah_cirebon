@@ -43,7 +43,7 @@ yarn-error.log*
 !.env.example
 
 # vercel
-.vercel
+/.vercel/
 
 # typescript
 *.tsbuildinfo
@@ -64,3 +64,5 @@ prisma/seed.ts
 /CLAUDE.md
 /.codex/
 /docs/
+
+.vercel
