@@ -1292,12 +1292,24 @@ textarea {
   color: var(--primary);
 }
 
-.publication-article-content p {
+.publication-article-content {
+  text-align: justify;
+  text-justify: inter-word;
+  font-size: clamp(0.95rem, 1.2vw, 1.125rem);
+}
+
+.publication-article-content p,
+.publication-article-content li,
+.publication-article-content blockquote {
   text-align: justify !important;
   text-justify: inter-word;
   line-height: 1.8;
   overflow-wrap: anywhere;
   hyphens: auto;
+}
+
+.publication-article-content :is(h1, h2, h3, h4, h5, h6) {
+  text-align: left;
 }
 
 .publication-article-content img {
@@ -8644,14 +8656,11 @@ textarea:focus-visible {
   line-clamp: 2;
 }
 
-/* Article detail titles are intentionally compact without affecting other public headings. */
+/* Article detail titles scale down responsively while keeping the complete title visible. */
 .publication-detail-title {
-  display: -webkit-box !important;
-  overflow: hidden !important;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2 !important;
-  line-clamp: 2 !important;
-  text-overflow: ellipsis;
+  font-size: clamp(1.5rem, 4.8vw, 3rem) !important;
+  line-height: 1.1 !important;
+  text-wrap: balance;
 }
 
 /* Homepage reference layout: compact activity, publication, and FAQ sections. */
