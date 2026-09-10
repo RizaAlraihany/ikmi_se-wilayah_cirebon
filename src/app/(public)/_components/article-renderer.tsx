@@ -1,4 +1,6 @@
 const leadingH1Pattern = /^(?:\s|<!--[\s\S]*?-->)*<h1\b[^>]*>([\s\S]*?)<\/h1\s*>/i
+const firstImagePattern = /<img\b[^>]*\bsrc\s*=\s*(['"])(.*?)\1[^>]*>/i
+const imageOnlyBlockPattern = /<(p|div|figure)\b[^>]*>\s*(?:<a\b[^>]*>\s*)?<img\b[^>]*>\s*(?:<\/a>\s*)?<\/\1>/i
 
 function decodeEntities(value: string) {
   const named: Record<string, string> = {
@@ -40,11 +42,51 @@ export function suppressLeadingDuplicateTitleH1(content: string, title: string) 
   return content.slice(match[0].length)
 }
 
-export function ArticleRenderer({ content, title }: { content: string; title: string }) {
+function normalizeImageReference(value: string) {
+  const decoded = decodeEntities(value.trim())
+
+  try {
+    const url = new URL(decoded)
+    const normalizedPath = url.pathname.replace(/\/(?:w\d+(?:-h\d+)?|s\d+)(?=\/)/gi, '/')
+    return `${url.hostname.toLowerCase()}${normalizedPath}`.replace(/\/$/, '')
+  } catch {
+    return decoded.split(/[?#]/, 1)[0].replace(/\/(?:w\d+(?:-h\d+)?|s\d+)(?=\/)/gi, '/').replace(/\/$/, '').toLowerCase()
+  }
+}
+
+function isSameImageReference(first: string, second: string) {
+  return normalizeImageReference(first) === normalizeImageReference(second)
+}
+
+/**
+ * Blogger stores the cover image as the first image in the article body too.
+ * The detail page already renders the cover above the body, so suppress only
+ * that first matching image while preserving every subsequent image.
+ */
+export function suppressLeadingDuplicateCoverImage(content: string, coverImageUrl?: string | null) {
+  if (!coverImageUrl) return content
+
+  const firstImage = content.match(firstImagePattern)
+  if (!firstImage?.[2] || !isSameImageReference(firstImage[2], coverImageUrl)) {
+    return content
+  }
+
+  const imageBlock = content.match(imageOnlyBlockPattern)
+  if (imageBlock?.index !== undefined && imageBlock.index <= (firstImage.index ?? Number.POSITIVE_INFINITY)) {
+    return `${content.slice(0, imageBlock.index)}${content.slice(imageBlock.index + imageBlock[0].length)}`
+  }
+
+  return content.replace(firstImagePattern, '')
+}
+
+export function ArticleRenderer({ content, title, coverImageUrl }: { content: string; title: string; coverImageUrl?: string | null }) {
   // Current CMS creation and Blogger import flows sanitize stored HTML before
   // persistence. Keep the established public trust model here rather than
   // introducing a browser-only sanitizer dependency into the server route.
-  const normalizedContent = suppressLeadingDuplicateTitleH1(content, title)
+  const normalizedContent = suppressLeadingDuplicateCoverImage(
+    suppressLeadingDuplicateTitleH1(content, title),
+    coverImageUrl,
+  )
 
   return (
     <div

@@ -1293,7 +1293,7 @@ textarea {
 }
 
 .publication-article-content p {
-  text-align: justify;
+  text-align: justify !important;
   text-justify: inter-word;
   line-height: 1.8;
   overflow-wrap: anywhere;
@@ -8642,6 +8642,16 @@ textarea:focus-visible {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+}
+
+/* Article detail titles are intentionally compact without affecting other public headings. */
+.publication-detail-title {
+  display: -webkit-box !important;
+  overflow: hidden !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2 !important;
+  line-clamp: 2 !important;
+  text-overflow: ellipsis;
 }
 
 /* Homepage reference layout: compact activity, publication, and FAQ sections. */

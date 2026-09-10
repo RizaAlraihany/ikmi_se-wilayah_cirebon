@@ -105,7 +105,7 @@ export function PublicationDetail({ post, relatedPosts }: { post: PublishedPost;
                 <span className="text-xs font-semibold text-text-muted">Dipublikasi {dateStr}</span>
               </div>
 
-              <h1 className="font-heading text-3xl font-extrabold leading-tight text-primary sm:text-4xl md:text-5xl">
+              <h1 className="publication-detail-title font-heading text-3xl font-extrabold leading-tight text-primary sm:text-4xl md:text-5xl">
                 {post.title}
               </h1>
 
@@ -130,7 +130,7 @@ export function PublicationDetail({ post, relatedPosts }: { post: PublishedPost;
                 <ArticleActionButtons title={post.title} />
               </div>
 
-              <ArticleRenderer content={post.content} title={post.title} />
+              <ArticleRenderer content={post.content} title={post.title} coverImageUrl={post.thumbnailUrl} />
 
               <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-widest text-text-muted">
