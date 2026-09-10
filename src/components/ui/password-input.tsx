@@ -23,7 +23,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         />
         <button
           type="button"
-          className="ikmi-button ikmi-button--ghost absolute right-0 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-text-secondary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-50"
+          className="absolute right-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md border border-transparent bg-transparent text-text-secondary transition-colors hover:bg-surface-alt hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-50"
           onClick={() => setIsVisible((current) => !current)}
           disabled={disabled}
           aria-label={isVisible ? 'Sembunyikan password' : 'Tampilkan password'}

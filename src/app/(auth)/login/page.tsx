@@ -14,7 +14,7 @@ export default function LoginPage() {
   return (
     <main className="relative isolate min-h-dvh overflow-hidden bg-background">
       <div className="mx-auto grid min-h-dvh w-full max-w-[120rem] lg:grid-cols-[minmax(20rem,0.82fr)_minmax(30rem,1.18fr)]">
-      <section className="relative hidden overflow-hidden bg-primary p-10 text-surface lg:flex lg:items-end xl:p-14">
+      <section className="relative hidden overflow-hidden bg-primary p-10 text-surface lg:flex lg:items-center xl:p-14">
         <div className="pointer-events-none absolute -right-28 -top-24 h-72 w-72 rounded-full bg-accent/20 blur-3xl" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full border border-white/10" aria-hidden="true" />
         <div className="max-w-lg border-t border-white/30 pt-7">
@@ -42,16 +42,17 @@ export default function LoginPage() {
 
       <section className="flex min-h-dvh items-center justify-center px-4 py-8 sm:px-8 lg:min-h-0 lg:px-12 xl:px-20">
         <div className="w-full max-w-md">
-          <div className="mb-6 flex items-center gap-3 lg:hidden">
-            <Image src={IKMI_LOGO_URL} alt="Logo IKMI Cirebon" width={48} height={48} className="rounded-md" priority />
-            <div>
-              <p className="font-heading text-base font-bold text-primary">IKMI Cirebon</p>
-              <p className="text-xs text-muted">Ruang kerja internal</p>
-            </div>
-          </div>
         <Card className="w-full border-border/80 border-t-2 border-t-accent bg-surface shadow-lg">
           <CardContent className="space-y-7 p-5 sm:p-8">
             <div className="space-y-3 text-left">
+              <Image
+                src={IKMI_LOGO_URL}
+                alt="Logo IKMI Cirebon"
+                width={56}
+                height={56}
+                className="rounded-md lg:hidden"
+                priority
+              />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Ruang kerja admin</p>
                 <h1 className="mt-2 font-heading text-2xl font-bold text-primary sm:text-3xl">
