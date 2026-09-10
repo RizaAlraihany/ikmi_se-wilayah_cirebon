@@ -64,7 +64,7 @@ export default function LoginPage() {
               </div>
             </div>
             <LoginForm />
-            <p className="border-t border-border pt-5 text-sm leading-6 text-text-secondary">
+            <p className="whitespace-nowrap border-t border-border pt-5 text-xs leading-6 tracking-[-0.01em] text-text-secondary sm:text-sm sm:tracking-normal">
               Hubungi Super Admin untuk mendapatkan akses.
             </p>
           </CardContent>
