@@ -192,8 +192,12 @@ export const blogService = {
             seoKeywords: validated.seoKeywords,
             authorName: validated.authorName,
             categoryId: validated.categoryId,
-            programId: validated.programId,
-            agendaId: validated.agendaId,
+            // The dashboard's optional selects submit an empty string when no
+            // relation is selected. Prisma must receive null to clear an
+            // optional foreign key; persisting '' violates the FK constraint
+            // and made otherwise valid post edits fail.
+            programId: validated.programId === undefined ? undefined : validated.programId || null,
+            agendaId: validated.agendaId === undefined ? undefined : validated.agendaId || null,
             updatedBy: user.id,
           },
         })
@@ -365,7 +369,14 @@ export const blogService = {
       throw new ForbiddenError('Publisher hanya dapat publish artikel departemennya.')
     }
 
-    if (post.status !== PostStatus.APPROVED && post.status !== PostStatus.SCHEDULED) {
+    const isDirectCmsPost = !post.writingSubmissionId
+    const canPublishDirectly = isDirectCmsPost
+      && (post.status === PostStatus.DRAFT || post.status === PostStatus.REVISION)
+
+    // CMS authors with publishing authority may publish their own editorial
+    // posts directly. Public writing submissions remain review-only and still
+    // require APPROVED or SCHEDULED status before they can go live.
+    if (!canPublishDirectly && post.status !== PostStatus.APPROVED && post.status !== PostStatus.SCHEDULED) {
       throw new ValidationError('Artikel harus APPROVED atau SCHEDULED sebelum dipublish.')
     }
     if (post.status === PostStatus.SCHEDULED && post.scheduledAt && post.scheduledAt.getTime() > Date.now()) {

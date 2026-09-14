@@ -6,7 +6,9 @@ export const ALLOWED_DOCUMENT_TYPES = [
 ]
 export const ALLOWED_DOCUMENT_EXTENSIONS = ['.pdf', '.docx']
 
-export const MAX_IMAGE_SIZE = 2 * 1024 * 1024 // 2MB
+// The dashboard action transport permits 11 MB. Ten MB is practical for
+// original camera photos while retaining a small boundary below that limit.
+export const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10MB
 export const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024 // 10MB
 
 function hasAllowedExtension(name: string, extensions: readonly string[]) {
@@ -51,7 +53,7 @@ export function validateImage(file: File): { valid: boolean; error?: string } {
     return { valid: false, error: 'Ekstensi gambar tidak sesuai dengan tipe file.' }
   }
   if (file.size > MAX_IMAGE_SIZE) {
-    return { valid: false, error: 'Ukuran gambar maksimal 2 MB.' }
+    return { valid: false, error: 'Ukuran gambar maksimal 10 MB.' }
   }
   return { valid: true }
 }

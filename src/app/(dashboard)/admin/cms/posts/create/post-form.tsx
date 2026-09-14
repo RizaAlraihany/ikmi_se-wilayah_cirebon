@@ -61,6 +61,7 @@ export function PostForm({
   const [globalError, setGlobalError] = useState<string>('')
   const [coverUploadMessage, setCoverUploadMessage] = useState<string>('')
   const [ogUploadMessage, setOgUploadMessage] = useState<string>('')
+  const [isUploadingAsset, setIsUploadingAsset] = useState(false)
   const isEdit = Boolean(initialPost)
 
   const schema = isEdit ? postUpdateSchema : postCreateSchema
@@ -109,33 +110,47 @@ export function PostForm({
     setCoverUploadMessage('')
     if (!file) return
 
-    const formData = new FormData()
-    formData.append('file', file)
-    const result = await uploadBlogCoverAction(formData)
+    setIsUploadingAsset(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const result = await uploadBlogCoverAction(formData, isEdit ? 'update' : 'create')
 
-    if (result.error) {
-      setCoverUploadMessage(result.error)
-      return
+      if (result.error) {
+        setCoverUploadMessage(result.error)
+        return
+      }
+
+      setValue('featuredImage', result.url || '', { shouldValidate: true, shouldDirty: true })
+      setValue('featuredImagePublicId', result.publicId || '', { shouldValidate: true, shouldDirty: true })
+      setCoverUploadMessage('Cover berhasil diupload ke Cloudinary.')
+    } catch {
+      setCoverUploadMessage('Cover belum dapat diunggah. Periksa koneksi lalu coba kembali.')
+    } finally {
+      setIsUploadingAsset(false)
     }
-
-    setValue('featuredImage', result.url || '', { shouldValidate: true, shouldDirty: true })
-    setValue('featuredImagePublicId', result.publicId || '', { shouldValidate: true, shouldDirty: true })
-    setCoverUploadMessage('Cover berhasil diupload ke Cloudinary.')
   }
 
   const uploadOgImage = async (file: File | undefined) => {
     setOgUploadMessage('')
     if (!file) return
-    const formData = new FormData()
-    formData.append('file', file)
-    const result = await uploadBlogCoverAction(formData)
-    if (result.error) {
-      setOgUploadMessage(result.error)
-      return
+    setIsUploadingAsset(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const result = await uploadBlogCoverAction(formData, isEdit ? 'update' : 'create')
+      if (result.error) {
+        setOgUploadMessage(result.error)
+        return
+      }
+      setValue('ogImage', result.url || '', { shouldValidate: true, shouldDirty: true })
+      setValue('ogImagePublicId', result.publicId || '', { shouldValidate: true, shouldDirty: true })
+      setOgUploadMessage('OG image berhasil diupload.')
+    } catch {
+      setOgUploadMessage('OG image belum dapat diunggah. Periksa koneksi lalu coba kembali.')
+    } finally {
+      setIsUploadingAsset(false)
     }
-    setValue('ogImage', result.url || '', { shouldValidate: true, shouldDirty: true })
-    setValue('ogImagePublicId', result.publicId || '', { shouldValidate: true, shouldDirty: true })
-    setOgUploadMessage('OG image berhasil diupload.')
   }
 
   const uploadInlineImage = async (file: File) => {
@@ -230,8 +245,10 @@ export function PostForm({
             id="featuredImageFile"
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            disabled={isSubmitting}
-            onChange={(event) => void uploadCover(event.target.files?.[0])}
+            disabled={isSubmitting || isUploadingAsset}
+            onChange={(event) => {
+              void uploadCover(event.target.files?.[0]).finally(() => { event.target.value = '' })
+            }}
           />
           {coverUploadMessage ? <p className="text-xs font-semibold text-muted">{coverUploadMessage}</p> : null}
         </Field>
@@ -304,7 +321,9 @@ export function PostForm({
       <Field label="OG Image" htmlFor="ogImage" error={errors.ogImage?.message}>
         <p className="text-xs leading-5 text-muted">Gambar khusus saat artikel dibagikan. Jika kosong, cover artikel digunakan.</p>
         <Input id="ogImage" {...register('ogImage')} type="url" placeholder="https://res.cloudinary.com/..." disabled={isSubmitting} />
-        <Input id="ogImageFile" type="file" accept="image/jpeg,image/png,image/webp" disabled={isSubmitting} onChange={(event) => void uploadOgImage(event.target.files?.[0])} />
+        <Input id="ogImageFile" type="file" accept="image/jpeg,image/png,image/webp" disabled={isSubmitting || isUploadingAsset} onChange={(event) => {
+          void uploadOgImage(event.target.files?.[0]).finally(() => { event.target.value = '' })
+        }} />
         {ogUploadMessage ? <p className="text-xs font-semibold text-muted">{ogUploadMessage}</p> : null}
       </Field>
 
@@ -312,7 +331,7 @@ export function PostForm({
         <Button type="button" variant="secondary" onClick={() => router.back()} disabled={isSubmitting}>
           Batal
         </Button>
-        <Button type="submit" disabled={isSubmitting || categories.length === 0}>
+        <Button type="submit" disabled={isSubmitting || isUploadingAsset || categories.length === 0}>
           {isSubmitting ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan Draf'}
         </Button>
       </div>

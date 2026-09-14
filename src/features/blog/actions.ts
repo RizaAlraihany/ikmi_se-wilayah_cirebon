@@ -59,9 +59,12 @@ export async function updatePostAction(data: PostUpdateInput) {
   }
 }
 
-export async function uploadBlogCoverAction(formData: FormData) {
+export async function uploadBlogCoverAction(formData: FormData, mode: 'create' | 'update' = 'create') {
   try {
-    const user = await requirePermission('post.create')
+    // Cover uploads are part of the same mutation as the surrounding form:
+    // an edit needs update permission, while a new draft needs create access.
+    const permission = mode === 'update' ? 'post.update' : 'post.create'
+    const user = await requirePermission(permission)
     await rateLimit(`cms:post:cover:${user.id}`, 30, 3600)
 
     const file = formData.get('file')
@@ -75,6 +78,12 @@ export async function uploadBlogCoverAction(formData: FormData) {
     const uploaded = await storageService.uploadImage(file, cloudinaryFolders.blog)
     return { success: true, url: uploaded.secureUrl, publicId: uploaded.publicId }
   } catch (error) {
+    const cloudinaryStatus = typeof error === 'object' && error !== null && 'http_code' in error
+      ? (error as { http_code?: unknown }).http_code
+      : undefined
+    if (cloudinaryStatus === 401) {
+      return { error: 'Layanan upload gambar belum terhubung. Periksa konfigurasi Cloudinary di Vercel.' }
+    }
     return { error: safeActionError(error, 'Cover belum dapat diunggah.', 'post.cover_upload') }
   }
 }
