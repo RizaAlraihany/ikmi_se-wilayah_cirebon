@@ -57,13 +57,13 @@ export function MediaLibraryClient({ assets }: { assets: MediaAssetItem[] }) {
             </div>
           ) : null}
           <form action={handleUpload} className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <Input name="file" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Upload media CMS" required />
+            <Input name="file" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" aria-label="Upload media CMS" required />
             <Button type="submit">
               <Upload className="h-4 w-4" aria-hidden="true" />
               Upload
             </Button>
           </form>
-          <p className="text-xs text-muted">Format: JPG, PNG, WebP. Maksimal 2MB.</p>
+          <p className="text-xs text-muted">Format: JPG, PNG, WebP, HEIC, atau HEIF. Maksimal 10 MB.</p>
         </CardContent>
       </Card>
 

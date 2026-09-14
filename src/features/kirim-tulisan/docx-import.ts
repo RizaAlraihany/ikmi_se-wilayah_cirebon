@@ -459,7 +459,7 @@ export async function importDocxSubmission(file: File): Promise<DocxImportResult
           }
           try {
             const imageBuffer = await image.readAsBuffer()
-            if (imageBuffer.byteLength > MAX_IMAGE_SIZE) throw new Error('Ukuran gambar melebihi 2 MB.')
+            if (imageBuffer.byteLength > MAX_IMAGE_SIZE) throw new Error('Ukuran gambar melebihi 10 MB.')
             const imageBytes = new Uint8Array(imageBuffer.byteLength)
             imageBytes.set(imageBuffer)
             const imageFile = new File([imageBytes.buffer], 'docx-image-' + imageCount + '.' + (image.contentType.split('/')[1] || 'bin'), { type: image.contentType })

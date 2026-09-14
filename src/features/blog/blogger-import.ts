@@ -160,6 +160,8 @@ function imageExtensionForMimeType(mimeType: string) {
   if (mimeType === 'image/jpeg') return 'jpg'
   if (mimeType === 'image/png') return 'png'
   if (mimeType === 'image/webp') return 'webp'
+  if (mimeType === 'image/heic') return 'heic'
+  if (mimeType === 'image/heif') return 'heif'
   return null
 }
 
@@ -185,7 +187,7 @@ async function copyBloggerImage(sourceUrl: string, postId: string, imageIndex: n
   }
 
   const bytes = await response.arrayBuffer()
-  if (bytes.byteLength > MAX_IMAGE_SIZE) throw new ValidationError('Ukuran gambar Blogger melebihi batas 2 MB.')
+  if (bytes.byteLength > MAX_IMAGE_SIZE) throw new ValidationError('Ukuran gambar Blogger melebihi batas 10 MB.')
 
   const file = new File([bytes], `blogger-${postId}-${imageIndex + 1}.${extension}`, { type: mimeType })
   const validation = await validateImageSignature(file)

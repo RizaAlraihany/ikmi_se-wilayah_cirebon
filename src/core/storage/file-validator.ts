@@ -1,5 +1,5 @@
-export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-export const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+export const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']
 export const ALLOWED_DOCUMENT_TYPES = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -10,6 +10,10 @@ export const ALLOWED_DOCUMENT_EXTENSIONS = ['.pdf', '.docx']
 // original camera photos while retaining a small boundary below that limit.
 export const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10MB
 export const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024 // 10MB
+
+export function isHeicImageFile(file: Pick<File, 'name' | 'type'>) {
+  return file.type === 'image/heic' || file.type === 'image/heif' || /\.(?:heic|heif)$/i.test(file.name)
+}
 
 function hasAllowedExtension(name: string, extensions: readonly string[]) {
   const lowerName = name.trim().toLowerCase()
@@ -26,6 +30,8 @@ const imageMimeExtensions: Record<string, readonly string[]> = {
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
   'image/webp': ['.webp'],
+  'image/heic': ['.heic'],
+  'image/heif': ['.heif'],
 }
 
 const documentMimeExtensions: Record<string, readonly string[]> = {
@@ -44,10 +50,10 @@ export function validateImage(file: File): { valid: boolean; error?: string } {
   const filenameValidation = validateFilename(file.name)
   if (!filenameValidation.valid) return filenameValidation
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    return { valid: false, error: 'Format gambar harus JPG, PNG, atau WebP.' }
+    return { valid: false, error: 'Format gambar harus JPG, PNG, WebP, HEIC, atau HEIF.' }
   }
   if (!hasAllowedExtension(file.name, ALLOWED_IMAGE_EXTENSIONS)) {
-    return { valid: false, error: 'Ekstensi gambar harus JPG, PNG, atau WebP.' }
+    return { valid: false, error: 'Ekstensi gambar harus JPG, PNG, WebP, HEIC, atau HEIF.' }
   }
   if (!imageMimeExtensions[file.type]?.includes(extensionFor(file.name))) {
     return { valid: false, error: 'Ekstensi gambar tidak sesuai dengan tipe file.' }
@@ -112,13 +118,18 @@ export async function validateImageSignature(file: File): Promise<{ valid: boole
   if (!basicValidation.valid) return basicValidation
 
   try {
-    const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer())
+    const bytes = new Uint8Array(await file.slice(0, 64).arrayBuffer())
     const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
     const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47
     const isWebp = bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46
       && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+    const ascii = (start: number, length: number) => String.fromCharCode(...bytes.slice(start, start + length))
+    const heicBrands = new Set(['heic', 'heix', 'hevc', 'hevx', 'heif', 'heis', 'hevm', 'hevs', 'mif1', 'msf1'])
+    const isHeic = bytes.length >= 16
+      && ascii(4, 4) === 'ftyp'
+      && (heicBrands.has(ascii(8, 4)) || Array.from({ length: Math.floor((bytes.length - 16) / 4) }, (_, index) => ascii(16 + index * 4, 4)).some((brand) => heicBrands.has(brand)))
 
-    if ((file.type === 'image/jpeg' && !isJpeg) || (file.type === 'image/png' && !isPng) || (file.type === 'image/webp' && !isWebp)) {
+    if ((file.type === 'image/jpeg' && !isJpeg) || (file.type === 'image/png' && !isPng) || (file.type === 'image/webp' && !isWebp) || ((file.type === 'image/heic' || file.type === 'image/heif') && !isHeic)) {
       return { valid: false, error: 'Signature file gambar tidak valid.' }
     }
 
@@ -131,11 +142,11 @@ export async function validateImageSignature(file: File): Promise<{ valid: boole
 export async function validateImageOrDocumentSignature(file: File): Promise<{ valid: boolean; error?: string }> {
   if (ALLOWED_IMAGE_TYPES.includes(file.type)) return validateImageSignature(file)
   if (ALLOWED_DOCUMENT_TYPES.includes(file.type)) return validateDocumentSignature(file)
-  return { valid: false, error: 'Format lampiran harus JPG, PNG, WebP, PDF, atau DOCX.' }
+  return { valid: false, error: 'Format lampiran harus JPG, PNG, WebP, HEIC, HEIF, PDF, atau DOCX.' }
 }
 
 export function validateImageOrDocument(file: File): { valid: boolean; error?: string } {
   if (ALLOWED_IMAGE_TYPES.includes(file.type)) return validateImage(file)
   if (ALLOWED_DOCUMENT_TYPES.includes(file.type)) return validateDocument(file)
-  return { valid: false, error: 'Format lampiran harus JPG, PNG, WebP, PDF, atau DOCX.' }
+  return { valid: false, error: 'Format lampiran harus JPG, PNG, WebP, HEIC, HEIF, PDF, atau DOCX.' }
 }

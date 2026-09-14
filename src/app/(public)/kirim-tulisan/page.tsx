@@ -34,7 +34,7 @@ export default function KirimTulisanPage() {
               </li>
               <li className="flex gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <span>Gambar di dalam tulisan mendukung format <strong>JPG</strong>, <strong>PNG</strong>, atau <strong>WebP</strong> hingga <strong>2 MB</strong>.</span>
+                <span>Gambar di dalam tulisan mendukung format <strong>JPG</strong>, <strong>PNG</strong>, <strong>WebP</strong>, <strong>HEIC</strong>, atau <strong>HEIF</strong> hingga <strong>10 MB</strong>.</span>
               </li>
               <li className="flex gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />

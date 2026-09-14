@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 export const ImageSchema = z
   .any()
@@ -22,5 +22,5 @@ export const ImageSchema = z
       const f = file as File | { size: number, type: string }
       return ACCEPTED_IMAGE_TYPES.includes(f?.type)
     },
-    "Hanya format .jpg, .jpeg, .png dan .webp yang diizinkan."
+    "Hanya format .jpg, .jpeg, .png, .webp, .heic, dan .heif yang diizinkan."
   );

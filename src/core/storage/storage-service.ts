@@ -1,4 +1,5 @@
 import { cloudinary } from './cloudinary'
+import { isHeicImageFile } from './file-validator'
 
 export interface UploadOptions {
   folder?: string
@@ -25,7 +26,7 @@ export const DOCX_IMPORT_TEMP_TAG = 'ikmi-docx-import-temp'
 export const DOCX_IMPORT_ROOT = `${cloudinaryFolders.writingSubmissions}/docx-imports`
 
 const DOCX_IMPORT_SESSION_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const DOCX_IMPORT_IMAGE_EXTENSION_PATTERN = /\.(?:jpe?g|png|webp)$/i
+const DOCX_IMPORT_IMAGE_EXTENSION_PATTERN = /\.(?:jpe?g|png|webp|heic|heif)$/i
 
 export function isDocxImportSessionId(value: string) {
   return DOCX_IMPORT_SESSION_PATTERN.test(value)
@@ -118,9 +119,12 @@ export const storageService = {
           if (error) {
             reject(error)
           } else if (result) {
+            const browserSafeUrl = resourceType === 'image' && isHeicImageFile(file)
+              ? cloudinary.url(result.public_id, { secure: true, resource_type: 'image', transformation: [{ fetch_format: 'auto' }] })
+              : result.secure_url
             resolve({
-              url: result.url,
-              secureUrl: result.secure_url,
+              url: browserSafeUrl,
+              secureUrl: browserSafeUrl,
               publicId: result.public_id,
               width: result.width,
               height: result.height,

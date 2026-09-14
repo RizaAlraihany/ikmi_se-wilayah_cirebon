@@ -133,11 +133,11 @@ export function BannerForm({ banner, programs, publications }: Props) {
           <div className="mt-6 grid gap-5 md:grid-cols-2">
             <Field label="Gambar desktop" htmlFor="desktopImage" required description="Disarankan rasio lebar 16:8.">
               <Input id="desktopImage" name="desktopImage" type="text" inputMode="url" required maxLength={2048} value={desktopImage} onChange={(event) => setDesktopImage(event.target.value)} placeholder="https://res.cloudinary.com/..." />
-              <Input aria-label="Unggah gambar desktop" type="file" accept="image/png,image/jpeg,image/webp" disabled={loading} onChange={(event) => void uploadImage(event.target.files?.[0], 'desktop')} />
+              <Input aria-label="Unggah gambar desktop" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/png,image/jpeg,image/webp,image/heic,image/heif" disabled={loading} onChange={(event) => void uploadImage(event.target.files?.[0], 'desktop')} />
             </Field>
             <Field label="Gambar mobile" htmlFor="mobileImage" required description="Disarankan rasio potret 4:5.">
               <Input id="mobileImage" name="mobileImage" type="text" inputMode="url" required maxLength={2048} value={mobileImage} onChange={(event) => setMobileImage(event.target.value)} placeholder="https://res.cloudinary.com/..." />
-              <Input aria-label="Unggah gambar mobile" type="file" accept="image/png,image/jpeg,image/webp" disabled={loading} onChange={(event) => void uploadImage(event.target.files?.[0], 'mobile')} />
+              <Input aria-label="Unggah gambar mobile" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/png,image/jpeg,image/webp,image/heic,image/heif" disabled={loading} onChange={(event) => void uploadImage(event.target.files?.[0], 'mobile')} />
             </Field>
           </div>
         </section>

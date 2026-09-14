@@ -190,8 +190,8 @@ export function RequestPamfletForm({ programs, agendas }: RequestPamfletFormProp
           id="request-attachment"
           name="attachment"
           label="Upload file (opsional)"
-          description="JPG, PNG, atau WebP maksimal 2 MB; PDF atau DOCX maksimal 10 MB. File disimpan privat."
-          accept="image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          description="JPG, PNG, WebP, HEIC, atau HEIF maksimal 10 MB; PDF atau DOCX maksimal 10 MB. File disimpan privat."
+          accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           maxSizeBytes={10 * 1024 * 1024}
           validateFiles={validateAttachment}
           onFilesChange={(files) => setAttachment(files[0] ?? null)}

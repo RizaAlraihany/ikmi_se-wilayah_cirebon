@@ -244,7 +244,7 @@ export function PostForm({
           <Input
             id="featuredImageFile"
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif"
             disabled={isSubmitting || isUploadingAsset}
             onChange={(event) => {
               void uploadCover(event.target.files?.[0]).finally(() => { event.target.value = '' })
@@ -321,7 +321,7 @@ export function PostForm({
       <Field label="OG Image" htmlFor="ogImage" error={errors.ogImage?.message}>
         <p className="text-xs leading-5 text-muted">Gambar khusus saat artikel dibagikan. Jika kosong, cover artikel digunakan.</p>
         <Input id="ogImage" {...register('ogImage')} type="url" placeholder="https://res.cloudinary.com/..." disabled={isSubmitting} />
-        <Input id="ogImageFile" type="file" accept="image/jpeg,image/png,image/webp" disabled={isSubmitting || isUploadingAsset} onChange={(event) => {
+        <Input id="ogImageFile" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={isSubmitting || isUploadingAsset} onChange={(event) => {
           void uploadOgImage(event.target.files?.[0]).finally(() => { event.target.value = '' })
         }} />
         {ogUploadMessage ? <p className="text-xs font-semibold text-muted">{ogUploadMessage}</p> : null}

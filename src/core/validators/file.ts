@@ -4,7 +4,7 @@ const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_DOC_TYPES = ['application/pdf'];
 
 const MAX_PROOF_SIZE = 2 * 1024 * 1024; // 2MB
-const ACCEPTED_PROOF_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+const ACCEPTED_PROOF_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif'];
 
 const isFile = (file: unknown) => {
   if (typeof window === "undefined") {
@@ -40,5 +40,5 @@ export const ProofSchema = z
       const f = file as File | { size: number, type: string }
       return ACCEPTED_PROOF_TYPES.includes(f?.type)
     },
-    "Hanya format .pdf, .jpg, .jpeg, dan .png yang diizinkan."
+    "Hanya format .pdf, .jpg, .jpeg, .png, .heic, dan .heif yang diizinkan."
   );

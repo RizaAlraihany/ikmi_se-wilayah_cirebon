@@ -269,8 +269,8 @@ export function ArticleEditor({ id, value, onChange, disabled = false, onImageUp
 
       {imagePanelOpen ? (
         <div className="grid gap-3 border-b border-line bg-background/70 p-3" role="group" aria-label="Tambah gambar artikel">
-          <Input aria-label="File gambar artikel" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setImageFile(event.target.files?.[0] || null)} disabled={disabled || isUploadingImage} />
-          <p className="text-xs text-muted">Atau gunakan URL gambar publik. JPG, PNG, dan WebP maksimal 2 MB untuk unggahan.</p>
+          <Input aria-label="File gambar artikel" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(event) => setImageFile(event.target.files?.[0] || null)} disabled={disabled || isUploadingImage} />
+          <p className="text-xs text-muted">Atau gunakan URL gambar publik. JPG, PNG, WebP, HEIC, dan HEIF maksimal 10 MB untuk unggahan.</p>
           <Input aria-label="URL gambar artikel" value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="https://..." disabled={disabled || isUploadingImage || Boolean(imageFile)} />
           <Input aria-label="Teks alternatif gambar" value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} placeholder="Deskripsikan isi gambar" disabled={disabled || isUploadingImage} />
           <Input aria-label="Caption gambar" value={imageCaption} onChange={(event) => setImageCaption(event.target.value)} placeholder="Caption gambar (opsional)" disabled={disabled || isUploadingImage} />
