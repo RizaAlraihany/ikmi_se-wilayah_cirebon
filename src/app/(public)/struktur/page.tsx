@@ -35,6 +35,57 @@ type StructureGroup = {
   members: StrukturCardMember[];
 };
 
+const LOGO_KABINET_URL =
+  "https://res.cloudinary.com/fvggnar7/image/upload/v1787039115/logo_Kabinet.png";
+const LOGO_IKMI_URL =
+  "https://res.cloudinary.com/fvggnar7/image/upload/v1787039032/logo_ikmi.png";
+
+const DEPARTMENT_LOGO_ENTRIES = [
+  {
+    aliases: ["bph", "badanpengurusharian"],
+    url: "https://res.cloudinary.com/fvggnar7/image/upload/v1787039032/logo_bph.png",
+  },
+  {
+    aliases: ["kaderisasi"],
+    url: "https://res.cloudinary.com/fvggnar7/image/upload/v1787039034/logo_kaderisasi.png",
+  },
+  {
+    aliases: ["kajian", "keilmuan"],
+    url: "https://res.cloudinary.com/fvggnar7/image/upload/v1787039032/logo_kajian.png",
+  },
+  {
+    aliases: ["psda", "pengembangansumberdaya"],
+    url: "https://res.cloudinary.com/fvggnar7/image/upload/v1787039033/logo_psda.png",
+  },
+  {
+    aliases: ["ekotif", "ekonomikreatif", "ekonomidankewirausahaan"],
+    url: "https://res.cloudinary.com/fvggnar7/image/upload/v1787039032/logo_ekotif.png",
+  },
+  {
+    aliases: ["komdigi", "komunikasidigital", "komunikasidanmedia"],
+    url: "https://res.cloudinary.com/fvggnar7/image/upload/v1787039033/logo_komdigi.png",
+  },
+  {
+    aliases: ["hpm"],
+    url: "https://res.cloudinary.com/fvggnar7/image/upload/v1787039032/logo_hpm.png",
+  },
+] as const;
+
+function normalizeUnitKey(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function getDepartmentLogo(group: StructureGroup) {
+  const values = [group.code, group.name, group.id, group.unitType].map(normalizeUnitKey);
+  return DEPARTMENT_LOGO_ENTRIES.find(({ aliases }) =>
+    aliases.some((alias) => values.some((value) => value === alias || value.includes(alias))),
+  )?.url ?? null;
+}
+
 function asRecord(value: unknown): UnknownRecord | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return value as UnknownRecord;
@@ -147,13 +198,14 @@ export default async function PengurusPage() {
   const sortedGroups = groups.map((group) => ({
     ...group,
     photoUrl:
+      getDepartmentLogo(group) ??
       group.photoUrl ??
       readMediaUrl(configuredDepartmentPhotos, [
         group.id,
         group.code,
         group.name,
       ]) ??
-      null,
+      LOGO_IKMI_URL,
   }));
 
   const bph =
@@ -187,8 +239,7 @@ export default async function PengurusPage() {
       "bannerImageUrl",
       "bannerImage",
     ]) ??
-    bph?.photoUrl ??
-    "https://res.cloudinary.com/fvggnar7/image/upload/v1789385069/BPHU.png";
+    LOGO_KABINET_URL;
 
   return (
     <main className="structure-page public-page-root">

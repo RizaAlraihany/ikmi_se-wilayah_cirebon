@@ -29,6 +29,19 @@ describe('public structure page layout', () => {
     expect(cardSource).toContain('<span>{member.unitName}</span>')
   })
 
+  it('uses the Cloudinary department logo set for unit covers', () => {
+    expect(pageSource).toContain('logo_Kabinet.png')
+    expect(pageSource).toContain('logo_ikmi.png')
+    expect(pageSource).toContain('logo_bph.png')
+    expect(pageSource).toContain('logo_kaderisasi.png')
+    expect(pageSource).toContain('logo_kajian.png')
+    expect(pageSource).toContain('logo_psda.png')
+    expect(pageSource).toContain('logo_ekotif.png')
+    expect(pageSource).toContain('logo_komdigi.png')
+    expect(pageSource).toContain('logo_hpm.png')
+    expect(gridSource).toContain('alt={`Logo ${department.name}`}')
+  })
+
   it('keeps the existing organizational diagram structure', () => {
     expect(gridSource).toContain('structure-chart-lead')
     expect(gridSource).toContain('structure-chart-departments--connected')

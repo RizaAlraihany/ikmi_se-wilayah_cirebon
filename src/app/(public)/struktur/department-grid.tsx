@@ -43,7 +43,7 @@ function DepartmentImage({
   return (
     <Image
       src={department.photoUrl}
-      alt={`Dokumentasi ${department.name}`}
+      alt={`Logo ${department.name}`}
       fill
       priority={priority}
       sizes="(max-width: 767px) 90vw, (max-width: 1199px) 42vw, 340px"
