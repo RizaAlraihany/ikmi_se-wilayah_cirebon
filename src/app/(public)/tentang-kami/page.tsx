@@ -532,7 +532,7 @@ export default async function TentangPage() {
     ]) ??
     readMediaUrl(aboutRecord, ["heroImageUrl", "heroImage", "hero"]) ??
     webConfig.landing_hero?.slides?.[0]?.url ??
-    "https://res.cloudinary.com/dsgldeuuy/image/upload/v1781210005/BPHU_rkqdtg.png";
+    "https://res.cloudinary.com/fvggnar7/image/upload/v1789385069/BPHU.png";
 
   const profileImage =
     readMediaUrl(mediaRecord, ["profileImageUrl", "profileImage", "profile"]) ??

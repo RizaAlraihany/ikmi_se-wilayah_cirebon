@@ -232,7 +232,7 @@ export default async function Home() {
     landingSections.aboutImageUrl?.trim() ||
     heroSlides[0]?.desktopImage ||
     heroSlides[0]?.mobileImage ||
-    "https://res.cloudinary.com/dsgldeuuy/image/upload/v1781210005/BPHU_rkqdtg.png";
+    "https://res.cloudinary.com/fvggnar7/image/upload/v1789385069/BPHU.png";
   const aboutImageAlt =
     landingSections.aboutImageAlt?.trim() ||
     "Dokumentasi kebersamaan IKMI Cirebon";

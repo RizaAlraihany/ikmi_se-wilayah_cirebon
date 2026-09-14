@@ -188,7 +188,7 @@ export default async function PengurusPage() {
       "bannerImage",
     ]) ??
     bph?.photoUrl ??
-    "https://res.cloudinary.com/dsgldeuuy/image/upload/v1781210005/BPHU_rkqdtg.png";
+    "https://res.cloudinary.com/fvggnar7/image/upload/v1789385069/BPHU.png";
 
   return (
     <main className="structure-page public-page-root">

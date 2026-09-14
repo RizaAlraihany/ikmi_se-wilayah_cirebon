@@ -17,7 +17,7 @@ export const defaultWebConfig = {
       { title: 'Kepedulian', description: 'Pengabdian langsung kepada masyarakat.' },
     ],
     slides: [
-      { url: 'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781210005/BPHU_rkqdtg.png', label: 'BPHU' },
+      { url: 'https://res.cloudinary.com/fvggnar7/image/upload/v1789385069/BPHU.png', label: 'BPHU' },
       { url: 'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781225577/ChatGPT_Image_12_Jun_2026_07.49.13_wzkx4s.png', label: 'Kegiatan IKMI 1' },
       { url: 'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781228245/ChatGPT_Image_12_Jun_2026_08.31.44_bnzje5.png', label: 'Kegiatan IKMI 2' },
       { url: 'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781230548/psda_yufbw9.png', label: 'PSDA' },
