@@ -16,6 +16,7 @@ import { siteUrl } from '@/core/seo/site'
 import { breadcrumbStructuredData, serializeStructuredData } from '@/core/seo/structured-data'
 import { postQueries } from '@/features/blog/queries'
 import { publicationPath } from '@/features/blog/publication-routes'
+import { publicPlainText } from '@/features/public/public-text'
 import { ArticleActionButtons } from './article-share-button'
 
 type PublishedPost = NonNullable<Awaited<ReturnType<typeof postQueries.getPublishedPostBySlug>>>
@@ -51,6 +52,7 @@ export function PublicationDetail({ post, relatedPosts }: { post: PublishedPost;
   const displayAuthor = post.authorName || post.author.name
   const authorPosition = post.author.position?.name ?? 'Kontributor IKMI'
   const canonicalPath = publicationPath(post.slug)
+  const excerpt = publicPlainText(post.excerpt)
   const articleJsonLd = serializeStructuredData({
     '@context': 'https://schema.org',
     '@graph': [
@@ -58,7 +60,7 @@ export function PublicationDetail({ post, relatedPosts }: { post: PublishedPost;
         '@type': 'Article',
         mainEntityOfPage: `${siteUrl}${canonicalPath}`,
         headline: post.title,
-        description: post.seoDescription || post.excerpt || post.content.replace(/<[^>]+>/g, '').slice(0, 160),
+        description: publicPlainText(post.seoDescription || post.excerpt || post.content).slice(0, 160),
         datePublished: post.publishedAt?.toISOString(),
         dateModified: post.updatedAt.toISOString(),
         image: post.ogImageUrl || post.thumbnailUrl ? [post.ogImageUrl || post.thumbnailUrl] : undefined,
@@ -109,7 +111,7 @@ export function PublicationDetail({ post, relatedPosts }: { post: PublishedPost;
                 {post.title}
               </h1>
 
-              {post.excerpt ? <p className="text-base font-medium leading-7 text-text-secondary sm:text-lg sm:leading-8">{post.excerpt}</p> : null}
+              {excerpt ? <p className="text-base font-medium leading-7 text-text-secondary sm:text-lg sm:leading-8">{excerpt}</p> : null}
 
               <div className="flex flex-wrap items-center gap-4 border-y border-border py-4 text-xs text-text-secondary">
                 <span className="inline-flex items-center gap-1.5"><User className="h-4 w-4 text-text-muted" aria-hidden="true" />{displayAuthor}</span>

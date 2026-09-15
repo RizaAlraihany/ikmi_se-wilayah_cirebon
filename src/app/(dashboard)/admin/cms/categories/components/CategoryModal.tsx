@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { PUBLICATION_CATEGORY_SLUGS, categoryCreateSchema } from '@/features/categories/schemas'
+import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -34,21 +36,21 @@ export function CategoryModal({ category, onClose }: { category: CategoryModalVa
     setLoading(true)
     setError('')
 
-    const payload = { name, slug, description }
-    
-    let result
-    if (category) {
-      result = await updateCategoryAction({ ...payload, id: category.id })
-    } else {
-      result = await createCategoryAction(payload)
-    }
-
-    if (result.error) {
-      setError(result.error)
+    try {
+      const parsed = categoryCreateSchema.safeParse({ name, slug, description })
+      if (!parsed.success) {
+        setError(parsed.error.issues[0].message)
+        return
+      }
+      const result = category
+        ? await updateCategoryAction({ ...parsed.data, id: category.id })
+        : await createCategoryAction(parsed.data)
+      if (result.error) setError(result.error)
+      else { onClose(); router.refresh() }
+    } catch {
+      setError('Kategori belum dapat disimpan. Periksa koneksi lalu coba kembali.')
+    } finally {
       setLoading(false)
-    } else {
-      onClose()
-      router.refresh()
     }
   }
 
@@ -67,8 +69,9 @@ export function CategoryModal({ category, onClose }: { category: CategoryModalVa
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-primary">Nama Kategori</label>
+            <label htmlFor="category-name" className="text-sm font-semibold text-primary">Nama Kategori</label>
             <Input
+              id="category-name"
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               placeholder="Contoh: Berita"
@@ -76,18 +79,22 @@ export function CategoryModal({ category, onClose }: { category: CategoryModalVa
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-primary">Slug</label>
-            <Input
+            <label htmlFor="category-slug" className="text-sm font-semibold text-primary">Kategori publikasi</label>
+            <Select
+              id="category-slug"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              placeholder="contoh-slug"
               required
-            />
-            <p className="text-xs text-text-secondary">Hanya huruf kecil, angka, dan strip (-).</p>
+            >
+              <option value="" disabled>Pilih kategori</option>
+              {PUBLICATION_CATEGORY_SLUGS.map((value) => <option key={value} value={value}>{value[0].toUpperCase() + value.slice(1)}</option>)}
+            </Select>
+            <p className="text-xs text-text-secondary">Kategori yang sudah digunakan artikel tidak dapat dipindahkan.</p>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-primary">Deskripsi</label>
+            <label htmlFor="category-description" className="text-sm font-semibold text-primary">Deskripsi</label>
             <Textarea
+              id="category-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}

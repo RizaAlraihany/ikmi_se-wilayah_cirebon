@@ -1,5 +1,7 @@
 'use client'
 
+import { actionPayloadError } from '@/core/storage/action-payload'
+
 import { useState } from 'react'
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -20,6 +22,7 @@ export function KirimTulisanForm() {
   const [success, setSuccess] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [isImporting, setIsImporting] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [importWarnings, setImportWarnings] = useState<string[]>([])
   const [importSessionId, setImportSessionId] = useState<string | null>(null)
   const [importAssetManifest, setImportAssetManifest] = useState<string | null>(null)
@@ -88,6 +91,8 @@ export function KirimTulisanForm() {
     const formData = new FormData()
     formData.append('file', file)
     try {
+      const sizeError = actionPayloadError(formData)
+      if (sizeError) { setGlobalError(sizeError); return }
       const result = await importWritingDocxAction(formData)
       if (!result.success || !('html' in result)) {
         setGlobalError(result.error || 'Dokumen DOCX belum dapat diimpor.')
@@ -117,6 +122,7 @@ export function KirimTulisanForm() {
   }
 
   const onSubmit = async (data: SubmitKaryaTulisInput) => {
+    if (isImporting || isUploadingImage) return
     setGlobalError('')
 
     const formData = new FormData()
@@ -138,6 +144,9 @@ export function KirimTulisanForm() {
     // Honeypot
     formData.append('bot_field', '')
 
+    const sizeError = actionPayloadError(formData)
+    if (sizeError) { setGlobalError(sizeError); return }
+    try {
     const result = await submitKaryaTulisAction(formData)
 
     if (result.success) {
@@ -151,13 +160,19 @@ export function KirimTulisanForm() {
     } else {
       setGlobalError(result.error || 'Terjadi kesalahan')
     }
+    } catch {
+      setGlobalError('Tulisan belum dapat dikirim. Periksa koneksi lalu coba kembali; isi formulir tetap tersedia.')
+    }
   }
 
   const uploadInlineImage = async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    const result = await uploadWritingInlineImageAction(formData)
-    return { url: result.url, error: result.error }
+    setIsUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const result = await uploadWritingInlineImageAction(formData)
+      return { url: result.url, error: result.error }
+    } finally { setIsUploadingImage(false) }
   }
 
   if (success) {
@@ -265,7 +280,7 @@ export function KirimTulisanForm() {
                     id="writing-content"
                     value={field.value || ''}
                     onChange={field.onChange}
-                    disabled={isSubmitting || isImporting}
+                    disabled={isSubmitting || isImporting || isUploadingImage}
                     onImageUpload={uploadInlineImage}
                   />
                 )}
@@ -277,7 +292,7 @@ export function KirimTulisanForm() {
           <div className="space-y-4 border-t border-border pt-6">
             <h3 className="font-heading text-xl font-bold text-primary">Lampiran Dokumen (alternatif tulis langsung)</h3>
             <p className="text-sm text-muted mb-2">
-              Kirim isi tulisan langsung atau naskah asli dalam format <strong>DOCX</strong> atau <strong>PDF</strong> (maksimal <strong>10MB</strong>). DOCX dapat diimpor secara opsional ke editor; semua dokumen tetap disimpan sebagai lampiran.
+              Kirim isi tulisan langsung atau naskah asli dalam format <strong>DOCX</strong> atau <strong>PDF</strong> (maksimal <strong>4MB</strong>). DOCX dapat diimpor secara opsional ke editor; semua dokumen tetap disimpan sebagai lampiran.
             </p>
 
             {!file ? (
@@ -290,11 +305,11 @@ export function KirimTulisanForm() {
                       className="relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 hover:text-primary/80"
                     >
                       <span>Pilih file</span>
-                      <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled={isSubmitting || isImporting} />
+                      <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" disabled={isSubmitting || isImporting || isUploadingImage} />
                     </label>
                     <p className="pl-1">atau drag and drop</p>
                   </div>
-                  <p className="text-xs leading-5 text-muted">DOCX atau PDF (maks. 10MB)</p>
+                  <p className="text-xs leading-5 text-muted">DOCX atau PDF (maks. 4MB)</p>
                 </div>
               </div>
             ) : (
@@ -309,8 +324,8 @@ export function KirimTulisanForm() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {file.name.toLowerCase().endsWith('.docx') ? <Button type="button" variant="secondary" size="sm" onClick={() => void importDocx()} disabled={isSubmitting || isImporting}>{isImporting ? 'Mengimpor...' : 'Impor ke editor'}</Button> : null}
-                  <Button type="button" variant="ghost" size="icon" aria-label="Hapus lampiran" onClick={() => void removeFile()} disabled={isSubmitting || isImporting} className="text-muted hover:text-destructive shrink-0">
+                  {file.name.toLowerCase().endsWith('.docx') ? <Button type="button" variant="secondary" size="sm" onClick={() => void importDocx()} disabled={isSubmitting || isImporting || isUploadingImage}>{isImporting ? 'Mengimpor...' : 'Impor ke editor'}</Button> : null}
+                  <Button type="button" variant="ghost" size="icon" aria-label="Hapus lampiran" onClick={() => void removeFile()} disabled={isSubmitting || isImporting || isUploadingImage} className="text-muted hover:text-destructive shrink-0">
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -325,7 +340,7 @@ export function KirimTulisanForm() {
               <span>Saya berhak mengirim tulisan ini, menyetujui proses penyuntingan, pencantuman nama penulis, dan penggunaan data untuk proses editorial.</span>
             </label>
             {errors.consent ? <p className="text-sm font-medium text-danger" role="alert">{errors.consent.message}</p> : null}
-            <Button type="submit" variant="primary" disabled={isSubmitting || isImporting} size="md" className="w-full sm:w-auto">
+            <Button type="submit" variant="primary" disabled={isSubmitting || isImporting || isUploadingImage} size="md" className="w-full sm:w-auto">
               {isSubmitting ? 'Mengirim Tulisan...' : 'Kirim Tulisan'}
             </Button>
           </div>

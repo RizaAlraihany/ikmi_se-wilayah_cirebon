@@ -66,7 +66,7 @@ export const requireAuth = reactCache(async (): Promise<ActiveSessionUser> => {
   }
   const activeUser = await requireActiveUser(userId)
   const sessionVersion = session.user.sessionVersion
-  if (sessionVersion !== undefined && sessionVersion !== activeUser.sessionVersion) {
+  if (sessionVersion !== activeUser.sessionVersion) {
     throw new UnauthorizedError('Sesi tidak lagi valid.')
   }
   return activeUser

@@ -97,6 +97,7 @@ export function DepartmentGrid({
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
   const activeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLElement>(null);
 
   const allDepartments = leadDepartment
     ? [leadDepartment, ...departments]
@@ -115,6 +116,15 @@ export function DepartmentGrid({
       if (event.key === "Escape") {
         setSelectedDeptId(null);
         window.requestAnimationFrame(() => activeTriggerRef.current?.focus());
+      }
+      if (event.key === "Tab" && modalRef.current) {
+        const controls = Array.from(modalRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex="0"]'));
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (first && last && (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus();
+        }
       }
     };
 
@@ -175,6 +185,7 @@ export function DepartmentGrid({
           onMouseDown={closeDepartment}
         >
           <section
+            ref={modalRef}
             className="structure-modal"
             role="dialog"
             aria-modal="true"

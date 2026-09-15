@@ -5,6 +5,7 @@ import { FileText, UploadCloud } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { submitKaryaTulisRevisionAction } from '@/features/kirim-tulisan/actions'
+import { actionPayloadError } from '@/core/storage/action-payload'
 
 export function KirimTulisanRevisionForm({ token }: { token: string }) {
   const [file, setFile] = useState<File | null>(null)
@@ -20,10 +21,17 @@ export function KirimTulisanRevisionForm({ token }: { token: string }) {
     const formData = new FormData()
     formData.set('file', file)
     formData.set('bot_field', '')
-    const result = await submitKaryaTulisRevisionAction(token, formData)
-    setIsSubmitting(false)
-    if (result.success) setSuccess(true)
-    else setError(result.error ?? 'Revisi gagal dikirim.')
+    try {
+      const sizeError = actionPayloadError(formData)
+      if (sizeError) { setError(sizeError); return }
+      const result = await submitKaryaTulisRevisionAction(token, formData)
+      if (result.success) setSuccess(true)
+      else setError(result.error ?? 'Revisi gagal dikirim.')
+    } catch {
+      setError('Revisi belum dapat dikirim. Periksa koneksi lalu coba kembali.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (success) return <section className="mt-6 rounded-xl border border-success/30 bg-success/10 p-5 text-sm text-success-foreground"><h2 className="font-semibold">Revisi berhasil dikirim</h2><p className="mt-1">File baru masuk kembali ke antrean review redaksi.</p></section>
@@ -32,7 +40,7 @@ export function KirimTulisanRevisionForm({ token }: { token: string }) {
     {error ? <p role="alert" className="rounded-lg bg-danger/10 p-3 text-sm text-danger">{error}</p> : null}
     <label htmlFor="revision-file" className="block text-sm font-semibold text-primary">File revisi</label>
     <Input id="revision-file" type="file" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(event) => setFile(event.target.files?.[0] ?? null)} disabled={isSubmitting} />
-    <p className="text-xs text-muted-foreground">DOCX atau PDF, maksimal 10 MB. File asli tetap tersimpan sebagai versi sebelumnya.</p>
+    <p className="text-xs text-muted-foreground">DOCX atau PDF, maksimal 4 MB. File asli tetap tersimpan sebagai versi sebelumnya.</p>
     {file ? <p className="flex items-center gap-2 text-sm text-primary"><FileText className="h-4 w-4" />{file.name}</p> : null}
     <input name="website" className="hidden" tabIndex={-1} autoComplete="off" />
     <Button type="submit" className="w-full" disabled={isSubmitting || !file}><UploadCloud className="h-4 w-4" />{isSubmitting ? 'Mengunggah revisi...' : 'Kirim revisi'}</Button>

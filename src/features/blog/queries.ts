@@ -34,6 +34,8 @@ export const postQueries = {
 
   async getPaginatedPosts(page: number = 1, limit: number = 10, search?: string) {
     await requirePublicationReader()
+    page = Number.isSafeInteger(page) && page > 0 ? Math.min(page, 1_000_000) : 1
+    limit = Number.isSafeInteger(limit) && limit > 0 ? Math.min(limit, 100) : 10
     const skip = (page - 1) * limit
 
     const where = {

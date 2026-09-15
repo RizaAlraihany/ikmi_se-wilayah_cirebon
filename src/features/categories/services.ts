@@ -54,6 +54,9 @@ export const categoryService = {
     if (!existing) throw new NotFoundError('Kategori tidak ditemukan')
 
     if (validated.slug && validated.slug !== existing.slug) {
+      if (await prisma.post.count({ where: { categoryId: existing.id, deletedAt: null } })) {
+        throw new ValidationError('Slug kategori yang digunakan publikasi tidak dapat diubah.')
+      }
       const existingSlug = await categoryQueries.getCategoryBySlug(validated.slug)
       if (existingSlug) throw new ValidationError('Slug sudah digunakan')
     }

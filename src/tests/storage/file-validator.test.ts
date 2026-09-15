@@ -27,7 +27,7 @@ describe('file validator allow-lists', () => {
 
   it('validates HEIC/HEIF ISO-BMFF signatures', async () => {
     const heicSignature = [
-      0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70,
+      0x00, 0x00, 0x00, 0x14, 0x66, 0x74, 0x79, 0x70,
       0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
       0x6d, 0x69, 0x66, 0x31,
     ]
@@ -39,6 +39,15 @@ describe('file validator allow-lists', () => {
   it('accepts dashboard photos up to 10 MB and rejects larger files', () => {
     expect(validateImage({ name: 'dokumentasi.jpg', type: 'image/jpeg', size: MAX_IMAGE_SIZE } as File)).toEqual({ valid: true })
     expect(validateImage({ name: 'dokumentasi.jpg', type: 'image/jpeg', size: MAX_IMAGE_SIZE + 1 } as File)).toEqual({ valid: false, error: 'Ukuran gambar maksimal 10 MB.' })
+  })
+
+  it('rejects AVIF renamed HEIC, truncated boxes, and brands outside ftyp', async () => {
+    const box = [0, 0, 0, 20, ...Array.from('ftypavif').map(c => c.charCodeAt(0)), 0, 0, 0, 0, ...Array.from('mif1').map(c => c.charCodeAt(0))]
+    for (const bytes of [box, [...box, ...Array.from('heic').map(c => c.charCodeAt(0))], [0, 0, 0, 64, ...box.slice(4)]]) {
+      expect((await validateImageSignature(signatureFile('renamed.heic', 'image/heic', bytes))).valid).toBe(false)
+    }
+    const compatible = [...box.slice(0, 8), ...Array.from('mif1').map(c => c.charCodeAt(0)), 0, 0, 0, 0, ...Array.from('heic').map(c => c.charCodeAt(0))]
+    expect((await validateImageSignature(signatureFile('camera.heic', 'image/heic', compatible))).valid).toBe(true)
   })
 
   it('rejects a document whose magic bytes do not match its declared type', async () => {

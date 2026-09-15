@@ -17,7 +17,7 @@ function decodeEntities(value: string) {
       const numeric = code.toLowerCase().startsWith('x')
         ? Number.parseInt(code.slice(1), 16)
         : Number.parseInt(code, 10)
-      return Number.isFinite(numeric) ? String.fromCodePoint(numeric) : _
+      return Number.isInteger(numeric) && numeric >= 0 && numeric <= 0x10ffff ? String.fromCodePoint(numeric) : _
     })
     .replace(/&([a-z]+);?/gi, (match, name: string) => named[name.toLowerCase()] ?? match)
 }

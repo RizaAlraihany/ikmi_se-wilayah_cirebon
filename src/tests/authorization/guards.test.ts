@@ -27,7 +27,7 @@ const activeUser = {
 describe('authorization guards', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    authMock.mockResolvedValue({ user: { id: activeUser.id } })
+    authMock.mockResolvedValue({ user: { id: activeUser.id, sessionVersion: activeUser.sessionVersion } })
     prismaMock.user.findFirst.mockResolvedValue(activeUser as never)
   })
 
@@ -47,6 +47,11 @@ describe('authorization guards', () => {
   it('rejects a session after a password, role, or account security update', async () => {
     authMock.mockResolvedValue({ user: { id: activeUser.id, sessionVersion: 0 } })
 
+    await expect(requireAuth()).rejects.toBeInstanceOf(UnauthorizedError)
+  })
+
+  it('rejects a legacy session without a revocation version', async () => {
+    authMock.mockResolvedValue({ user: { id: activeUser.id } })
     await expect(requireAuth()).rejects.toBeInstanceOf(UnauthorizedError)
   })
 
@@ -94,7 +99,7 @@ describe('authorization guards', () => {
 
     jest.clearAllMocks()
     const komdigiUser = { ...activeUser, roleId: 'admin_komdigi' }
-    authMock.mockResolvedValue({ user: { id: komdigiUser.id } })
+    authMock.mockResolvedValue({ user: { id: komdigiUser.id, sessionVersion: komdigiUser.sessionVersion } })
     prismaMock.user.findFirst.mockResolvedValue(komdigiUser as never)
     canMock.mockResolvedValue(true)
 
@@ -112,7 +117,7 @@ describe('authorization guards', () => {
 
     jest.clearAllMocks()
     const superAdmin = { ...activeUser, roleId: 'super_admin' }
-    authMock.mockResolvedValue({ user: { id: superAdmin.id } })
+    authMock.mockResolvedValue({ user: { id: superAdmin.id, sessionVersion: superAdmin.sessionVersion } })
     prismaMock.user.findFirst.mockResolvedValue(superAdmin as never)
 
     await expect(requireSuperAdmin()).resolves.toEqual(superAdmin)

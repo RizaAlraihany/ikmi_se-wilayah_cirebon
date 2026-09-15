@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { postCreateSchema, postUpdateSchema, type PostCreateInput, type PostUpdateInput } from '@/features/blog/schemas'
 import { createPostAction, updatePostAction, uploadBlogCoverAction, uploadPostInlineImageAction } from '@/features/blog/actions'
 import { ArticleEditor } from '@/components/ui/editor'
+import { actionPayloadError } from '@/core/storage/action-payload'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
@@ -114,6 +115,8 @@ export function PostForm({
     try {
       const formData = new FormData()
       formData.append('file', file)
+      const sizeError = actionPayloadError(formData)
+      if (sizeError) { setCoverUploadMessage(sizeError); return }
       const result = await uploadBlogCoverAction(formData, isEdit ? 'update' : 'create')
 
       if (result.error) {
@@ -138,6 +141,8 @@ export function PostForm({
     try {
       const formData = new FormData()
       formData.append('file', file)
+      const sizeError = actionPayloadError(formData)
+      if (sizeError) { setOgUploadMessage(sizeError); return }
       const result = await uploadBlogCoverAction(formData, isEdit ? 'update' : 'create')
       if (result.error) {
         setOgUploadMessage(result.error)
@@ -154,23 +159,33 @@ export function PostForm({
   }
 
   const uploadInlineImage = async (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    const result = await uploadPostInlineImageAction(formData)
-    return { url: result.url, error: result.error }
+    setIsUploadingAsset(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const result = await uploadPostInlineImageAction(formData, isEdit ? 'update' : 'create')
+      return { url: result.url, error: result.error }
+    } finally {
+      setIsUploadingAsset(false)
+    }
   }
 
   const onSubmit = async (data: PostCreateInput | PostUpdateInput) => {
+    if (isUploadingAsset) return
     setGlobalError('')
-    const result = isEdit
-      ? await updatePostAction(data as PostUpdateInput)
-      : await createPostAction(data as PostCreateInput)
+    try {
+      const result = isEdit
+        ? await updatePostAction(data as PostUpdateInput)
+        : await createPostAction(data as PostCreateInput)
 
-    if (result?.error) {
-      setGlobalError(result.error)
-    } else {
-      router.push('/admin/cms/posts')
-      router.refresh()
+      if (result?.error) {
+        setGlobalError(result.error)
+      } else {
+        router.push('/admin/cms/posts')
+        router.refresh()
+      }
+    } catch {
+      setGlobalError('Publikasi belum dapat disimpan. Periksa koneksi lalu coba kembali; isi formulir tetap tersedia.')
     }
   }
 
@@ -269,7 +284,7 @@ export function PostForm({
           name="content"
           control={control}
           render={({ field }) => (
-            <ArticleEditor value={field.value || ''} onChange={field.onChange} disabled={isSubmitting} onImageUpload={uploadInlineImage} />
+            <ArticleEditor value={field.value || ''} onChange={field.onChange} disabled={isSubmitting || isUploadingAsset} onImageUpload={uploadInlineImage} />
           )}
         />
       </Field>

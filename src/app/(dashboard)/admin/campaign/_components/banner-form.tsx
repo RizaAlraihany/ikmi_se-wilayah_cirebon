@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { archiveHomepageBanner, createHomepageBanner, updateHomepageBanner } from '@/features/homepage-banner/actions'
 import { formatJakartaCampaignDatetime } from '@/features/homepage-banner/domain'
 import { uploadWebConfigImageAction } from '@/features/web-config/actions'
+import { actionPayloadError } from '@/core/storage/action-payload'
 
 type BannerFormData = {
   id: string
@@ -55,6 +56,8 @@ export function BannerForm({ banner, programs, publications }: Props) {
     try {
       const data = new FormData()
       data.set('file', file)
+      const sizeError = actionPayloadError(data)
+      if (sizeError) { setError(sizeError); return }
       const result = await uploadWebConfigImageAction(data)
       if (result.url) (target === 'desktop' ? setDesktopImage : setMobileImage)(result.url)
       else setError(result.error || 'Gambar belum dapat diunggah.')
@@ -67,35 +70,32 @@ export function BannerForm({ banner, programs, publications }: Props) {
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (loading) return
     setError(null)
     setLoading(true)
     const formData = new FormData(event.currentTarget)
-    const result = banner
-      ? await updateHomepageBanner(banner.id, formData)
-      : await createHomepageBanner(formData)
-
-    if (result.success) {
-      router.push('/admin/campaign')
-      router.refresh()
-      return
-    }
-    setError(result.error || 'Banner belum dapat disimpan.')
-    setLoading(false)
+    try {
+      const sizeError = actionPayloadError(formData)
+      if (sizeError) { setError(sizeError); return }
+      const result = banner
+        ? await updateHomepageBanner(banner.id, formData)
+        : await createHomepageBanner(formData)
+      if (result.success) { router.push('/admin/campaign'); router.refresh() }
+      else setError(result.error || 'Banner belum dapat disimpan.')
+    } catch { setError('Banner belum dapat disimpan. Periksa koneksi lalu coba kembali.') }
+    finally { setLoading(false) }
   }
 
   async function onArchive() {
     if (!banner) return
     setError(null)
     setLoading(true)
-    const result = await archiveHomepageBanner(banner.id)
-    if (result.success) {
-      router.push('/admin/campaign')
-      router.refresh()
-      return
-    }
-    setArchiveOpen(false)
-    setError(result.error || 'Banner belum dapat diarsipkan.')
-    setLoading(false)
+    try {
+      const result = await archiveHomepageBanner(banner.id)
+      if (result.success) { router.push('/admin/campaign'); router.refresh() }
+      else { setArchiveOpen(false); setError(result.error || 'Banner belum dapat diarsipkan.') }
+    } catch { setError('Banner belum dapat diarsipkan. Periksa koneksi lalu coba kembali.') }
+    finally { setLoading(false) }
   }
 
   return (

@@ -25,6 +25,11 @@ const posts = [
 ] as const
 
 describe('BlogList', () => {
+  it('renders imported HTML entities as readable excerpt text', () => {
+    render(<BlogList initialPosts={[{ ...posts[0], excerpt: 'Tradisi&nbsp;IKMI &amp; mahasiswa' }]} />)
+    expect(screen.getByText('Tradisi IKMI & mahasiswa')).toBeInTheDocument()
+    expect(screen.queryByText(/&nbsp;/)).not.toBeInTheDocument()
+  })
   it('uses clear pressed states for category filters and filters publication content', () => {
     render(<BlogList initialPosts={[...posts]} />)
 

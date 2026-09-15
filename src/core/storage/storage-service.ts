@@ -119,8 +119,8 @@ export const storageService = {
           if (error) {
             reject(error)
           } else if (result) {
-            const browserSafeUrl = resourceType === 'image' && isHeicImageFile(file)
-              ? cloudinary.url(result.public_id, { secure: true, resource_type: 'image', transformation: [{ fetch_format: 'auto' }] })
+            const browserSafeUrl = resourceType === 'image' && options?.accessType !== 'authenticated' && isHeicImageFile(file)
+              ? cloudinary.url(result.public_id, { secure: true, resource_type: 'image', format: 'jpg', transformation: [{ fetch_format: 'auto' }] })
               : result.secure_url
             resolve({
               url: browserSafeUrl,
@@ -170,6 +170,7 @@ export const storageService = {
       type: 'authenticated',
       sign_url: true,
       expires_at: Math.floor(Date.now() / 1000) + 5 * 60,
+      ...(resourceType === 'image' ? { format: 'jpg', transformation: [{ fetch_format: 'auto' }] } : {}),
     })
   },
 

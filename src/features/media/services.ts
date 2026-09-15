@@ -53,7 +53,9 @@ export const mediaService = {
     const asset = await mediaQueries.getMediaAssetById(id)
     if (!asset) throw new NotFoundError('Media tidak ditemukan.')
 
-    await storageService.deleteFile(asset.publicId)
+    // URLs can be embedded in published HTML and WebConfig without a foreign
+    // key to MediaAsset. Archive the library entry while retaining its file;
+    // deleting Cloudinary here would break those existing public references.
 
     const [deletedAsset] = await prisma.$transaction([
       prisma.mediaAsset.update({
@@ -65,7 +67,7 @@ export const mediaService = {
       }),
       prisma.auditLog.create({
         data: {
-          action: 'DELETE',
+          action: 'ARCHIVE',
           entity: 'MediaAsset',
           entityId: id,
           oldData: JSON.stringify(asset),

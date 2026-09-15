@@ -1,8 +1,10 @@
 import { z } from 'zod'
 
+export const PUBLICATION_CATEGORY_SLUGS = ['berita', 'opini', 'artikel', 'kajian'] as const
+
 export const categoryCreateSchema = z.object({
   name: z.string().min(2, { message: 'Nama kategori minimal 2 karakter' }),
-  slug: z.string().min(2, { message: 'Slug minimal 2 karakter' }).regex(/^[a-z0-9-]+$/, 'Slug hanya boleh berisi huruf kecil, angka, dan strip (-)'),
+  slug: z.enum(PUBLICATION_CATEGORY_SLUGS, { message: 'Kategori publikasi hanya Berita, Opini, Artikel, atau Kajian.' }),
   description: z.string().min(5, { message: 'Deskripsi minimal 5 karakter' }),
 })
 

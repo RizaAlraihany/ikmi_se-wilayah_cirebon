@@ -160,7 +160,7 @@ export const blogService = {
     // A published URL is a public contract. Existing editor submissions may
     // still contain an auto-generated slug after a title edit, so ignore it
     // once the post is published rather than silently changing the URL.
-    const nextSlug = post.status === PostStatus.PUBLISHED || !validated.slug
+    const nextSlug = post.publishedAt || post.status === PostStatus.PUBLISHED || !validated.slug
       ? undefined
       : await resolveUniqueSlug(validated.slug, post.id)
 

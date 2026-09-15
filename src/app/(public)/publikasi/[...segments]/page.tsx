@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from 'next/navigation'
 import { siteUrl } from '@/core/seo/site'
 import { postQueries } from '@/features/blog/queries'
 import { publicationPath } from '@/features/blog/publication-routes'
+import { publicPlainText } from '@/features/public/public-text'
 
 import { PublicationDetail } from '../publication-detail'
 
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<Publication
   if (!post) return { title: 'Publikasi Tidak Ditemukan', robots: { index: false, follow: false } }
 
   const canonicalPath = publicationPath(post.slug)
-  const description = post.seoDescription || post.excerpt || post.content.substring(0, 160).replace(/<[^>]+>/g, '')
+  const description = publicPlainText(post.seoDescription || post.excerpt || post.content).slice(0, 160)
 
   return {
     title: post.seoTitle || post.title,

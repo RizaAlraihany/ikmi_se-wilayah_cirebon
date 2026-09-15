@@ -1,5 +1,7 @@
 'use client'
 
+import { actionPayloadError } from '@/core/storage/action-payload'
+
 import { useEffect, useRef, useState } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -196,18 +198,28 @@ export function ArticleEditor({ id, value, onChange, disabled = false, onImageUp
 
     let src = imageUrl.trim()
     if (imageFile) {
+      const payload = new FormData()
+      payload.append('file', imageFile)
+      const sizeError = actionPayloadError(payload)
+      if (sizeError) { setImageError(sizeError); return }
       if (!onImageUpload) {
         setImageError('Unggah gambar belum tersedia pada formulir ini.')
         return
       }
       setIsUploadingImage(true)
-      const result = await onImageUpload(imageFile)
-      setIsUploadingImage(false)
-      if (!result.url) {
-        setImageError(result.error || 'Gambar belum dapat diunggah.')
+      try {
+        const result = await onImageUpload(imageFile)
+        if (!result.url) {
+          setImageError(result.error || 'Gambar belum dapat diunggah.')
+          return
+        }
+        src = result.url
+      } catch {
+        setImageError('Gambar belum dapat diunggah. Periksa koneksi lalu coba kembali.')
         return
+      } finally {
+        setIsUploadingImage(false)
       }
-      src = result.url
     }
 
     if (!isHttpUrl(src)) {
@@ -270,7 +282,7 @@ export function ArticleEditor({ id, value, onChange, disabled = false, onImageUp
       {imagePanelOpen ? (
         <div className="grid gap-3 border-b border-line bg-background/70 p-3" role="group" aria-label="Tambah gambar artikel">
           <Input aria-label="File gambar artikel" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(event) => setImageFile(event.target.files?.[0] || null)} disabled={disabled || isUploadingImage} />
-          <p className="text-xs text-muted">Atau gunakan URL gambar publik. JPG, PNG, WebP, HEIC, dan HEIF maksimal 10 MB untuk unggahan.</p>
+          <p className="text-xs text-muted">Atau gunakan URL gambar publik. JPG, PNG, WebP, HEIC, dan HEIF maksimal 4 MB untuk unggahan.</p>
           <Input aria-label="URL gambar artikel" value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="https://..." disabled={disabled || isUploadingImage || Boolean(imageFile)} />
           <Input aria-label="Teks alternatif gambar" value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} placeholder="Deskripsikan isi gambar" disabled={disabled || isUploadingImage} />
           <Input aria-label="Caption gambar" value={imageCaption} onChange={(event) => setImageCaption(event.target.value)} placeholder="Caption gambar (opsional)" disabled={disabled || isUploadingImage} />

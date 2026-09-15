@@ -114,9 +114,9 @@ export async function approvePostAction(id: string) {
   }
 }
 
-export async function uploadPostInlineImageAction(formData: FormData) {
+export async function uploadPostInlineImageAction(formData: FormData, mode: 'create' | 'update' = 'create') {
   try {
-    const user = await requirePermission('post.create')
+    const user = await requirePermission(mode === 'update' ? 'post.update' : 'post.create')
     await rateLimit(`cms:post:inline-image:${user.id}`, 60, 3600)
 
     const file = formData.get('file')

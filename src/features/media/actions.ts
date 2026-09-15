@@ -33,6 +33,6 @@ export async function deleteMediaAction(id: string) {
     revalidatePath('/admin/cms/media')
     return { success: true }
   } catch (error) {
-    return { error: safeActionError(error, 'Media belum dapat dihapus.', 'media.delete') }
+    return { error: safeActionError(error, 'Media belum dapat diarsipkan.', 'media.archive') }
   }
 }

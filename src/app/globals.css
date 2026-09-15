@@ -8657,7 +8657,7 @@ textarea:focus-visible {
 }
 
 /* Article detail titles scale down responsively while keeping the complete title visible. */
-.publication-detail-title {
+.public-shell main:not(#view-beranda) h1.publication-detail-title {
   font-size: clamp(1.5rem, 4.8vw, 3rem) !important;
   line-height: 1.1 !important;
   text-wrap: balance;

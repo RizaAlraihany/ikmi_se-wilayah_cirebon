@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ArrowRight, BookOpen, ChevronDown, FileText, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { publicationPath } from '@/features/blog/publication-routes'
+import { publicPlainText } from '@/features/public/public-text'
 
 type Post = {
   id: string
@@ -22,8 +23,7 @@ type Post = {
 const fixedCategories = ['Semua', 'Berita', 'Opini', 'Artikel', 'Kajian']
 
 function stripHtml(content: string) {
-  return content
-    .replace(/<[^>]+>/g, ' ')
+  return publicPlainText(content.replace(/<[^>]+>/g, ' '))
     .replace(/\bhttps?:\/\/[^\s<]+/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim()

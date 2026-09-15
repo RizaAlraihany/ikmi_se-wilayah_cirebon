@@ -9,6 +9,7 @@ jest.mock('@/core/storage/storage-service', () => ({
 jest.mock('@/features/blog/services', () => ({ blogService: {} }))
 
 import { uploadPostInlineImageAction } from '@/features/blog/actions'
+import { ForbiddenError } from '@/core/errors/custom-errors'
 
 const { requirePermission: mockRequirePermission } = jest.requireMock('@/core/authorization/guards')
 const { rateLimit: mockRateLimit } = jest.requireMock('@/core/security/rate-limiter')
@@ -40,6 +41,17 @@ describe('CMS inline image upload boundary', () => {
     formData.append('file', new File(['bad'], 'bad.png', { type: 'image/png' }))
 
     await expect(uploadPostInlineImageAction(formData)).resolves.toEqual({ error: 'Signature gambar tidak valid.' })
+    expect(mockUploadImage).not.toHaveBeenCalled()
+  })
+
+  it('uses update authority in the edit form and stops denied uploads', async () => {
+    const data = new FormData()
+    data.append('file', new File(['image'], 'cms.png', { type: 'image/png' }))
+    await uploadPostInlineImageAction(data, 'update')
+    expect(mockRequirePermission).toHaveBeenCalledWith('post.update')
+    mockUploadImage.mockClear()
+    mockRequirePermission.mockRejectedValueOnce(new ForbiddenError('Denied'))
+    expect(await uploadPostInlineImageAction(data, 'update')).toHaveProperty('error')
     expect(mockUploadImage).not.toHaveBeenCalled()
   })
 })

@@ -124,10 +124,13 @@ export async function validateImageSignature(file: File): Promise<{ valid: boole
     const isWebp = bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46
       && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
     const ascii = (start: number, length: number) => String.fromCharCode(...bytes.slice(start, start + length))
-    const heicBrands = new Set(['heic', 'heix', 'hevc', 'hevx', 'heif', 'heis', 'hevm', 'hevs', 'mif1', 'msf1'])
-    const isHeic = bytes.length >= 16
+    // Generic mif1/msf1 brands also describe AVIF and do not prove HEIC.
+    // Only inspect brands inside the declared ftyp box, never later payload.
+    const heicBrands = new Set(['heic', 'heix', 'hevc', 'hevx', 'heis', 'hevm', 'hevs'])
+    const boxSize = bytes.length >= 4 ? new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0) : 0
+    const isHeic = bytes.length >= 16 && boxSize >= 16 && boxSize <= file.size && boxSize % 4 === 0
       && ascii(4, 4) === 'ftyp'
-      && (heicBrands.has(ascii(8, 4)) || Array.from({ length: Math.floor((bytes.length - 16) / 4) }, (_, index) => ascii(16 + index * 4, 4)).some((brand) => heicBrands.has(brand)))
+      && (heicBrands.has(ascii(8, 4)) || Array.from({ length: Math.floor((Math.min(bytes.length, boxSize) - 16) / 4) }, (_, index) => ascii(16 + index * 4, 4)).some((brand) => heicBrands.has(brand)))
 
     if ((file.type === 'image/jpeg' && !isJpeg) || (file.type === 'image/png' && !isPng) || (file.type === 'image/webp' && !isWebp) || ((file.type === 'image/heic' || file.type === 'image/heif') && !isHeic)) {
       return { valid: false, error: 'Signature file gambar tidak valid.' }
