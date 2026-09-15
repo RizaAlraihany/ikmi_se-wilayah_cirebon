@@ -22,7 +22,7 @@ describe('IKMI Design System primitives', () => {
       'ikmi-button',
       'ikmi-button--primary',
       'min-h-12',
-      'rounded-full',
+      'rounded-md',
     )
     expect(screen.getByText('Dipublikasikan')).toHaveClass('bg-success-surface')
     expect(screen.getByRole('alert')).toHaveTextContent('Tidak dapat menyimpan')
@@ -43,7 +43,9 @@ describe('IKMI Design System primitives', () => {
 
     render(<DialogExample />)
     fireEvent.click(screen.getByRole('button', { name: 'Buka konfirmasi' }))
-    expect(screen.getByRole('dialog', { name: 'Konfirmasi perubahan' })).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog', { name: 'Konfirmasi perubahan' })
+    expect(dialog).toBeInTheDocument()
+    expect(dialog.parentElement?.parentElement).toBe(document.body)
 
     fireEvent.click(screen.getByRole('button', { name: 'Tutup dialog' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

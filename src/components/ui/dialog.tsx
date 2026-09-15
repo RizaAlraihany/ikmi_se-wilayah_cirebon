@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 
 export type DialogProps = {
@@ -74,9 +75,9 @@ export function Dialog({
     }
   }, [onOpenChange, open])
 
-  if (!open) return null
+  if (!open || typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <div
       className={cn('fixed inset-0 z-[var(--z-dialog)] flex items-stretch justify-center bg-primary/55 p-0 sm:items-center sm:p-4', containerClassName)}
       role="presentation"
@@ -111,6 +112,7 @@ export function Dialog({
         </div>
         <div className="mt-5">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
