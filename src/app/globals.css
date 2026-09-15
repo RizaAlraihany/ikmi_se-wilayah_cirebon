@@ -12606,3 +12606,138 @@ textarea:focus-visible {
 .dashboard-shell :is(p, li) {
   text-wrap: pretty;
 }
+
+/* Dashboard baseline: a calm, structured workspace instead of layered glass panels. */
+.dashboard-shell {
+  background: var(--background);
+}
+
+.dashboard-sidebar {
+  border-color: var(--border) !important;
+  background: var(--surface) !important;
+  box-shadow: none !important;
+}
+
+.dashboard-sidebar nav {
+  padding: 1rem 0.75rem 1.25rem;
+}
+
+.dashboard-sidebar nav > div + div {
+  margin-top: 1rem !important;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.dashboard-sidebar nav > div > p {
+  color: var(--text-secondary);
+}
+
+.dashboard-sidebar nav a[aria-current='page'] {
+  color: var(--text-inverse) !important;
+  background: var(--primary) !important;
+  box-shadow: none !important;
+}
+
+.dashboard-sidebar nav a[aria-current='page'] svg {
+  color: currentColor !important;
+}
+
+.dashboard-topbar {
+  border-color: var(--border) !important;
+  background: var(--surface-alt) !important;
+  box-shadow: none !important;
+}
+
+.dashboard-shell .glass-subtle,
+.dashboard-shell .glass-standard,
+.dashboard-shell .glass-focus {
+  border-color: var(--border) !important;
+  background: var(--surface) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.dashboard-shell table {
+  border-collapse: collapse;
+}
+
+.dashboard-shell table thead {
+  border-block: 1px solid var(--border);
+  background: var(--surface-alt) !important;
+}
+
+.dashboard-shell table th {
+  color: var(--text-secondary) !important;
+  font-size: 0.6875rem;
+}
+
+.dashboard-shell table tbody tr {
+  background: var(--surface);
+}
+
+@media (hover: hover) {
+  .dashboard-shell table tbody tr:hover {
+    background: var(--surface-alt);
+  }
+}
+
+.dashboard-page {
+  gap: 1.5rem;
+}
+
+.dashboard-hero {
+  border: 1px solid var(--primary) !important;
+  border-left-width: 0.25rem !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: none !important;
+}
+
+.dashboard-page > section[aria-label='Ringkasan data'] {
+  overflow: hidden;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm);
+  background: var(--surface) !important;
+}
+
+.dashboard-page > section[aria-label='Ringkasan data'] > article {
+  min-height: 6.5rem;
+  padding: 1rem;
+}
+
+.dashboard-page > section.grid:not([aria-label]) > article {
+  border: 1px solid var(--border) !important;
+  border-left: 0.1875rem solid var(--primary) !important;
+  border-radius: var(--radius-sm);
+  background: var(--surface) !important;
+}
+
+.dashboard-page > section.border-t-2 {
+  padding-top: 1rem;
+  border-top-width: 1px;
+  border-top-color: var(--border);
+}
+
+@media (max-width: 767px) {
+  .dashboard-topbar > div {
+    min-height: 3.75rem;
+    height: auto;
+  }
+
+  .dashboard-shell main {
+    padding: 1rem;
+  }
+
+  .dashboard-page {
+    gap: 1.25rem;
+  }
+
+  .dashboard-hero {
+    border-left-width: 0.1875rem !important;
+  }
+
+  .dashboard-shell .grid.gap-3.md\:hidden > * {
+    border-radius: var(--radius-sm) !important;
+    box-shadow: none !important;
+  }
+}
