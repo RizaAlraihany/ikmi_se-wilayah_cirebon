@@ -17,7 +17,7 @@ const variants: Record<ButtonVariant, string> = {
 const sizes: Record<ButtonSize, string> = {
   sm: 'min-h-11 px-4 text-sm',
   md: 'min-h-12 px-5 text-sm lg:min-h-11',
-  icon: 'h-11 w-11 p-0',
+  icon: 'size-11 p-0',
 }
 
 type SharedProps = {
@@ -39,7 +39,7 @@ export function Button({
     <button
       type={type}
       className={cn(
-        'ikmi-button inline-flex items-center justify-center gap-2 rounded-full font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-50',
+        'ikmi-button inline-flex items-center justify-center gap-2 rounded-md font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-50',
         variants[variant],
         sizes[size],
         className,
@@ -60,7 +60,7 @@ export function ButtonLink({
   return (
     <Link
       className={cn(
-        'ikmi-button inline-flex items-center justify-center gap-2 rounded-full font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+        'ikmi-button inline-flex items-center justify-center gap-2 rounded-md font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
         variants[variant],
         sizes[size],
         className,

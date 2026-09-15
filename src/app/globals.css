@@ -12454,3 +12454,155 @@ textarea:focus-visible {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.55);
 }
+
+/* Baseline UI refinement: keep active surfaces crisp and content-led. */
+.ikmi-glass-surface,
+.ikmi-glass-surface[data-glass="subtle"],
+.ikmi-glass-surface[data-glass="interactive"],
+.ikmi-glass-surface[data-glass="floating"] {
+  --_glass-bg: var(--surface);
+  --_glass-border: var(--border);
+  --_glass-blur: 0px;
+  --_glass-shadow: var(--shadow-sm);
+  border-color: var(--border) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-sm) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.ikmi-glass-surface[data-glass-tint="brand"] {
+  border-color: var(--primary) !important;
+  color: var(--text-inverse);
+  background: var(--primary) !important;
+}
+
+.ikmi-glass-surface[data-glass-tint="danger"] {
+  border-color: var(--danger) !important;
+  color: var(--text-inverse);
+  background: var(--danger) !important;
+}
+
+.ikmi-glass-surface[data-glass-interactive="true"] {
+  transition:
+    border-color 160ms var(--ease-standard),
+    background-color 160ms var(--ease-standard),
+    box-shadow 160ms var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .ikmi-glass-surface[data-glass-interactive="true"]:hover {
+    transform: none;
+    border-color: var(--border-strong) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+}
+
+.ikmi-button,
+.ikmi-liquid-blue,
+.public-glass-button,
+.public-primary-action,
+.membership-form-trigger {
+  border-radius: var(--radius-md) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.ikmi-button--primary,
+.ikmi-liquid-blue,
+.public-primary-action,
+.membership-form-trigger {
+  border-color: var(--secondary) !important;
+  color: var(--text-inverse) !important;
+  background: var(--secondary) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.ikmi-button--secondary {
+  border-color: var(--border-strong) !important;
+  color: var(--primary) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.ikmi-button--ghost {
+  border-color: transparent !important;
+  color: var(--primary) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.ikmi-button--danger {
+  border-color: var(--danger) !important;
+  color: var(--text-inverse) !important;
+  background: var(--danger) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+@media (hover: hover) {
+  .ikmi-button--primary:not(:disabled):hover,
+  .ikmi-liquid-blue:hover,
+  .public-primary-action:hover,
+  .membership-form-trigger:hover {
+    border-color: var(--primary) !important;
+    background: var(--primary) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+
+  .ikmi-button--secondary:not(:disabled):hover,
+  .ikmi-button--ghost:not(:disabled):hover {
+    border-color: var(--border-strong) !important;
+    background: var(--surface-alt) !important;
+    box-shadow: none !important;
+  }
+}
+
+.dashboard-topbar,
+.dashboard-shell nav[aria-label="Navigasi mobile"] {
+  background: var(--surface) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.public-nav-dropdown-menu {
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-md) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+#view-beranda .quick-access-shell {
+  border-color: var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-sm) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+#view-beranda .quick-link {
+  border-radius: 0 !important;
+}
+
+#view-beranda
+  :is(
+    .home-hero-primary,
+    .home-hero-secondary,
+    .home-outline-action,
+    .home-primary-action,
+    .home-secondary-action,
+    .membership-primary,
+    .membership-secondary
+  ) {
+  border-radius: var(--radius-md) !important;
+}
+
+.public-shell :is(h1, h2, h3),
+.dashboard-shell :is(h1, h2, h3) {
+  text-wrap: balance;
+}
+
+.public-shell :is(p, li),
+.dashboard-shell :is(p, li) {
+  text-wrap: pretty;
+}

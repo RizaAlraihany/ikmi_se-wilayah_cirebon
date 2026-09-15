@@ -15,8 +15,6 @@ export default function LoginPage() {
     <main className="relative isolate min-h-dvh overflow-hidden bg-background">
       <div className="mx-auto grid min-h-dvh w-full max-w-[120rem] lg:grid-cols-[minmax(20rem,0.82fr)_minmax(30rem,1.18fr)]">
       <section className="relative hidden overflow-hidden bg-primary p-10 text-surface lg:flex lg:items-center xl:p-14">
-        <div className="pointer-events-none absolute -right-28 -top-24 h-72 w-72 rounded-full bg-accent/20 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full border border-white/10" aria-hidden="true" />
         <div className="max-w-lg border-t border-white/30 pt-7">
           <Image
             src={IKMI_LOGO_URL}
@@ -42,7 +40,7 @@ export default function LoginPage() {
 
       <section className="flex min-h-dvh items-center justify-center px-4 py-8 sm:px-8 lg:min-h-0 lg:px-12 xl:px-20">
         <div className="w-full max-w-md">
-        <Card className="w-full border-border/80 border-t-2 border-t-accent bg-surface shadow-lg">
+        <Card className="w-full border-border/80 border-t-2 border-t-accent bg-surface shadow-sm">
           <CardContent className="space-y-7 p-5 sm:p-8">
             <div className="space-y-3 text-left">
               <Image

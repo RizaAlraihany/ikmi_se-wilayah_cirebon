@@ -96,7 +96,7 @@ export default async function DashboardLayout({
   const stableChildren = Children.toArray(children)
 
   return (
-    <div className="dashboard-shell min-h-screen text-primary">
+    <div className="dashboard-shell min-h-dvh text-primary">
       <DashboardSidebar key="dashboard-sidebar" groups={activeNavGroups} workspaceLabel={workspaceLabel} />
 
       <div key="dashboard-content" className="lg:pl-64">
@@ -122,7 +122,7 @@ export default async function DashboardLayout({
           </div>
         </header>
 
-        <main className="min-h-[calc(100vh-64px)] px-4 py-5 lg:px-8 lg:py-7">
+        <main className="min-h-[calc(100dvh-64px)] px-4 py-5 lg:px-8 lg:py-7">
           <div className="dashboard-container">
             {stableChildren}
           </div>
