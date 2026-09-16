@@ -53,25 +53,20 @@ export const structureService = {
         where: { id: data.positionId, departmentId: department.id, deletedAt: null },
         select: { id: true, departmentId: true },
       }),
-      data.personType === 'MEMBER'
-        ? prisma.member.findFirst({
-            where: { id: data.personId, membershipStatus: 'ACTIVE_MEMBER', deletedAt: null },
-            select: { id: true, periodId: true },
-          })
-        : prisma.user.findFirst({
-            where: { id: data.personId, isActive: true, deletedAt: null },
-            select: { id: true },
-          }),
+      prisma.member.findFirst({
+        where: { id: data.personId, membershipStatus: 'ACTIVE_MEMBER', deletedAt: null },
+        select: { id: true, periodId: true },
+      }),
     ])
     if (!position) throw new ValidationError('Jabatan tidak sesuai dengan unit organisasi yang dipilih.')
     if (position.departmentId !== department.id) throw new ValidationError('Jabatan tidak sesuai dengan unit organisasi yang dipilih.')
     if (!assignee) throw new ValidationError('Pengurus tidak aktif atau tidak ditemukan.')
-    if (data.personType === 'MEMBER' && 'periodId' in assignee && assignee.periodId && assignee.periodId !== period.id) {
+    if (assignee.periodId && assignee.periodId !== period.id) {
       throw new ValidationError('Pengurus anggota tidak berada pada periode aktif.')
     }
 
     const [existingPersonAssignment, occupiedPosition] = await Promise.all([
-      prisma.structureAssignment.findFirst({ where: { periodId, positionId: data.positionId, deletedAt: null, ...(data.personType === 'MEMBER' ? { memberId: data.personId } : { userId: data.personId }) }, select: { id: true } }),
+      prisma.structureAssignment.findFirst({ where: { periodId, positionId: data.positionId, deletedAt: null, memberId: data.personId }, select: { id: true } }),
       prisma.structureAssignment.findFirst({ where: { periodId, positionId: data.positionId, deletedAt: null }, select: { id: true } }),
     ])
     if (existingPersonAssignment) throw new ValidationError('Pengurus ini sudah ditugaskan pada jabatan tersebut di periode aktif.')
@@ -79,7 +74,7 @@ export const structureService = {
 
     return prisma.$transaction(async (tx) => {
       const created = await tx.structureAssignment.create({
-        data: { periodId, userId: data.personType === 'USER' ? data.personId : null, memberId: data.personType === 'MEMBER' ? data.personId : null, departmentId: data.departmentId, positionId: data.positionId, sortOrder: data.sortOrder },
+        data: { periodId, userId: null, memberId: data.personId, departmentId: data.departmentId, positionId: data.positionId, sortOrder: data.sortOrder },
       })
       await tx.auditLog.create({
         data: {

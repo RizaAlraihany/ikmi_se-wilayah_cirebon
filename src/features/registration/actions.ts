@@ -37,6 +37,7 @@ export async function updateRegistrationStatusAction(id: string, status: RegStat
     await registrationService.updateStatus(id, status, actor.id)
     revalidatePath('/admin/organization/registrations')
     revalidatePath(`/admin/organization/registrations/${id}`)
+    revalidatePath('/admin')
     return { success: true }
   } catch (error) {
     return { error: safeActionError(error, 'Pendaftaran belum dapat diproses.', 'registration.review') }

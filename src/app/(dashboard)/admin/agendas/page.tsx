@@ -43,11 +43,12 @@ export default async function AgendaListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-y-2 border-primary bg-surface px-1 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-5">
         <div>
-          <h1 className="font-heading text-3xl font-extrabold text-primary">Agenda</h1>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-text-secondary">
-            Kelola jadwal tetap, berulang, kondisional, relatif, dan dependen secara terpisah dari Program.
+          <p className="text-xs font-bold uppercase text-accent">Operasional Organisasi</p>
+          <h1 className="mt-2 font-heading text-3xl font-extrabold text-balance text-primary">Agenda</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-pretty text-text-secondary">
+            Kelola agenda bertanggal tetap atau kondisional. Jadwal lanjutan lama tetap tersimpan sebagai riwayat.
           </p>
         </div>
         <ButtonLink href="/admin/agendas/new" prefetch={false}>
@@ -75,7 +76,7 @@ export default async function AgendaListPage() {
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-accent">
+                      <p className="text-xs font-extrabold uppercase text-accent">
                         {agenda.organizationalUnit?.name ?? 'Unit belum ditentukan'}
                       </p>
                       <Badge tone={agendaStatusTone(derivedStatus)}>{agendaStatusLabel(derivedStatus)}</Badge>

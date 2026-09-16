@@ -35,7 +35,7 @@ export default async function AdminStructurePage() {
     ? undefined
     : authorizedActor.departmentId ?? '__no_authorized_unit__'
 
-  const [assignments, departments, positions, users, members] = await Promise.all([
+  const [assignments, departments, positions, members] = await Promise.all([
     prisma.structureAssignment.findMany({
       where: {
         periodId: activePeriod.id,
@@ -79,26 +79,22 @@ export default async function AdminStructurePage() {
       select: { id: true, name: true, departmentId: true, sortOrder: true },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     }),
-    prisma.user.findMany({
-      where: { isActive: true, deletedAt: null },
-      select: { id: true, name: true },
-      orderBy: { name: 'asc' },
-    }),
     prisma.member.findMany({ where: { membershipStatus: 'ACTIVE_MEMBER', deletedAt: null }, select: { id: true, fullName: true }, orderBy: { fullName: 'asc' } }),
   ])
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-y-2 border-primary bg-surface px-1 py-6 sm:flex-row sm:items-end sm:justify-between sm:px-5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Struktur Kepengurusan</h1>
-          <p className="text-muted-foreground">Kelola struktur kepengurusan periode {activePeriod.name}</p>
+          <p className="text-xs font-bold uppercase text-accent">Periode aktif</p>
+          <h1 className="mt-2 font-heading text-3xl font-extrabold text-balance text-primary">Struktur Kepengurusan</h1>
+          <p className="mt-2 text-sm leading-6 text-pretty text-text-secondary">Kelola penugasan anggota untuk periode {activePeriod.name}.</p>
         </div>
         <AssignStructureForm
           periodId={activePeriod.id}
           departments={departments}
           positions={positions}
-          people={[...members.map((member) => ({ id: member.id, name: member.fullName, type: 'MEMBER' as const })), ...users.map((user) => ({ id: user.id, name: `${user.name} (akun admin legacy)`, type: 'USER' as const }))]}
+          people={members.map((member) => ({ id: member.id, name: member.fullName }))}
         />
       </div>
 
@@ -116,7 +112,7 @@ export default async function AdminStructurePage() {
             <div className="space-y-3">
               <div className="space-y-3 md:hidden">
                 {assignments.map((assignment) => (
-                  <article key={assignment.id} className="space-y-3 rounded-md border p-4">
+                  <article key={assignment.id} className="space-y-3 border border-border bg-surface p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-medium text-foreground">{assignment.member?.fullName ?? assignment.user?.name ?? 'Data pengurus tidak tersedia'}</p>
@@ -131,7 +127,7 @@ export default async function AdminStructurePage() {
                   </article>
                 ))}
               </div>
-              <div className="hidden overflow-x-auto rounded-md border md:block">
+              <div className="hidden overflow-x-auto border border-border md:block">
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-border bg-muted/50 text-xs uppercase text-muted-foreground">
                   <tr>

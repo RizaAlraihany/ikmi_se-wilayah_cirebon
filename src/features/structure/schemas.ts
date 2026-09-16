@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const assignStructureSchema = z.object({
-  personType: z.enum(['MEMBER', 'USER']),
+  personType: z.literal('MEMBER'),
   personId: z.string().min(1, 'Pengurus harus dipilih').max(80),
   departmentId: z.string().min(1, 'Departemen/Unit harus dipilih'),
   positionId: z.string().min(1, 'Jabatan harus dipilih'),

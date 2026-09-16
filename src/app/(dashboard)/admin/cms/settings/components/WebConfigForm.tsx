@@ -26,6 +26,7 @@ export function WebConfigForm({ configs }: { configs: ConfigValues }) {
   const [saving, setSaving] = useState(false)
 
   async function saveContact() {
+    if (saving) return
     setSaving(true)
     setMessage('')
     const result = await updateContactInfoAction(contact)
@@ -36,8 +37,8 @@ export function WebConfigForm({ configs }: { configs: ConfigValues }) {
 
   return (
     <Card>
-      <CardContent className="space-y-6 p-6">
-        {message ? <div className="rounded-2xl bg-accent/15 px-4 py-3 text-sm font-medium text-primary ring-1 ring-accent/30">{message}</div> : null}
+      <CardContent className="space-y-6 p-5 sm:p-6">
+        {message ? <div role="status" className="border-l-2 border-accent bg-surface-alt px-4 py-3 text-sm font-medium text-primary">{message}</div> : null}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-heading text-lg font-bold text-primary">Informasi kontak</h2>

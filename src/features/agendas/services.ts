@@ -5,6 +5,47 @@ import { prisma } from '@/core/database/prisma'
 import { ForbiddenError, NotFoundError, ValidationError } from '@/core/errors/custom-errors'
 import { agendaSchema, type AgendaInput } from './schemas'
 
+const frozenScheduleTypes = new Set<AgendaInput['scheduleType']>(['RECURRING', 'RELATIVE_TO_PROGRAM', 'DEPENDENT_ON_PROGRAM'])
+
+function sameInstant(left: Date | null, right: Date | null) {
+  return left?.getTime() === right?.getTime()
+}
+
+function assertSchedulePolicy(data: AgendaInput, current?: {
+  scheduleType: string
+  startDatetime: Date | null
+  endDatetime: Date | null
+  recurrenceRule: string | null
+  relativeToProgramId: string | null
+  relativeOffset: number | null
+  conditionalNote: string | null
+}) {
+  if (!current && frozenScheduleTypes.has(data.scheduleType)) {
+    throw new ValidationError('Jenis jadwal lanjutan telah dibekukan sesuai PRD v5. Gunakan tanggal tetap atau jadwal kondisional.')
+  }
+  if (!current || !frozenScheduleTypes.has(current.scheduleType as AgendaInput['scheduleType'])) return
+
+  const unchanged = data.scheduleType === current.scheduleType
+    && sameInstant(data.startDatetime, current.startDatetime)
+    && sameInstant(data.endDatetime, current.endDatetime)
+    && data.recurrenceRule === current.recurrenceRule
+    && data.relativeToProgramId === current.relativeToProgramId
+    && data.relativeOffset === current.relativeOffset
+    && data.conditionalNote === current.conditionalNote
+  if (!unchanged) {
+    throw new ValidationError('Aturan jadwal lanjutan lama tidak dapat diubah. Buat Agenda baru dengan tanggal tetap atau jadwal kondisional.')
+  }
+}
+
+function assertRegistrationPolicy(data: AgendaInput, current?: { requiresRegistration: boolean | null; registrationType: string | null }) {
+  if (!current && data.requiresRegistration) {
+    throw new ValidationError('Pendaftaran Agenda telah dibekukan sesuai PRD v5. Kelola pendaftaran anggota dari menu Anggota.')
+  }
+  if (current?.requiresRegistration && (!data.requiresRegistration || data.registrationType !== current.registrationType)) {
+    throw new ValidationError('Pendaftaran Agenda lama dipertahankan sebagai riwayat dan tidak dapat diubah.')
+  }
+}
+
 async function requireAgendaActor(actorId: string) {
   const actor = await requireRoleForUser(actorId, ORGANIZATION_DASHBOARD_ROLE_IDS)
   return requirePermissionForUser(actor, 'calendar.manage')
@@ -124,6 +165,8 @@ export const agendaService = {
   async create(input: unknown, actorId: string) {
     const actor = await requireAgendaActor(actorId)
     const data = agendaSchema.parse(input)
+    assertSchedulePolicy(data)
+    assertRegistrationPolicy(data)
     await assertAgendaUnitScope(actor, data.organizationalUnitId)
     const references = await validateReferences(data)
     const stored = storageData(data, references.relativeProgram)
@@ -143,6 +186,8 @@ export const agendaService = {
     const data = agendaSchema.parse(input)
     const current = await prisma.agenda.findFirst({ where: { id, deletedAt: null } })
     if (!current) throw new NotFoundError('Agenda tidak ditemukan.')
+    assertSchedulePolicy(data, current)
+    assertRegistrationPolicy(data, current)
 
     await assertAgendaUnitScope(actor, current.organizationalUnitId ?? data.organizationalUnitId)
     if (data.organizationalUnitId !== current.organizationalUnitId) {

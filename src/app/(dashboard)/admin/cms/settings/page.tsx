@@ -28,9 +28,10 @@ export default async function WebConfigPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-2xl font-extrabold text-primary">Kontak Publik</h1>
-        <p className="mt-1 text-sm text-muted">Kelola kanal kontak resmi yang digunakan halaman Kontak dan footer website publik.</p>
+      <div className="border-y-2 border-primary bg-surface px-1 py-6 sm:px-5">
+        <p className="text-xs font-bold uppercase text-accent">Website Publik</p>
+        <h1 className="mt-2 font-heading text-3xl font-extrabold text-balance text-primary">Kontak Publik</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-pretty text-text-secondary">Kelola kanal resmi yang dipakai halaman Kontak dan footer website publik.</p>
       </div>
 
       <WebConfigForm configs={configsMap} />

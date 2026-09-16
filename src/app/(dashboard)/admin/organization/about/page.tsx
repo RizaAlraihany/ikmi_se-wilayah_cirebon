@@ -10,5 +10,14 @@ export default async function OrganizationAboutPage() {
   await requireRoleForUser(actor, ORGANIZATION_DASHBOARD_ROLE_IDS)
   const initialContent = await webConfigQueries.getPublicAboutContent()
 
-  return <div className="space-y-6"><div><h1 className="font-heading text-2xl font-extrabold text-primary">Konten Tentang</h1><p className="mt-1 text-sm text-muted">Kelola narasi Sejarah yang tampil di halaman Tentang publik.</p></div><AboutContentForm initialContent={initialContent} /></div>
+  return (
+    <div className="space-y-6">
+      <div className="border-y-2 border-primary bg-surface px-1 py-6 sm:px-5">
+        <p className="text-xs font-bold uppercase text-accent">Website Publik</p>
+        <h1 className="mt-2 font-heading text-3xl font-extrabold text-balance text-primary">Konten Tentang</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-pretty text-text-secondary">Kelola narasi sejarah yang tampil pada halaman Tentang publik. Informasi kabinet dan struktur tetap dikelola dari menu Organisasi.</p>
+      </div>
+      <AboutContentForm initialContent={initialContent} />
+    </div>
+  )
 }

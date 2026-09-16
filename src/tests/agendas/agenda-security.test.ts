@@ -70,6 +70,44 @@ describe('Agenda security and storage invariants', () => {
     expect(prismaMock.$transaction).not.toHaveBeenCalled()
   })
 
+  it('rejects creating a newly advanced Agenda schedule before reading or persisting data', async () => {
+    await expect(agendaService.create({
+      ...validInput,
+      scheduleType: 'RECURRING',
+      recurrenceRule: 'FREQ=MONTHLY;INTERVAL=1',
+    }, actor.id)).rejects.toBeInstanceOf(ValidationError)
+
+    expect(prismaMock.department.findFirst).not.toHaveBeenCalled()
+    expect(prismaMock.agenda.create).not.toHaveBeenCalled()
+  })
+
+  it('rejects a newly created Agenda registration workflow', async () => {
+    await expect(agendaService.create({
+      ...validInput,
+      requiresRegistration: true,
+      registrationType: 'GENERAL_REGISTRATION',
+    }, actor.id)).rejects.toBeInstanceOf(ValidationError)
+
+    expect(prismaMock.agenda.create).not.toHaveBeenCalled()
+  })
+
+  it('keeps a legacy advanced schedule from being converted through an update', async () => {
+    prismaMock.agenda.findFirst.mockResolvedValueOnce({
+      id: 'legacy-recurring',
+      organizationalUnitId: 'unit-1',
+      scheduleType: 'RECURRING',
+      startDatetime: new Date('2026-08-20T02:00:00.000Z'),
+      endDatetime: new Date('2026-08-20T04:00:00.000Z'),
+      recurrenceRule: 'FREQ=MONTHLY;INTERVAL=1',
+      relativeToProgramId: null,
+      relativeOffset: null,
+      conditionalNote: null,
+    } as never)
+
+    await expect(agendaService.update('legacy-recurring', validInput, actor.id)).rejects.toBeInstanceOf(ValidationError)
+    expect(prismaMock.agenda.update).not.toHaveBeenCalled()
+  })
+
   it('stores Asia/Jakarta time and clears stale fields when schedule type changes', async () => {
     prismaMock.department.findFirst.mockResolvedValueOnce({ id: 'unit-1', periodId: 'period-1' } as never)
     prismaMock.period.findFirst.mockResolvedValueOnce({ id: 'period-1' } as never)

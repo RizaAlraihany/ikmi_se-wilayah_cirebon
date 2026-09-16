@@ -14,7 +14,7 @@ interface AssignStructureFormProps {
   periodId: string
   departments: Array<{ id: string; name: string }>
   positions: Array<{ id: string; name: string; departmentId: string | null }>
-  people: Array<{ id: string; name: string; type: 'MEMBER' | 'USER' }>
+  people: Array<{ id: string; name: string }>
 }
 
 export function AssignStructureForm({ periodId, departments, positions, people }: AssignStructureFormProps) {
@@ -36,8 +36,7 @@ export function AssignStructureForm({ periodId, departments, positions, people }
     setError('')
 
     try {
-      const [personType, personId] = personKey.split(':') as ['MEMBER' | 'USER', string]
-      const res = await assignStructureAction(periodId, { personType, personId, departmentId, positionId, sortOrder: 0 })
+      const res = await assignStructureAction(periodId, { personType: 'MEMBER', personId: personKey, departmentId, positionId, sortOrder: 0 })
       if (res.success) {
         setOpen(false)
         setPersonKey('')
@@ -65,7 +64,7 @@ export function AssignStructureForm({ periodId, departments, positions, people }
         open={open}
         onOpenChange={setOpen}
         title="Tambah Penugasan Struktur"
-        description="Assign pengurus ke departemen dan jabatan untuk periode ini."
+        description="Tugaskan anggota aktif ke unit dan jabatan pada periode ini."
       >
         <form onSubmit={onSubmit} className="space-y-4">
           {error && <Alert tone="danger">{error}</Alert>}
@@ -79,7 +78,7 @@ export function AssignStructureForm({ periodId, departments, positions, people }
             >
               <option value="" disabled>Pilih pengurus...</option>
               {people.map((person) => (
-                <option key={`${person.type}:${person.id}`} value={`${person.type}:${person.id}`}>
+                <option key={person.id} value={person.id}>
                   {person.name}
                 </option>
               ))}

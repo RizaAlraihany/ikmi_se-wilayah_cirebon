@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { updateCabinetAction } from '@/features/organization/actions'
 import type { CabinetInput } from '@/features/organization/cabinet'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
 export function CabinetForm({ periodId, cabinet }: { periodId: string; cabinet?: CabinetInput | null }) {
+  const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   async function save(form: FormData) {
@@ -16,6 +18,7 @@ export function CabinetForm({ periodId, cabinet }: { periodId: string; cabinet?:
       const text = (key: string) => String(form.get(key) || '')
       const result = await updateCabinetAction(periodId, { tagline: text('tagline'), description: text('description'), vision: text('vision'), missions: text('missions').split('\n').map((line) => line.trim()).filter(Boolean), logoUrl: text('logoUrl') })
       setMessage(result.error || 'Profil kabinet tersimpan.')
+      if (!result.error) router.refresh()
     } catch {
       setMessage('Profil kabinet belum dapat disimpan. Silakan coba lagi.')
     } finally {

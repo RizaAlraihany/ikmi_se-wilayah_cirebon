@@ -44,6 +44,8 @@ const scheduleLabels: Record<ScheduleType, string> = {
   DEPENDENT_ON_PROGRAM: 'Mengikuti Program',
 }
 
+const supportedScheduleTypes: ScheduleType[] = ['FIXED_DATE', 'CONDITIONAL']
+
 const periodLabels: Record<string, string> = { ACTIVE: 'Aktif', DRAFT: 'Draft', ARCHIVED: 'Arsip' }
 
 function editableStatus(status: string | undefined) {
@@ -66,15 +68,35 @@ export function AgendaForm({
 }) {
   const router = useRouter()
   const [scheduleType, setScheduleType] = useState<ScheduleType>(agenda?.scheduleType ?? 'FIXED_DATE')
-  const [requiresRegistration, setRequiresRegistration] = useState(Boolean(agenda?.requiresRegistration))
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const missingMasterData = units.length === 0 || periods.length === 0
   const disabled = saving || missingMasterData
+  const isLegacySchedule = Boolean(agenda && !supportedScheduleTypes.includes(agenda.scheduleType))
+  const hasLegacyRegistration = Boolean(agenda?.requiresRegistration)
 
   async function submit(formData: FormData) {
     setSaving(true)
     setMessage('')
+    const schedule = isLegacySchedule && agenda
+      ? {
+          scheduleType: agenda.scheduleType,
+          startDatetime: agenda.startDatetime,
+          endDatetime: agenda.endDatetime,
+          recurrenceRule: agenda.recurrenceRule,
+          relativeToProgramId: agenda.relativeToProgramId,
+          relativeOffset: agenda.relativeOffset,
+          conditionalNote: agenda.conditionalNote,
+        }
+      : {
+          scheduleType,
+          startDatetime: get(formData, 'startDatetime'),
+          endDatetime: get(formData, 'endDatetime'),
+          recurrenceRule: get(formData, 'recurrenceRule'),
+          relativeToProgramId: get(formData, 'relativeToProgramId'),
+          relativeOffset: get(formData, 'relativeOffset'),
+          conditionalNote: get(formData, 'conditionalNote'),
+        }
     const payload = {
       name: get(formData, 'name'),
       organizationalUnitId: get(formData, 'organizationalUnitId'),
@@ -82,18 +104,12 @@ export function AgendaForm({
       description: get(formData, 'description'),
       picId: get(formData, 'picId'),
       programId: get(formData, 'programId'),
-      scheduleType,
-      startDatetime: get(formData, 'startDatetime'),
-      endDatetime: get(formData, 'endDatetime'),
-      recurrenceRule: get(formData, 'recurrenceRule'),
-      relativeToProgramId: get(formData, 'relativeToProgramId'),
-      relativeOffset: get(formData, 'relativeOffset'),
-      conditionalNote: get(formData, 'conditionalNote'),
+      ...schedule,
       location: get(formData, 'location'),
       visibility: get(formData, 'visibility'),
       status: get(formData, 'status'),
-      requiresRegistration,
-      registrationType: requiresRegistration ? get(formData, 'registrationType') : null,
+      requiresRegistration: hasLegacyRegistration,
+      registrationType: hasLegacyRegistration ? agenda?.registrationType ?? null : null,
     }
     const result = agenda ? await updateAgendaAction(agenda.id, payload) : await createAgendaAction(payload)
     setSaving(false)
@@ -161,51 +177,34 @@ export function AgendaForm({
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Aturan Jadwal</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Jadwal Agenda</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <Field label="Tipe jadwal">
-              <Select value={scheduleType} onChange={(event) => setScheduleType(event.target.value as ScheduleType)} disabled={disabled}>
-                {Object.entries(scheduleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </Select>
-            </Field>
-            {scheduleType === 'FIXED_DATE' ? <DateFields agenda={agenda} disabled={disabled} required /> : null}
-            {scheduleType === 'RECURRING' ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <DateFields agenda={agenda} disabled={disabled} />
-                  <p className="mt-2 text-xs leading-5 text-text-secondary">Tanpa waktu mulai, master Agenda tetap tersimpan tetapi belum menghasilkan occurrence kalender.</p>
-                </div>
-                <Field label="Aturan RRULE">
-                  <Input name="recurrenceRule" defaultValue={agenda?.recurrenceRule ?? 'FREQ=MONTHLY;INTERVAL=1'} maxLength={200} disabled={disabled} placeholder="FREQ=MONTHLY;INTERVAL=1" />
-                  <p className="mt-2 text-xs leading-5 text-text-secondary">Mendukung DAILY, WEEKLY, MONTHLY, INTERVAL, serta BYMONTHDAY untuk jadwal bulanan.</p>
-                </Field>
+            {isLegacySchedule ? (
+              <div className="border-l-2 border-warning bg-warning-surface px-4 py-3 text-sm leading-6 text-warning-foreground">
+                <p className="font-semibold">Jadwal lama: {scheduleLabels[scheduleType]}</p>
+                <p className="mt-1">Aturan berulang dan agenda berbasis Program telah dibekukan sesuai PRD v5. Data jadwal ini tetap dipertahankan; Anda masih dapat memperbarui informasi umum atau mengarsipkannya.</p>
               </div>
-            ) : null}
-            {scheduleType === 'CONDITIONAL' ? (
+            ) : (
+              <>
+                <Field label="Tipe jadwal">
+                  <Select value={scheduleType} onChange={(event) => setScheduleType(event.target.value as ScheduleType)} disabled={disabled}>
+                    {supportedScheduleTypes.map((value) => <option key={value} value={value}>{scheduleLabels[value]}</option>)}
+                  </Select>
+                </Field>
+                {scheduleType === 'FIXED_DATE' ? <DateFields agenda={agenda} disabled={disabled} required /> : null}
+                {scheduleType === 'CONDITIONAL' ? (
               <Field label="Kondisi jadwal">
                 <Textarea name="conditionalNote" defaultValue={agenda?.conditionalNote ?? ''} maxLength={5_000} disabled={disabled} required rows={3} placeholder="Contoh: Dilaksanakan setelah kebutuhan unit disetujui." />
                 <p className="mt-2 text-xs text-text-secondary">Agenda tetap tersimpan tanpa tanggal sampai kondisi memiliki jadwal konkret.</p>
               </Field>
-            ) : null}
-            {scheduleType === 'RELATIVE_TO_PROGRAM' || scheduleType === 'DEPENDENT_ON_PROGRAM' ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label={scheduleType === 'RELATIVE_TO_PROGRAM' ? 'Program pemicu selesai' : 'Program yang diikuti'}>
-                  <Select name="relativeToProgramId" defaultValue={agenda?.relativeToProgramId ?? ''} disabled={disabled} required>
-                    <option value="">Pilih Program</option>
-                    {programs.map((program) => <option key={program.id} value={program.id}>{program.name}{program.actualEnd ? ' · realisasi selesai tersedia' : ' · menunggu realisasi'}</option>)}
-                  </Select>
-                </Field>
-                <Field label="Offset hari">
-                  <Input name="relativeOffset" type="number" min={-3650} max={3650} defaultValue={agenda?.relativeOffset ?? (scheduleType === 'RELATIVE_TO_PROGRAM' ? '7' : '0')} required={scheduleType === 'RELATIVE_TO_PROGRAM'} disabled={disabled} />
-                  <p className="mt-2 text-xs text-text-secondary">Tanggal dihitung setelah waktu selesai aktual Program tersedia.</p>
-                </Field>
-              </div>
-            ) : null}
+                ) : null}
+              </>
+            )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Publikasi & Pendaftaran</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Publikasi</CardTitle></CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <Field label="Visibilitas">
               <Select name="visibility" defaultValue={agenda?.visibility ?? 'HIDDEN'} disabled={disabled}>
@@ -224,19 +223,10 @@ export function AgendaForm({
                 <option value="CANCELLED">Dibatalkan</option>
               </Select>
             </Field>
-            <label className="flex min-h-14 items-center gap-3 rounded-xl border border-border bg-surface-alt p-4 text-sm font-semibold text-primary md:col-span-2">
-              <input type="checkbox" checked={requiresRegistration} onChange={(event) => setRequiresRegistration(event.target.checked)} disabled={disabled} />
-              Agenda memerlukan pendaftaran
-            </label>
-            {requiresRegistration ? (
-              <Field label="Jenis pendaftaran">
-                <Select name="registrationType" defaultValue={agenda?.registrationType ?? 'GENERAL_REGISTRATION'} disabled={disabled}>
-                  <option value="GENERAL_REGISTRATION">Pendaftaran umum</option>
-                  <option value="MEMBERSHIP_RECRUITMENT">Rekrutmen anggota</option>
-                  <option value="INTERNAL_REGISTRATION">Pendaftaran internal</option>
-                  <option value="EXTERNAL_LINK">Tautan eksternal</option>
-                </Select>
-              </Field>
+            {hasLegacyRegistration ? (
+              <div className="border-l-2 border-warning bg-warning-surface px-4 py-3 text-sm leading-6 text-warning-foreground md:col-span-2">
+                Pendaftaran Agenda lama tetap dipertahankan sebagai riwayat. Pendaftaran anggota IKMI dikelola dari menu Anggota.
+              </div>
             ) : null}
           </CardContent>
         </Card>

@@ -15,14 +15,15 @@ export const metadata = {
 export default function AdminRegistrationsPage() {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="border-y-2 border-primary bg-surface px-1 py-6 sm:px-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-primary">Pendaftaran Anggota</h1>
-          <p className="text-sm text-muted-foreground">Kelola pendaftaran anggota baru IKMI Cirebon.</p>
+          <p className="text-xs font-bold uppercase text-accent">Keanggotaan</p>
+          <h1 className="mt-2 font-heading text-3xl font-extrabold text-balance text-primary">Pendaftaran Anggota</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-pretty text-text-secondary">Tinjau pendaftaran dan proses setiap calon anggota sesuai tahapan keanggotaan IKMI Cirebon.</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+      <div className="overflow-hidden border border-border bg-surface">
         <RegistrationTable />
       </div>
     </div>
@@ -48,7 +49,7 @@ async function RegistrationTable() {
     <>
       <div className="grid gap-3 p-4 md:hidden">
         {registrations.map((reg) => (
-          <article key={reg.id} className="rounded-xl border border-border bg-surface p-4">
+          <article key={reg.id} className="border border-border bg-surface p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0"><h2 className="truncate font-semibold text-primary">{reg.fullName}</h2><p className="mt-1 text-xs text-muted-foreground">{reg.registrationNumber || '-'} · {reg.campus}</p></div>
               <Badge tone={statusColorMap[reg.status]}>{statusLabelMap[reg.status]}</Badge>
@@ -57,7 +58,7 @@ async function RegistrationTable() {
           </article>
         ))}
       </div>
-      <div className="hidden md:block">
+      <div className="hidden overflow-x-auto md:block">
       <table className="w-full text-left text-sm">
         <thead className="border-b border-border bg-muted/50 text-xs uppercase text-muted-foreground">
           <tr>

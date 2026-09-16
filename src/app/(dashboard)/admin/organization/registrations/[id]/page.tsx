@@ -25,21 +25,22 @@ export default async function RegistrationDetailPage(props: { params: Promise<{ 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 border-b-2 border-primary pb-5">
         <Link href="/admin/organization/registrations">
           <Button variant="ghost" size="icon" className="h-9 w-9">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-primary">Detail Pendaftaran</h1>
-          <p className="text-sm text-muted-foreground">{registration.registrationNumber || 'Belum ada nomor'}</p>
+          <p className="text-xs font-bold uppercase text-accent">Keanggotaan</p>
+          <h1 className="mt-1 font-heading text-2xl font-extrabold text-primary">Detail Pendaftaran</h1>
+          <p className="mt-1 text-sm text-text-secondary">{registration.registrationNumber || 'Belum ada nomor'}</p>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm space-y-6">
+          <div className="space-y-6 border border-border bg-surface p-5 sm:p-6">
             <div className="flex items-start justify-between border-b border-border pb-6">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
