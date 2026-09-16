@@ -22,41 +22,37 @@ describe('dashboard navigation', () => {
   it('separates organization and Komdigi workspaces before permission checks', () => {
     expect(visibleHrefs('admin_organization')).toEqual([
       '/admin',
-      '/admin/programs',
       '/admin/agendas',
-      '/admin/events',
       '/admin/organization/registrations',
       '/admin/organization/structure',
-      '/admin/documents',
-      '/admin/organization#periode',
+      '/admin/organization/about',
+      '/admin/organization',
+      '/admin/cms/settings',
     ])
 
     expect(visibleHrefs('admin_komdigi')).toEqual([
       '/admin',
-      '/admin/cms/content-plan',
-      '/admin/request-pamflet',
       '/admin/kirim-tulisan',
       '/admin/campaign',
       '/admin/cms/posts',
       '/admin/cms/media',
-      '/admin/cms/settings',
     ])
   })
 
   it('uses role-specific mobile shortcuts and rejects unknown roles', () => {
     expect(getMobileNavigationItems('admin_organization').map((item) => item.href)).toEqual([
       '/admin',
-      '/admin/programs',
       '/admin/agendas',
-      '/admin/events',
       '/admin/organization/registrations',
+      '/admin/organization/structure',
+      '/admin/organization/about',
     ])
     expect(getMobileNavigationItems('admin_komdigi').map((item) => item.href)).toEqual([
       '/admin',
-      '/admin/cms/content-plan',
-      '/admin/request-pamflet',
-      '/admin/kirim-tulisan',
+      '/admin/campaign',
       '/admin/cms/posts',
+      '/admin/kirim-tulisan',
+      '/admin/cms/media',
     ])
     expect(getMobileNavigationItems('user')).toEqual([])
   })
@@ -76,9 +72,20 @@ describe('dashboard navigation', () => {
     expect(getDashboardRouteRequirement('/admin/organization#periode')?.path).toBe('/admin/organization')
   })
 
-  it('protects Documents with a dedicated permission instead of the Letters domain', () => {
-    expect(getDashboardRouteRequirement('/admin/documents')?.permission).toBe('document_archive.view')
-    const documentItem = dashboardNavigationGroups.flatMap((group) => group.items).find((item) => item.href === '/admin/documents')
-    expect(documentItem?.permission).toBe('document_archive.view')
+  it('keeps frozen operational routes out of active navigation', () => {
+    const activeHrefs = dashboardNavigationGroups.flatMap((group) => group.items).map((item) => item.href)
+    expect(activeHrefs).not.toEqual(expect.arrayContaining(['/admin/events', '/admin/documents', '/admin/cms/content-plan', '/admin/request-pamflet']))
+  })
+
+  it('denies direct access to removed legacy modules', () => {
+    expect(getDashboardRouteRequirement('/admin/events')).toBeUndefined()
+    expect(getDashboardRouteRequirement('/admin/finance')).toBeUndefined()
+    expect(getDashboardRouteRequirement('/admin/reports')).toBeUndefined()
+    expect(getDashboardRouteRequirement('/admin/letters')).toBeUndefined()
+    expect(getDashboardRouteRequirement('/admin/documents')).toBeUndefined()
+    expect(getDashboardRouteRequirement('/admin/announcements')).toBeUndefined()
+    expect(getDashboardRouteRequirement('/admin/cms/content-plan')).toBeUndefined()
+    expect(getDashboardRouteRequirement('/admin/request-pamflet')).toBeUndefined()
+    expect(getDashboardRouteRequirement('/admin/cms/analytics')).toBeUndefined()
   })
 })

@@ -234,7 +234,7 @@ const dashboardBreadcrumbs = [
   ['/admin/campaign', 'CMS Beranda'],
   ['/admin/cms/posts', 'Publikasi'],
   ['/admin/cms/media', 'Media'],
-  ['/admin/cms/settings', 'SEO & Pengaturan'],
+  ['/admin/cms/settings', 'Kontak Publik'],
   ['/admin/programs', 'Program'],
   ['/admin/agendas', 'Agenda'],
   ['/admin/events', 'Kalender'],

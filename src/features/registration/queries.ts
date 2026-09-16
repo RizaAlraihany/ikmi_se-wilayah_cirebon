@@ -35,5 +35,24 @@ export const registrationQueries = {
         totalPages: Math.ceil(total / limit)
       }
     }
-  }
+  },
+
+  async getAnalytics() {
+    await requireRegistrationReviewAccess()
+
+    const year = new Date().getFullYear()
+    const startOfYear = new Date(year, 0, 1)
+    const registrations = await prisma.registration.findMany({
+      where: {
+        deletedAt: null,
+        createdAt: { gte: startOfYear },
+      },
+      select: { createdAt: true },
+    })
+
+    return Array.from({ length: 12 }, (_, index) => ({
+      month: new Date(year, index, 1).toLocaleDateString('id-ID', { month: 'short' }),
+      count: registrations.filter((registration) => registration.createdAt.getMonth() === index).length,
+    }))
+  },
 }

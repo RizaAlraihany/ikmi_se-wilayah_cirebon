@@ -507,9 +507,10 @@ function OfficerAvatar({ src, name }: { src: string | null; name: string }) {
 }
 
 export default async function TentangPage() {
-  const [structure, webConfig] = await Promise.all([
+  const [structure, webConfig, aboutContent] = await Promise.all([
     getActivePublicStructure(),
     webConfigQueries.getMergedWebConfig(),
+    webConfigQueries.getPublicAboutContent(),
   ]);
 
   const { period, assignments } = structure;
@@ -672,26 +673,12 @@ export default async function TentangPage() {
           <div className="about-reveal about-copy about-history-copy">
             <SectionHeading number="02" eyebrow="Sejarah" id="sejarah-title">
               <>
-                <span className="about-history-title-line">
-                  Lahir dari Ruang,
-                </span>
-                <span className="about-history-title-line">
-                  Tumbuh dalam Perjuangan
-                </span>
+                {aboutContent.historyTitle}
               </>
             </SectionHeading>
 
             <p>
-              IKMI berdiri pada <strong>1 Desember 1999</strong> dari semangat
-              mahasiswa Indramayu di Cirebon untuk memiliki ruang bersama.
-              Berawal dari obrolan sederhana di warung kopi, lahirlah organisasi
-              kedaerahan sebagai wadah silaturahmi dan persatuan mahasiswa
-              Indramayu.
-            </p>
-
-            <p>
-              Sejak itu, IKMI tumbuh dengan dua komitmen utama:
-              <strong> keilmuan dan kedaerahan</strong>.
+              {aboutContent.history}
             </p>
 
             <blockquote className="about-quote">

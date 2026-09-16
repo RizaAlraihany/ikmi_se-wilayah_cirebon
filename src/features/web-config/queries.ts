@@ -1,44 +1,24 @@
 import { prisma } from '@/core/database/prisma'
 import { defaultWebConfig } from './default-config'
+import { emptyPublicContactInfo, normalizePublicContactInfo, type PublicContactInfo } from './contact-contract'
+import { normalizeAboutContent, normalizeHomepageContent, type AboutContentInput, type HomepageContentInput } from './content-contract'
 
-export type PublicContactInfo = {
-  email: string | null
-  whatsapp: string | null
-  address: string | null
-  instagram: string | null
-  tiktok: string | null
-  youtube: string | null
-}
-
-const emptyPublicContactInfo: PublicContactInfo = {
-  email: null,
-  whatsapp: null,
-  address: null,
-  instagram: null,
-  tiktok: null,
-  youtube: null,
-}
-
-function readContactValue(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() ? value.trim() : null
-}
+export type { PublicContactInfo } from './contact-contract'
 
 function parsePublicContactInfo(valueJson: string): PublicContactInfo {
   try {
-    const parsed: unknown = JSON.parse(valueJson)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return emptyPublicContactInfo
-
-    const contact = parsed as Record<string, unknown>
-    return {
-      email: readContactValue(contact.email),
-      whatsapp: readContactValue(contact.whatsapp),
-      address: readContactValue(contact.address),
-      instagram: readContactValue(contact.instagram),
-      tiktok: readContactValue(contact.tiktok),
-      youtube: readContactValue(contact.youtube),
-    }
+    return normalizePublicContactInfo(JSON.parse(valueJson) as unknown)
   } catch {
     return emptyPublicContactInfo
+  }
+}
+
+function parseJsonValue(valueJson: string | undefined): unknown {
+  if (!valueJson) return undefined
+  try {
+    return JSON.parse(valueJson) as unknown
+  } catch {
+    return undefined
   }
 }
 
@@ -58,7 +38,25 @@ export const webConfigQueries = {
 
   async getPublicContactInfo(): Promise<PublicContactInfo> {
     const config = await this.getWebConfigByKey('contact_info')
-    return config ? parsePublicContactInfo(config.valueJson) : emptyPublicContactInfo
+    return config ? parsePublicContactInfo(config.valueJson) : normalizePublicContactInfo(defaultWebConfig.contact_info)
+  },
+
+  async getPublicHomepageContent(): Promise<HomepageContentInput> {
+    const [hero, profile, cta] = await Promise.all([
+      this.getWebConfigByKey('landing_hero'),
+      this.getWebConfigByKey('landing_about'),
+      this.getWebConfigByKey('landing_cta'),
+    ])
+    return normalizeHomepageContent({
+      landing_hero: parseJsonValue(hero?.valueJson),
+      landing_about: parseJsonValue(profile?.valueJson),
+      landing_cta: parseJsonValue(cta?.valueJson),
+    })
+  },
+
+  async getPublicAboutContent(): Promise<AboutContentInput> {
+    const config = await this.getWebConfigByKey('about_page')
+    return normalizeAboutContent(parseJsonValue(config?.valueJson))
   },
 
   async getMergedWebConfig() {

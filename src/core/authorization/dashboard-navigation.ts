@@ -62,25 +62,21 @@ export const dashboardNavigationGroups: readonly DashboardNavigationGroup[] = [
   {
     label: 'Organisasi',
     items: [
-      { href: '/admin/programs', label: 'Program', icon: 'calendar', permission: 'program.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
       { href: '/admin/agendas', label: 'Agenda', icon: 'calendar', permission: 'calendar.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
-      { href: '/admin/events', label: 'Kalender', icon: 'calendar', permission: 'calendar.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
       { href: '/admin/organization/registrations', label: 'Anggota', icon: 'book', permission: 'registration.review', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
       { href: '/admin/organization/structure', label: 'Struktur', icon: 'users', permission: 'structure.manage', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
-      { href: '/admin/documents', label: 'Dokumen', icon: 'archive', permission: 'document_archive.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
-      { href: '/admin/organization#periode', label: 'Periode', icon: 'calendar', permission: 'organization.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
+      { href: '/admin/organization/about', label: 'Konten Tentang', icon: 'profile', permission: 'organization.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
+      { href: '/admin/organization', label: 'Profil Organisasi', icon: 'profile', permission: 'organization.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
+      { href: '/admin/cms/settings', label: 'Kontak Publik', icon: 'settings', permission: null, roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
     ],
   },
   {
     label: 'Komdigi',
     items: [
-      { href: '/admin/cms/content-plan', label: 'Content Plan', icon: 'calendar', permission: 'content_plan.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
-      { href: '/admin/request-pamflet', label: 'Request Pamflet', icon: 'file', permission: 'content_plan.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
       { href: '/admin/kirim-tulisan', label: 'Kiriman Tulisan', icon: 'book', permission: 'post.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
       { href: '/admin/campaign', label: 'CMS Beranda', icon: 'image', permission: 'cms.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
       { href: '/admin/cms/posts', label: 'Publikasi', icon: 'newspaper', permission: 'post.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
       { href: '/admin/cms/media', label: 'Media', icon: 'archive', permission: 'cms.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
-      { href: '/admin/cms/settings', label: 'SEO & Pengaturan', icon: 'settings', permission: 'cms.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
     ],
   },
   {
@@ -94,8 +90,8 @@ export const dashboardNavigationGroups: readonly DashboardNavigationGroup[] = [
 
 const mobilePriorityHrefs: Record<DashboardRoleId, readonly string[]> = {
   super_admin: ['/admin', '/admin/users', '/admin/system/audit-logs'],
-  admin_organization: ['/admin', '/admin/programs', '/admin/agendas', '/admin/events', '/admin/organization/registrations'],
-  admin_komdigi: ['/admin', '/admin/cms/content-plan', '/admin/request-pamflet', '/admin/kirim-tulisan', '/admin/cms/posts'],
+  admin_organization: ['/admin', '/admin/agendas', '/admin/organization/registrations', '/admin/organization/structure', '/admin/organization/about'],
+  admin_komdigi: ['/admin', '/admin/campaign', '/admin/cms/posts', '/admin/kirim-tulisan', '/admin/cms/media'],
 }
 
 export function roleCanSeeNavigationItem(item: DashboardNavigationItem, roleId: string | null | undefined) {

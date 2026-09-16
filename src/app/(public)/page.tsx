@@ -203,13 +203,14 @@ function activityStateClass(status: ReturnType<typeof deriveProgramStatus>) {
 export default async function Home() {
   const now = new Date();
 
-  const [activeCampaigns, agendas, programs, posts, webConfig] =
+  const [activeCampaigns, agendas, programs, posts, webConfig, homepageContent] =
     await Promise.all([
       getActivePublicBanners(),
       getPublicAgendaOccurrences(),
       getPublicPrograms(),
       postQueries.getPublishedPosts(4),
       webConfigQueries.getMergedWebConfig(),
+      webConfigQueries.getPublicHomepageContent(),
     ]);
 
   const hero = webConfig.landing_hero;
@@ -346,17 +347,17 @@ export default async function Home() {
     <main id="view-beranda" className="home-page">
       <HeroSlideshow
         slides={heroSlides}
-        eyebrow="IKMI CIREBON"
-        title="Rumah Kedua Mahasiswa Indramayu"
-        description="Ruang bertemu, bertumbuh, dan bergerak bagi mahasiswa Indramayu di Cirebon—merawat identitas daerah, menguatkan intelektualitas, dan menghadirkan kontribusi nyata."
+        eyebrow={homepageContent.hero.eyebrow}
+        title={homepageContent.hero.title}
+        description={homepageContent.hero.subtitle}
         motto="Memayu Ing Jagat"
         primaryCta={{
-          label: "Lihat Agenda Terdekat",
-          href: "#agenda-terdekat",
+          label: homepageContent.hero.primaryCtaLabel,
+          href: homepageContent.hero.primaryCtaHref,
         }}
         secondaryCta={{
-          label: "Kenal IKMI",
-          href: "/tentang",
+          label: homepageContent.hero.secondaryCtaLabel,
+          href: homepageContent.hero.secondaryCtaHref,
         }}
       />
 
@@ -394,14 +395,14 @@ export default async function Home() {
             <p className="home-section-eyebrow">
               <span>TENTANG IKMI</span>
             </p>
-            <h2 id="home-profile-heading">Belajar dari Rantau, Bergerak untuk Daerah</h2>
+            <h2 id="home-profile-heading">{homepageContent.profile.title}</h2>
             <p className="hm-subhead">
               Rumah kedua yang hangat untuk belajar, bersilaturahmi, dan berkolaborasi di tanah rantau.
             </p>
 
             <div className="home-profile-description">
               <p>
-                IKMI bukan sekadar organisasi kedaerahan biasa, melainkan tempat berkumpulnya mahasiswa Indramayu di Cirebon untuk bersama-sama mengasah daya kritis, merawat kebersamaan, dan berkarya nyata demi kemajuan daerah.
+                {homepageContent.profile.description}
               </p>
             </div>
 
@@ -742,11 +743,9 @@ export default async function Home() {
             </div>
 
             <div>
-              <h2>Siap Bertumbuh Bersama IKMI?</h2>
+              <h2>{homepageContent.cta.title}</h2>
               <p>
-                Mari bergabung dengan keluarga besar IKMI Se-Wilayah Cirebon untuk
-                menjalin silaturahmi erat, mengasah potensi diri, serta berproses
-                bersama menghadirkan kontribusi nyata bagi bumi Indramayu.
+                {homepageContent.cta.description}
               </p>
             </div>
 

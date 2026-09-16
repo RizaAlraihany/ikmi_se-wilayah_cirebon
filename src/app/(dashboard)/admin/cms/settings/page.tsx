@@ -1,9 +1,8 @@
-import { auth } from '@/core/auth/auth'
-import { redirect } from 'next/navigation'
 import { webConfigQueries } from '@/features/web-config/queries'
 import { WebConfigForm } from './components/WebConfigForm'
-import { requireCmsUpdate } from '@/features/cms/access'
 import { defaultWebConfig } from '@/features/web-config/default-config'
+import { requireAuth, requireRoleForUser } from '@/core/authorization/guards'
+import { ORGANIZATION_DASHBOARD_ROLE_IDS } from '@/core/auth/roles'
 
 export const metadata = {
   title: 'Konfigurasi Web | IKMI Cirebon',
@@ -20,25 +19,18 @@ function safeJson(valueJson: string): unknown {
 }
 
 export default async function WebConfigPage() {
-  const session = await auth()
-  if (!session?.user?.id) redirect('/login')
-
-  await requireCmsUpdate(session.user.id)
-
-  const keys = ['landing_hero', 'landing_about', 'landing_sections', 'landing_cta', 'about_page', 'contact_info', 'seo_config']
-  const dbConfigs = await Promise.all(keys.map((key) => webConfigQueries.getWebConfigByKey(key)))
-
-  const configsMap: ConfigMap = {}
-  keys.forEach((key, index) => {
-    const config = dbConfigs[index]
-    configsMap[key] = config ? safeJson(config.valueJson) : defaultWebConfig[key as keyof typeof defaultWebConfig]
-  })
+  const actor = await requireAuth()
+  await requireRoleForUser(actor, ORGANIZATION_DASHBOARD_ROLE_IDS)
+  const config = await webConfigQueries.getWebConfigByKey('contact_info')
+  const configsMap: ConfigMap = {
+    contact_info: config ? safeJson(config.valueJson) : defaultWebConfig.contact_info,
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-extrabold text-primary">CMS & Web Config</h1>
-        <p className="mt-1 text-sm text-muted">Kelola landing page, tentang IKMI, kontak, dan SEO website publik.</p>
+        <h1 className="font-heading text-2xl font-extrabold text-primary">Kontak Publik</h1>
+        <p className="mt-1 text-sm text-muted">Kelola kanal kontak resmi yang digunakan halaman Kontak dan footer website publik.</p>
       </div>
 
       <WebConfigForm configs={configsMap} />

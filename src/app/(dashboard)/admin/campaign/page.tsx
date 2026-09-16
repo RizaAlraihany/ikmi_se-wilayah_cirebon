@@ -40,7 +40,7 @@ export default async function AdminCampaignPage() {
       <KomdigiPageHeader
         title="CMS Beranda"
         description="Atur campaign homepage, jadwal tayang, urutan prioritas, dan gambar khusus mobile."
-        action={<ButtonLink href="/admin/campaign/create"><Plus className="h-4 w-4" aria-hidden="true" />Tambah Banner</ButtonLink>}
+        action={<div className="flex flex-wrap gap-2"><ButtonLink href="/admin/campaign/editorial" variant="secondary">Konten Beranda</ButtonLink><ButtonLink href="/admin/campaign/create"><Plus className="h-4 w-4" aria-hidden="true" />Tambah Banner</ButtonLink></div>}
       />
 
       {banners.length > 0 ? (
