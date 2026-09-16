@@ -175,7 +175,7 @@ async function renderAdminDashboardPage() {
               <h1 className="font-heading text-2xl font-bold leading-tight text-balance text-primary sm:text-3xl">
                 {dashboard.title}
               </h1>
-              <p className="max-w-2xl text-sm leading-7 text-pretty text-text-secondary md:text-base">{dashboard.subtitle}</p>
+              <p className="dashboard-hero-subtitle max-w-2xl text-sm leading-7 text-pretty md:text-base">{dashboard.subtitle}</p>
             </div>
             {compactOrganizationMobile || compactKomdigiMobile ? (
               <div className="grid grid-cols-2 gap-px overflow-hidden border border-border bg-border md:hidden">
