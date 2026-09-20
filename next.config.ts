@@ -62,6 +62,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/tentang-kami',
+        destination: '/tentang',
+        permanent: true,
+      },
+      {
         source: '/event/:path*',
         destination: '/kegiatan',
         permanent: true,

@@ -18,8 +18,6 @@ import { publicationPath } from "@/features/blog/publication-routes";
 import { deriveAgendaStatus } from "@/features/agendas/domain";
 import { getActivePublicBanners } from "@/features/homepage-banner/queries";
 import { getPublicAgendaOccurrences } from "@/features/public/public-agenda";
-import { getPublicPrograms } from "@/features/public/public-program";
-import { deriveProgramStatus } from "@/features/programs/domain";
 import { webConfigQueries } from "@/features/web-config/queries";
 import {
   HeroSlideshow,
@@ -37,13 +35,6 @@ const quickAccess = [
     label: "Agenda",
     description: "Jadwal terdekat",
     Icon: CalendarDays,
-  },
-  {
-    id: "program",
-    href: "/kegiatan",
-    label: "Program",
-    description: "Lihat ruang partisipasi",
-    Icon: Users,
   },
   {
     id: "join",
@@ -183,38 +174,26 @@ function stripHtml(value: string | null | undefined) {
   return value?.replace(/<[^>]+>/g, "").trim() || "";
 }
 
-function activityStateLabel(status: ReturnType<typeof deriveProgramStatus>) {
-  if (status === "ONGOING") return "Sedang Berjalan";
-  if (status === "COMPLETED") return "Selesai";
-
-  return "Akan Datang";
-}
-
-function activityStateClass(status: ReturnType<typeof deriveProgramStatus>) {
-  if (status === "ONGOING") return "is-live";
-  if (status === "COMPLETED") return "is-completed";
-
-  return "is-upcoming";
-}
-
-
-
+const campaignPhasePresentation = {
+  BEFORE: { label: "Akan Datang", className: "is-upcoming" },
+  PRA: { label: "Sedang Berjalan", className: "is-live" },
+  AFTER: { label: "Selesai", className: "is-completed" },
+  GENERAL: { label: "Kegiatan Pilihan", className: "is-upcoming" },
+} as const;
 
 export default async function Home() {
   const now = new Date();
 
-  const [activeCampaigns, agendas, programs, posts, webConfig, homepageContent] =
+  const [activeCampaigns, agendas, posts, webConfig, homepageContent] =
     await Promise.all([
       getActivePublicBanners(),
       getPublicAgendaOccurrences(),
-      getPublicPrograms(),
       postQueries.getPublishedPosts(4),
       webConfigQueries.getMergedWebConfig(),
       webConfigQueries.getPublicHomepageContent(),
     ]);
 
   const hero = webConfig.landing_hero;
-  const landingSections = webConfig.landing_sections;
 
   /*
    * Hero sekarang hanya memakai foto dokumentasi.
@@ -229,14 +208,8 @@ export default async function Home() {
       alt: `Dokumentasi IKMI Cirebon ${index + 1}`,
     }));
 
-  const aboutImage =
-    landingSections.aboutImageUrl?.trim() ||
-    heroSlides[0]?.desktopImage ||
-    heroSlides[0]?.mobileImage ||
-    "https://res.cloudinary.com/fvggnar7/image/upload/v1789385069/BPHU.png";
-  const aboutImageAlt =
-    landingSections.aboutImageAlt?.trim() ||
-    "Dokumentasi kebersamaan IKMI Cirebon";
+  const aboutImage = homepageContent.profile.imageUrl;
+  const aboutImageAlt = homepageContent.profile.imageAlt;
 
   /*
    * Agenda Beranda mengikuti bulan berjalan di zona waktu Asia/Jakarta.
@@ -258,90 +231,24 @@ export default async function Home() {
     .sort((left, right) => left.start.getTime() - right.start.getTime())
     .slice(0, 3);
 
-  /*
-   * Banner Kegiatan Terdekat:
-   * 1. prioritaskan program yang sedang berjalan;
-   * 2. jika tidak ada, ambil upcoming paling dekat;
-   * 3. jika tidak ada, tampilkan program selesai terbaru sebagai AFTER state.
-   */
-  const programStates = programs.map((program) => ({
-    program,
-    status: deriveProgramStatus(program, now),
-  }));
-
-  const ongoingProgram =
-    programStates
-      .filter(({ status }) => status === "ONGOING")
-      .sort((left, right) => {
-        const a = left.program.plannedStart?.getTime() ?? 0;
-        const b = right.program.plannedStart?.getTime() ?? 0;
-        return b - a;
-      })[0] ?? null;
-
-  const upcomingProgram =
-    programStates
-      .filter(({ status }) => status === "UPCOMING")
-      .sort((left, right) => {
-        const a =
-          left.program.plannedStart?.getTime() ?? Number.MAX_SAFE_INTEGER;
-        const b =
-          right.program.plannedStart?.getTime() ?? Number.MAX_SAFE_INTEGER;
-        return a - b;
-      })[0] ?? null;
-
-  const completedProgram =
-    programStates
-      .filter(({ status }) => status === "COMPLETED")
-      .sort((left, right) => {
-        const a =
-          left.program.plannedEnd?.getTime() ??
-          left.program.plannedStart?.getTime() ??
-          0;
-        const b =
-          right.program.plannedEnd?.getTime() ??
-          right.program.plannedStart?.getTime() ??
-          0;
-        return b - a;
-      })[0] ?? null;
-
-  const featuredActivity =
-    ongoingProgram ?? upcomingProgram ?? completedProgram ?? null;
-
-  const featuredCampaign = featuredActivity
-    ? (activeCampaigns.find((campaign) => {
-        const campaignSlug = campaign.program?.slug;
-        const campaignName = campaign.program?.name;
-
-        return (
-          (campaignSlug &&
-            featuredActivity.program.slug &&
-            campaignSlug === featuredActivity.program.slug) ||
-          (campaignName && campaignName === featuredActivity.program.name)
-        );
-      }) ?? null)
-    : null;
-
+  const featuredCampaign = activeCampaigns[0] ?? null;
   const campaignRecord = asRecord(featuredCampaign);
-  const featuredImage = readString(campaignRecord, [
-    "desktopImage",
-    "mobileImage",
-  ]);
-
-  const campaignCtaLabel =
-    readString(campaignRecord, ["ctaLabel"]) ||
-    (featuredActivity?.status === "COMPLETED"
-      ? "Lihat Jejak Kegiatan"
-      : "Lihat Detail Kegiatan");
-
-  const configuredCampaignCtaHref =
-    readString(campaignRecord, ["ctaUrl"]) ||
-    (featuredActivity?.program.slug
-      ? `/program/${featuredActivity.program.slug}`
-      : "/program");
-
-  const campaignCtaHref = /^\/program(?:\/|$)/.test(configuredCampaignCtaHref)
-    ? "/kegiatan"
-    : configuredCampaignCtaHref;
+  const campaignDesktopImage = readString(campaignRecord, ["desktopImage"]);
+  const campaignMobileImage = readString(campaignRecord, ["mobileImage"]);
+  const campaignHeadline = readString(campaignRecord, ["headline"]);
+  const campaignSupportingText = readString(campaignRecord, ["supportingText"]);
+  const campaignCtaLabel = readString(campaignRecord, ["ctaLabel"]);
+  const configuredCampaignCtaHref = readString(campaignRecord, ["ctaUrl"]);
+  const campaignCtaHref = configuredCampaignCtaHref
+    ? /^\/program(?:\/|$)/.test(configuredCampaignCtaHref)
+      ? "/kegiatan"
+      : configuredCampaignCtaHref
+    : featuredCampaign?.program
+      ? "/kegiatan"
+      : null;
+  const campaignPhase = featuredCampaign
+    ? campaignPhasePresentation[featuredCampaign.phase]
+    : null;
 
   return (
     <main id="view-beranda" className="home-page">
@@ -413,8 +320,8 @@ export default async function Home() {
                 </span>
                 <p className="home-profile-quote-text">Memayu Ing Jagat</p>
               </div>
-              <Link href="/tentang" className="home-profile-quote-link">
-                Selengkapnya tentang IKMI <ArrowRight aria-hidden="true" />
+              <Link href={homepageContent.profile.ctaHref} className="home-profile-quote-link">
+                {homepageContent.profile.ctaLabel} <ArrowRight aria-hidden="true" />
               </Link>
             </blockquote>
           </div>
@@ -516,66 +423,45 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* KANAN — Featured Program */}
             <div className="hm-col-program">
-              <p className="hm-col-label">Kegiatan Terdekat</p>
+              <p className="hm-col-label">Kegiatan Pilihan</p>
 
-              {featuredActivity ? (
+              {featuredCampaign && campaignDesktopImage && campaignMobileImage && campaignHeadline && campaignPhase ? (
                 <div className="hm-program-card">
                   <div className="hm-program-media">
-                    {featuredImage ? (
-                      <Image
-                        src={featuredImage}
-                        alt={`Dokumentasi ${featuredActivity.program.name}`}
-                        fill
-                        sizes="(min-width: 1024px) 28vw, 100vw"
-                        className="hm-cover-img"
-                      />
-                    ) : (
-                      <div className="hm-media-empty" aria-hidden="true" />
-                    )}
-                    <span
-                      className={`hm-status-badge hm-status-${activityStateClass(featuredActivity.status)}`}
-                    >
-                      {activityStateLabel(featuredActivity.status)}
+                    <Image
+                      src={campaignDesktopImage}
+                      alt={campaignHeadline}
+                      fill
+                      sizes="(min-width: 1024px) 28vw, 100vw"
+                      className="hm-cover-img hidden md:block"
+                    />
+                    <Image
+                      src={campaignMobileImage}
+                      alt=""
+                      fill
+                      sizes="100vw"
+                      className="hm-cover-img md:hidden"
+                    />
+                    <span className={`hm-status-badge hm-status-${campaignPhase.className}`}>
+                      {campaignPhase.label}
                     </span>
                   </div>
 
                   <div className="hm-program-body">
-                    <h3>{featuredActivity.program.name}</h3>
-
-                    <p className="hm-program-meta">
-                      <CalendarDays aria-hidden="true" />
-                      <time
-                        dateTime={
-                          featuredActivity.program.plannedStart?.toISOString() ||
-                          undefined
-                        }
-                      >
-                        {formatDate(featuredActivity.program.plannedStart)}
-                      </time>
-                    </p>
-
-                    <p className="hm-program-desc">
-                      {stripHtml(featuredActivity.program.description) ||
-                        "Informasi kegiatan akan diperbarui oleh pengurus IKMI Cirebon."}
-                    </p>
-
-                    <Link
-                      href={campaignCtaHref}
-                      className="hm-text-link"
-                    >
-                      {campaignCtaLabel}
-                      <ArrowRight aria-hidden="true" />
-                    </Link>
+                    <h3>{campaignHeadline}</h3>
+                    {campaignSupportingText ? (
+                      <p className="hm-program-desc">{campaignSupportingText}</p>
+                    ) : null}
+                    {campaignCtaHref ? (
+                      <Link href={campaignCtaHref} className="hm-text-link">
+                        {campaignCtaLabel || "Lihat Kegiatan"}
+                        <ArrowRight aria-hidden="true" />
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
-              ) : (
-                <div className="hm-empty-row">
-                  <FileText aria-hidden="true" />
-                  <span>Program terbaru akan ditampilkan ketika dipublikasikan.</span>
-                </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -750,10 +636,10 @@ export default async function Home() {
             </div>
 
             <Link
-              href="/gabung"
+              href={homepageContent.cta.href}
               className="public-text-link about-closing-action"
             >
-              Gabung IKMI Sekarang
+              {homepageContent.cta.label}
               <ArrowRight aria-hidden="true" />
             </Link>
           </div>

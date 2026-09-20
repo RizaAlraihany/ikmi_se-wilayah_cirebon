@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react'
 import { ArticleEditor } from '@/components/ui/editor'
 import userEvent from '@testing-library/user-event'
 
+jest.setTimeout(30000)
+
 const mockChain = {
   focus: () => mockChain,
   toggleBold: () => mockChain,

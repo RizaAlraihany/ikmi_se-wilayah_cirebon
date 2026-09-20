@@ -43,7 +43,7 @@ export default async function AdminEditPostPage({ params }: { params: Promise<{ 
       <Card>
         <CardContent className="space-y-5 p-6">
           <h2 className="font-heading text-lg font-bold text-primary">Publication Workflow</h2>
-          <PostWorkflowActions postId={post.id} status={post.status} />
+          <PostWorkflowActions postId={post.id} status={post.status} canPublishDirectly={!post.writingSubmissionId} />
         </CardContent>
       </Card>
 

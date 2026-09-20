@@ -24,7 +24,9 @@ export async function submitRegistrationAction(data: RegistrationCreateInput) {
     checkHoneypot(parsed.bot_field)
 
     const registration = await registrationService.submitRegistration(parsed)
+    revalidatePath('/admin/organization/registrations')
     return { success: true, registrationNumber: registration.registrationNumber }
+
   } catch (error) {
     if (error instanceof SpamError) return { error: 'Terdeteksi aktivitas spam' }
     return { error: safeActionError(error, 'Pendaftaran belum dapat disimpan.', 'registration.submit') }

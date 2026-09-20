@@ -25,8 +25,21 @@ type HeroSlideshowProps = {
 
 const AUTOPLAY_DELAY = 10000;
 
+function splitTitle(title: string) {
+  const words = title.trim().split(/\s+/);
+  const splitAt = words.slice(1).reduce((best, _, index) => {
+    const position = index + 1;
+    const difference = Math.abs(words.slice(0, position).join(" ").length - words.slice(position).join(" ").length);
+    const bestDifference = Math.abs(words.slice(0, best).join(" ").length - words.slice(best).join(" ").length);
+    return difference < bestDifference ? position : best;
+  }, 1);
+
+  return [words.slice(0, splitAt).join(" "), words.slice(splitAt).join(" ")];
+}
+
 export function HeroSlideshow({ slides, eyebrow, title, description, motto, primaryCta, secondaryCta }: HeroSlideshowProps) {
   const validSlides = useMemo(() => slides.filter((slide) => Boolean(slide.desktopImage) || Boolean(slide.mobileImage)), [slides]);
+  const titleLines = splitTitle(title);
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -44,7 +57,7 @@ export function HeroSlideshow({ slides, eyebrow, title, description, motto, prim
     <div className="home-hero-content">
       <div className="home-hero-copy">
         <p className="home-hero-eyebrow">{eyebrow}</p>
-        <h1 id="home-hero-title">{title}</h1>
+        <h1 id="home-hero-title">{titleLines.map((line) => <span key={line}>{line}</span>)}</h1>
         <p className="home-hero-description">{description}</p>
         <blockquote className="home-hero-motto"><span aria-hidden="true">“</span>{motto}<span aria-hidden="true">”</span></blockquote>
         <div className="home-hero-actions"><Link href={primaryCta.href} className="home-hero-primary">{primaryCta.label}<ArrowRight aria-hidden="true" /></Link><Link href={secondaryCta.href} className="home-hero-secondary">{secondaryCta.label}<ArrowRight aria-hidden="true" /></Link></div>

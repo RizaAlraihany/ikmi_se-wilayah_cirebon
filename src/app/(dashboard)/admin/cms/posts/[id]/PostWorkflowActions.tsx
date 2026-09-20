@@ -21,7 +21,7 @@ import {
 
 type WorkflowAction = 'submit' | 'approve' | 'publish' | 'archive' | 'delete' | 'revision' | 'schedule'
 
-export function PostWorkflowActions({ postId, status }: { postId: string; status: string }) {
+export function PostWorkflowActions({ postId, status, canPublishDirectly = false }: { postId: string; status: string; canPublishDirectly?: boolean }) {
   const router = useRouter()
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null)
   const [pending, setPending] = useState<WorkflowAction | null>(null)
@@ -83,7 +83,10 @@ export function PostWorkflowActions({ postId, status }: { postId: string; status
       {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
       <div className="flex flex-wrap gap-2">
         {status === 'DRAFT' || status === 'REVISION' ? (
-          <Button type="button" size="sm" onClick={() => void run('submit')} disabled={Boolean(pending)}><Send className="h-4 w-4" aria-hidden="true" />Kirim Review</Button>
+          <>
+            <Button type="button" size="sm" onClick={() => void run('submit')} disabled={Boolean(pending)}><Send className="h-4 w-4" aria-hidden="true" />Kirim Review</Button>
+            {canPublishDirectly ? <Button type="button" variant="secondary" size="sm" onClick={() => void run('publish')} disabled={Boolean(pending)}><UploadCloud className="h-4 w-4" aria-hidden="true" />Publikasikan Sekarang</Button> : null}
+          </>
         ) : null}
         {status === 'PENDING_REVIEW' ? (
           <>
@@ -98,7 +101,7 @@ export function PostWorkflowActions({ postId, status }: { postId: string; status
           </>
         ) : null}
         {status === 'SCHEDULED' ? <Button type="button" size="sm" onClick={() => void run('publish')} disabled={Boolean(pending)}><UploadCloud className="h-4 w-4" aria-hidden="true" />Publikasikan Sekarang</Button> : null}
-        {status !== 'ARCHIVED' ? <Button type="button" variant="secondary" size="sm" onClick={() => void run('archive')} disabled={Boolean(pending)}><Archive className="h-4 w-4" aria-hidden="true" />Arsipkan</Button> : null}
+        {status === 'PUBLISHED' ? <Button type="button" variant="secondary" size="sm" onClick={() => void run('archive')} disabled={Boolean(pending)}><Archive className="h-4 w-4" aria-hidden="true" />Arsipkan</Button> : null}
         <Button type="button" variant="danger" size="sm" onClick={() => setDeleteOpen(true)} disabled={Boolean(pending)}><Trash2 className="h-4 w-4" aria-hidden="true" />Hapus</Button>
       </div>
 

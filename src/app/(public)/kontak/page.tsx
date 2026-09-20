@@ -27,13 +27,17 @@ const messageChecklist = [
 ]
 
 export default async function ContactPage() {
-  const contact = await webConfigQueries.getPublicContactInfo()
+  const [contact, pageHeroes] = await Promise.all([
+    webConfigQueries.getPublicContactInfo(),
+    webConfigQueries.getPublicPageHeroes(),
+  ])
+  const kontakHero = pageHeroes.kontak
 
   return (
     <main className="public-page-root contact-editorial" id="view-kontak">
       <header className="public-editorial-hero" aria-labelledby="contact-heading">
         <Image
-          src="https://res.cloudinary.com/dsgldeuuy/image/upload/v1781230578/komdigi_mht7vt.png"
+          src={kontakHero.imageUrl}
           alt=""
           fill
           priority
@@ -45,14 +49,8 @@ export default async function ContactPage() {
         <div className="public-editorial-container public-editorial-hero-grid">
           <div className="public-editorial-hero-copy">
             <PublicBreadcrumb items={[{ label: 'Kontak' }]} tone="inverse" />
-            <h1 id="contact-heading">
-              Hubungi IKMI
-              <span>Cirebon.</span>
-            </h1>
-            <p className="public-editorial-lead">
-              Gunakan kanal resmi organisasi untuk pertanyaan, undangan, kerja
-              sama, dan korespondensi publikasi.
-            </p>
+            <h1 id="contact-heading">{kontakHero.title}</h1>
+            <p className="public-editorial-lead">{kontakHero.lead}</p>
           </div>
 
           <div className="contact-official-channel">

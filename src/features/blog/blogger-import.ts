@@ -8,10 +8,10 @@ import { requirePublisher } from '@/features/cms/access'
 import type { SessionUser } from '@/core/authorization/rbac'
 import { cloudinaryFolders, storageService } from '@/core/storage/storage-service'
 import { MAX_IMAGE_SIZE, validateImageSignature } from '@/core/storage/file-validator'
+import { PUBLICATION_CATEGORY_SLUGS } from '@/features/categories/schemas'
 
 const BLOGGER_SOURCE_PROVIDER = 'BLOGGER'
 const MAX_IMPORT_POSTS = 100
-const publicationCategorySlugs = ['berita', 'opini', 'artikel', 'kajian'] as const
 const BLOGGER_IMAGE_HOSTS = ['blogger.googleusercontent.com', 'blogspot.com', 'bp.blogspot.com', 'ggpht.com']
 
 const bloggerPostSchema = z.object({
@@ -134,7 +134,7 @@ async function resolveUniqueSlug(tx: TxClient, candidate: string) {
 }
 
 function isPublicationCategory(category: { slug: string }) {
-  return publicationCategorySlugs.includes(category.slug.toLowerCase() as (typeof publicationCategorySlugs)[number])
+  return PUBLICATION_CATEGORY_SLUGS.includes(category.slug.toLowerCase() as (typeof PUBLICATION_CATEGORY_SLUGS)[number])
 }
 
 function isBloggerImageUrl(value: string) {

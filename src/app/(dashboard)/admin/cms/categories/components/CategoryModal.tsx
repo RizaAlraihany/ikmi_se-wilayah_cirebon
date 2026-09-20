@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { PUBLICATION_CATEGORY_SLUGS, categoryCreateSchema } from '@/features/categories/schemas'
+import { PUBLICATION_CATEGORY_SLUGS, PUBLICATION_CATEGORY_NAMES, categoryCreateSchema } from '@/features/categories/schemas'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,18 +18,10 @@ type CategoryModalValue = {
 
 export function CategoryModal({ category, onClose }: { category: CategoryModalValue | null; onClose: () => void }) {
   const router = useRouter()
-  const [name, setName] = useState(category?.name || '')
   const [slug, setSlug] = useState(category?.slug || '')
   const [description, setDescription] = useState(category?.description || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  const handleNameChange = (val: string) => {
-    setName(val)
-    if (!category) {
-      setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''))
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,6 +29,7 @@ export function CategoryModal({ category, onClose }: { category: CategoryModalVa
     setError('')
 
     try {
+      const name = category ? PUBLICATION_CATEGORY_NAMES[category.slug as keyof typeof PUBLICATION_CATEGORY_NAMES] : ''
       const parsed = categoryCreateSchema.safeParse({ name, slug, description })
       if (!parsed.success) {
         setError(parsed.error.issues[0].message)
@@ -54,6 +47,8 @@ export function CategoryModal({ category, onClose }: { category: CategoryModalVa
     }
   }
 
+  const canonicalName = category ? PUBLICATION_CATEGORY_NAMES[category.slug as keyof typeof PUBLICATION_CATEGORY_NAMES] : ''
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-primary/45 p-0 backdrop-blur-sm sm:items-center sm:p-4">
       <div className="w-full max-w-lg rounded-t-2xl border-t-4 border-t-accent bg-surface p-5 shadow-card ring-1 ring-border sm:rounded-2xl sm:p-6">
@@ -70,27 +65,37 @@ export function CategoryModal({ category, onClose }: { category: CategoryModalVa
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="category-name" className="text-sm font-semibold text-primary">Nama Kategori</label>
-            <Input
-              id="category-name"
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              placeholder="Contoh: Berita"
-              required
-            />
+            {category ? (
+              <Input
+                id="category-name"
+                value={canonicalName}
+                readOnly
+                className="bg-surface"
+              />
+            ) : (
+              <Select
+                id="category-name"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                required
+              >
+                <option value="" disabled>Pilih kategori</option>
+                {PUBLICATION_CATEGORY_SLUGS.map((value) => <option key={value} value={value}>{PUBLICATION_CATEGORY_NAMES[value]}</option>)}
+              </Select>
+            )}
           </div>
-          <div className="space-y-2">
-            <label htmlFor="category-slug" className="text-sm font-semibold text-primary">Kategori publikasi</label>
-            <Select
-              id="category-slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              required
-            >
-              <option value="" disabled>Pilih kategori</option>
-              {PUBLICATION_CATEGORY_SLUGS.map((value) => <option key={value} value={value}>{value[0].toUpperCase() + value.slice(1)}</option>)}
-            </Select>
-            <p className="text-xs text-text-secondary">Kategori yang sudah digunakan artikel tidak dapat dipindahkan.</p>
-          </div>
+          {category && (
+            <div className="space-y-2">
+              <label htmlFor="category-slug" className="text-sm font-semibold text-primary">Slug</label>
+              <Input
+                id="category-slug"
+                value={category.slug}
+                readOnly
+                className="bg-surface"
+              />
+              <p className="text-xs text-text-secondary">Slug tidak dapat diubah.</p>
+            </div>
+          )}
           <div className="space-y-2">
             <label htmlFor="category-description" className="text-sm font-semibold text-primary">Deskripsi</label>
             <Textarea

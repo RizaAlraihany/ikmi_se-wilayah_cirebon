@@ -1,4 +1,5 @@
 import { auth } from '@/core/auth/auth'
+import { revalidatePath } from 'next/cache'
 import { ForbiddenError, UnauthorizedError, ValidationError } from '@/core/errors/custom-errors'
 import { assignStructureAction } from '@/features/structure/actions'
 import { structureService } from '@/features/structure/services'
@@ -260,6 +261,7 @@ describe('Structure organization domain', () => {
     await expect(assignStructureAction('period-1', {
       personType: 'MEMBER', personId: 'member-1', departmentId: 'unit-1', positionId: 'position-1', sortOrder: 0,
     })).resolves.toMatchObject({ success: true })
+    expect(revalidatePath).toHaveBeenCalledWith('/tentang')
 
     const komdigi = { ...organizationActor, id: 'komdigi-action', roleId: 'admin_komdigi' }
     allowActionActor(komdigi)

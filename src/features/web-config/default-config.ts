@@ -8,7 +8,7 @@ export const defaultWebConfig = {
     primaryCtaLabel: 'Lihat FAQ',
     primaryCtaHref: '/#faq',
     secondaryCtaLabel: 'Jelajahi Visi Misi',
-    secondaryCtaHref: '/tentang-kami',
+    secondaryCtaHref: '/tentang',
     pillarsLabel: 'Garis Besar Haluan IKMI',
     pillars: [
       { title: 'Intelektual', description: 'Peningkatan kapasitas akademik dan riset.' },
@@ -44,6 +44,10 @@ export const defaultWebConfig = {
   landing_about: {
     title: 'Memayu Ing Jagat',
     description: 'Kami hadir bukan sekadar sebagai organisasi kedaerahan, melainkan ruang bertumbuh. IKMI menyatukan mahasiswa Indramayu di Cirebon untuk menjadi penggerak kesadaran kritis, menjaga nilai historis, dan membangun jejaring yang berdampak positif bagi kemajuan daerah.',
+    imageUrl: 'https://res.cloudinary.com/fvggnar7/image/upload/v1789385069/BPHU.png',
+    imageAlt: 'Dokumentasi kebersamaan IKMI Cirebon',
+    ctaLabel: 'Selengkapnya tentang IKMI',
+    ctaHref: '/tentang',
     badges: ['Humanis', 'Akademis', 'Modern']
   },
   landing_sections: {
@@ -72,11 +76,35 @@ export const defaultWebConfig = {
   },
   landing_cta: {
     title: 'Jadilah Bagian dari Perubahan',
-    description: 'Bersama IKMI, mari membangun jejaring, mengasah potensi, dan memberikan dampak bagi Indramayu.'
+    description: 'Bersama IKMI, mari membangun jejaring, mengasah potensi, dan memberikan dampak bagi Indramayu.',
+    label: 'Gabung IKMI Sekarang',
+    href: '/gabung',
   },
   about_page: {
-    historyTitle: 'Sejarah IKMI',
-    history: 'Ikatan Keluarga Mahasiswa Indramayu (IKMI) Se-Wilayah Cirebon didirikan sebagai respons atas kebutuhan mahasiswa asal Indramayu yang menempuh pendidikan di Cirebon untuk memiliki wadah silaturahmi, diskusi, dan aksi.',
+    hero: {
+      title: 'Rumah Mahasiswa',
+      accent: 'Indramayu di Cirebon',
+      lead: 'IKMI Se-Wilayah Cirebon adalah ruang bagi mahasiswa asal Indramayu di Cirebon untuk bersilaturahmi, bertumbuh, dan bergerak bersama. Di sini, kekeluargaan bertemu dengan pengembangan potensi dan kontribusi nyata bagi daerah.',
+      motto: 'Memayu Ing Jagat',
+      imageUrl: 'https://res.cloudinary.com/fvggnar7/image/upload/v1789385069/BPHU.png',
+    },
+    profile: {
+      title: 'Rumah Mahasiswa Indramayu',
+      description: 'IKMI adalah ruang bagi mahasiswa Indramayu untuk bertemu, bertumbuh, dan bergerak bersama melalui ikatan kekeluargaan, menjaga identitas, menebar kebaikan, dan menyiapkan aksi nyata untuk daerah.',
+      quote: 'Dari tanah rantau, kami belajar. Untuk Indramayu, kami bergerak.',
+      imageUrl: 'https://res.cloudinary.com/fvggnar7/image/upload/v1789385069/BPHU.png',
+    },
+    history: {
+      title: 'Sejarah IKMI',
+      description: 'Ikatan Keluarga Mahasiswa Indramayu (IKMI) Se-Wilayah Cirebon didirikan sebagai respons atas kebutuhan mahasiswa asal Indramayu yang menempuh pendidikan di Cirebon untuk memiliki wadah silaturahmi, diskusi, dan aksi.',
+      quote: 'Dari percakapan sederhana, lahir perjalanan lintas generasi.',
+    },
+    structureCta: {
+      title: 'Berbeda Peran, Satu Tujuan',
+      description: 'Setiap departemen mempunyai fokus yang berbeda. Namun semuanya bergerak menuju arah yang sama: membangun organisasi yang kuat, anggota yang berkembang, dan kontribusi yang terasa bagi masyarakat.',
+      label: 'Lihat Seluruh Pengurus',
+      href: '/struktur',
+    },
     vision: 'Mewujudkan organisasi mahasiswa daerah yang inklusif, progresif, dan berdaya saing sebagai katalisator perubahan sosial di Indramayu melalui kolaborasi di tanah Cirebon.',
     missions: [
       'Membangun solidaritas dan kepedulian antar mahasiswa Indramayu di Cirebon.',
@@ -182,6 +210,33 @@ export const defaultWebConfig = {
     instagram: 'https://instagram.com/ikmicirebon',
     tiktok: '',
     youtube: ''
+  },
+  page_heroes: {
+    kegiatan: {
+      title: 'Agenda IKMI Cirebon',
+      lead: 'Agenda publik diurutkan berdasarkan waktu agar rencana kegiatan mudah dipindai.',
+      imageUrl: 'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781225577/ChatGPT_Image_12_Jun_2026_07.49.13_wzkx4s.png',
+    },
+    publikasi: {
+      title: 'Indeks Publikasi',
+      lead: 'Berita, kajian, artikel, dan opini yang diterbitkan IKMI Cirebon untuk merawat pengetahuan, percakapan, dan gagasan bersama.',
+      imageUrl: 'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781230578/komdigi_mht7vt.png',
+    },
+    'kirim-tulisan': {
+      title: 'Kirim Tulisan',
+      lead: 'Tulis opini, artikel, atau kajian langsung dari halaman ini. Prosesnya tanpa akun dan langsung masuk ke antrean editorial.',
+      imageUrl: 'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781230548/psda_yufbw9.png',
+    },
+    gabung: {
+      title: 'Tumbuh, belajar, dan bergerak bersama.',
+      lead: 'Ceritakan sedikit tentang diri Anda. Data ini membantu pengurus mengenal dan menindaklanjuti minat bergabung Anda dengan tepat.',
+      imageUrl: 'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781228245/ChatGPT_Image_12_Jun_2026_08.31.44_bnzje5.png',
+    },
+    kontak: {
+      title: 'Hubungi IKMI Cirebon.',
+      lead: 'Gunakan kanal resmi organisasi untuk pertanyaan, undangan, kerja sama, dan korespondensi publikasi.',
+      imageUrl: 'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781230578/komdigi_mht7vt.png',
+    },
   },
   seo_config: {
     metaTitle: 'IKMI Cirebon | Ikatan Keluarga Mahasiswa Indramayu Se-Wilayah Cirebon',

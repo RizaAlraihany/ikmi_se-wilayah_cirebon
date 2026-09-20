@@ -79,8 +79,8 @@ describe('authorization guards', () => {
   it('uses the route map for known dashboard paths and denies unknown paths', async () => {
     canMock.mockResolvedValue(true)
 
-    await expect(requireDashboardRouteAccess('/admin/management')).resolves.toEqual(activeUser)
-    expect(canMock).toHaveBeenCalledWith('user.view', activeUser)
+    await expect(requireDashboardRouteAccess('/admin/organization')).resolves.toEqual(activeUser)
+    expect(canMock).toHaveBeenCalledWith('organization.view', activeUser)
     await expect(requireDashboardRouteAccess('/admin/not-yet-mapped')).rejects.toBeInstanceOf(ForbiddenError)
   })
 

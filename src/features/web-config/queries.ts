@@ -1,9 +1,10 @@
 import { prisma } from '@/core/database/prisma'
 import { defaultWebConfig } from './default-config'
 import { emptyPublicContactInfo, normalizePublicContactInfo, type PublicContactInfo } from './contact-contract'
-import { normalizeAboutContent, normalizeHomepageContent, type AboutContentInput, type HomepageContentInput } from './content-contract'
+import { normalizeAboutContent, normalizeHomepageContent, normalizePageHeroesContent, type AboutContentInput, type HomepageContentInput, type PageHeroesContentInput } from './content-contract'
 
 export type { PublicContactInfo } from './contact-contract'
+export type { PageHeroesContentInput } from './content-contract'
 
 function parsePublicContactInfo(valueJson: string): PublicContactInfo {
   try {
@@ -57,6 +58,11 @@ export const webConfigQueries = {
   async getPublicAboutContent(): Promise<AboutContentInput> {
     const config = await this.getWebConfigByKey('about_page')
     return normalizeAboutContent(parseJsonValue(config?.valueJson))
+  },
+
+  async getPublicPageHeroes(): Promise<PageHeroesContentInput> {
+    const config = await this.getWebConfigByKey('page_heroes')
+    return normalizePageHeroesContent(parseJsonValue(config?.valueJson))
   },
 
   async getMergedWebConfig() {

@@ -244,6 +244,7 @@ export async function submitKaryaTulisAction(formData: FormData) {
           console.error('Finalize DOCX import images error:', cleanupError)
         }
       }
+      revalidatePath('/admin/kirim-tulisan')
       return { success: true, id: created.id, submissionNumber: created.submissionNumber }
     } catch (error) {
       if (upload) await storageService.deleteFile(upload.publicId, 'raw', 'authenticated').catch(() => undefined)
@@ -412,6 +413,7 @@ export async function submitKaryaTulisRevisionAction(token: string, formData: Fo
           },
         })
       })
+      revalidatePath('/admin/kirim-tulisan')
       return { success: true }
     } catch (error) {
       await storageService.deleteFile(upload.publicId, 'raw').catch(() => undefined)

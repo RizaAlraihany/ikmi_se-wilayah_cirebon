@@ -61,19 +61,15 @@ describe('public activity routes', () => {
     expect(existsSync(resolve(process.cwd(), 'src/app/(public)/kegiatan/[slug]/page.tsx'))).toBe(false)
   })
 
-  it('keeps the frozen Program compatibility detail bounded to its public DTO', () => {
-    const page = source('src/app/(public)/program/[slug]/page.tsx')
-    const query = source('src/features/public/public-program.ts')
+  it('keeps frozen Program URLs as compatibility redirects without active promotion', () => {
+    const list = source('src/app/(public)/program/page.tsx')
+    const detail = source('src/app/(public)/program/[slug]/page.tsx')
 
-    expect(page).toContain('resolveProgramImages(program)')
-    expect(page).toContain('program.posts.map')
-    expect(page).not.toContain('program.albums')
-    expect(page).not.toContain('/galeri/')
-    expect(page).toContain('timeZone: \'Asia/Jakarta\'')
-    expect(query).toContain("status: 'PUBLISHED'")
-    expect(query).not.toContain('albums:')
-    expect(query).not.toContain('budgetPlan')
-    expect(query).not.toContain('plannedBudget')
+    for (const page of [list, detail]) {
+      expect(page).toContain("permanentRedirect('/kegiatan')")
+      expect(page).not.toContain('canonical')
+      expect(page).not.toContain('getPublicProgram')
+    }
   })
 
 })

@@ -102,10 +102,11 @@ describe('Phase 20 — SEO Infrastructure', () => {
       expect(implementation).toContain('/tentang')
     })
 
-    it('Program detail page has generateMetadata with canonical', () => {
+    it('keeps frozen Program detail URLs redirect-only without canonical metadata', () => {
       const source = readSource('src/app/(public)/program/[slug]/page.tsx')
-      expect(source).toContain('generateMetadata')
-      expect(source).toContain('canonical')
+      expect(source).toContain("permanentRedirect('/kegiatan')")
+      expect(source).not.toContain('generateMetadata')
+      expect(source).not.toContain('canonical')
     })
 
     it('Publication article page has generateMetadata with canonical', () => {
@@ -175,10 +176,11 @@ describe('Phase 20 — SEO Infrastructure', () => {
       expect(source).toContain('publicationPath(post.slug)')
     })
 
-    it('program detail has BreadcrumbList JSON-LD', () => {
+    it('does not promote frozen Program detail through structured data', () => {
       const source = readSource('src/app/(public)/program/[slug]/page.tsx')
-      expect(source).toContain('breadcrumbStructuredData')
-      expect(source).toContain('application/ld+json')
+      expect(source).toContain("permanentRedirect('/kegiatan')")
+      expect(source).not.toContain('breadcrumbStructuredData')
+      expect(source).not.toContain('application/ld+json')
     })
 
     it('does not expose Agenda detail structured data after the modal cutover', () => {
@@ -215,9 +217,9 @@ describe('Phase 20 — SEO Infrastructure', () => {
   })
 
   describe('clean public URLs', () => {
-    it('program detail uses slug-based URL not raw ID', () => {
+    it('redirects legacy Program detail URLs to the canonical activity route', () => {
       const source = readSource('src/app/(public)/program/[slug]/page.tsx')
-      expect(source).toContain('/program/')
+      expect(source).toContain("permanentRedirect('/kegiatan')")
       expect(source).not.toContain('/program?id=')
     })
 

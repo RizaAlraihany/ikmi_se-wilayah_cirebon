@@ -75,7 +75,9 @@ export const dashboardNavigationGroups: readonly DashboardNavigationGroup[] = [
     items: [
       { href: '/admin/kirim-tulisan', label: 'Kiriman Tulisan', icon: 'book', permission: 'post.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
       { href: '/admin/campaign', label: 'CMS Beranda', icon: 'image', permission: 'cms.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
+      { href: '/admin/campaign/pages', label: 'Hero Halaman', icon: 'file', permission: 'cms.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
       { href: '/admin/cms/posts', label: 'Publikasi', icon: 'newspaper', permission: 'post.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
+      { href: '/admin/cms/categories', label: 'Kategori', icon: 'file', permission: 'cms.update', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
       { href: '/admin/cms/media', label: 'Media', icon: 'archive', permission: 'cms.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
     ],
   },
@@ -91,7 +93,7 @@ export const dashboardNavigationGroups: readonly DashboardNavigationGroup[] = [
 const mobilePriorityHrefs: Record<DashboardRoleId, readonly string[]> = {
   super_admin: ['/admin', '/admin/users', '/admin/system/audit-logs'],
   admin_organization: ['/admin', '/admin/agendas', '/admin/organization/registrations', '/admin/organization/structure', '/admin/organization/about'],
-  admin_komdigi: ['/admin', '/admin/campaign', '/admin/cms/posts', '/admin/kirim-tulisan', '/admin/cms/media'],
+  admin_komdigi: ['/admin', '/admin/campaign', '/admin/campaign/pages', '/admin/cms/posts', '/admin/kirim-tulisan', '/admin/cms/media'],
 }
 
 export function roleCanSeeNavigationItem(item: DashboardNavigationItem, roleId: string | null | undefined) {

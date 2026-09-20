@@ -69,8 +69,6 @@ describe('Tentang page editorial layout', () => {
       'kalender/page.tsx',
       'kirim-tulisan/page.tsx',
       'kirim-tulisan/revisi/[token]/page.tsx',
-      'program/page.tsx',
-      'program/[slug]/page.tsx',
     ]
 
     const directBreadcrumbRoutes = [
@@ -117,14 +115,13 @@ describe('Tentang page editorial layout', () => {
   })
 
   it('renders the approved full headings without shortening the copy', () => {
-    expect(pageSource).toContain('Rumah Mahasiswa')
-    expect(pageSource).toContain('Indramayu di Cirebon')
-    expect(pageSource).toContain('Lahir dari Ruang,')
-    expect(pageSource).toContain('Tumbuh dalam Perjuangan')
+    expect(pageSource).toContain('aboutContent.hero.title')
+    expect(pageSource).toContain('aboutContent.hero.accent')
+    expect(pageSource).toContain('aboutContent.history.title')
     expect(pageSource).toContain('Satu Arah, Banyak Gerak')
     expect(pageSource).toContain('Dari Gagasan Menjadi Dampak')
     expect(pageSource).toContain('Mereka yang Menjaga Roda Organisasi')
-    expect(pageSource).toContain('Berbeda Peran, Satu Tujuan')
+    expect(pageSource).toContain('aboutContent.structureCta.title')
   })
 
   it('keeps headings complete and controls wrapping through responsive type sizes', () => {

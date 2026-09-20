@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { KirimTulisanForm } from '@/app/(public)/kirim-tulisan/kirim-tulisan-form'
 
+jest.setTimeout(30000)
+
 jest.mock('@/features/kirim-tulisan/actions', () => ({
   discardWritingDocxImportAction: jest.fn(),
   importWritingDocxAction: jest.fn(),

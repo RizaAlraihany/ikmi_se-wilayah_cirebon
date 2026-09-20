@@ -5,7 +5,7 @@ import { serializeAuditData } from '@/features/audit/audit-data'
 import { requireRoleForUser, type ActiveSessionUser } from '@/core/authorization/guards'
 import { KOMDIGI_DASHBOARD_ROLE_IDS, ORGANIZATION_DASHBOARD_ROLE_IDS } from '@/core/auth/roles'
 import { CONTACT_CONFIG_KEY } from './contact-contract'
-import { aboutContentSchema, homepageContentSchema, type AboutContentInput, type HomepageContentInput } from './content-contract'
+import { aboutContentSchema, homepageContentSchema, pageHeroesContentSchema, type AboutContentInput, type HomepageContentInput, type PageHeroesContentInput } from './content-contract'
 
 function parseObject(valueJson: string | undefined): Record<string, unknown> {
   if (!valueJson) return {}
@@ -102,6 +102,31 @@ export const webConfigService = {
           action: 'SECURITY_SETTING_CHANGE',
           entity: 'WebConfig',
           entityId: 'about_page',
+          oldData: existing ? serializeAuditData(existing.valueJson) : null,
+          newData: serializeAuditData(valueJson),
+          userId: allowedActor.id,
+        },
+      }),
+    ])
+  },
+
+  async updatePageHeroesContent(input: PageHeroesContentInput, actor: ActiveSessionUser) {
+    const validated = pageHeroesContentSchema.parse(input)
+    const allowedActor = await requireRoleForUser(actor, KOMDIGI_DASHBOARD_ROLE_IDS)
+    const existing = await webConfigQueries.getWebConfigByKey('page_heroes')
+    const valueJson = JSON.stringify({ ...parseObject(existing?.valueJson), ...validated })
+
+    await prisma.$transaction([
+      prisma.webConfig.upsert({
+        where: { key: 'page_heroes' },
+        update: { valueJson, deletedAt: null },
+        create: { key: 'page_heroes', valueJson },
+      }),
+      prisma.auditLog.create({
+        data: {
+          action: 'SECURITY_SETTING_CHANGE',
+          entity: 'WebConfig',
+          entityId: 'page_heroes',
           oldData: existing ? serializeAuditData(existing.valueJson) : null,
           newData: serializeAuditData(valueJson),
           userId: allowedActor.id,

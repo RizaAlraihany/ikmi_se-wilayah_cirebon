@@ -9,6 +9,7 @@ export const webConfigKeyPolicy = {
   landing_about: { classification: 'HOME_CMS', writable: true, roles: KOMDIGI_DASHBOARD_ROLE_IDS },
   landing_sections: { classification: 'HOME_CMS', writable: false },
   landing_cta: { classification: 'HOME_CMS', writable: true, roles: KOMDIGI_DASHBOARD_ROLE_IDS },
+  page_heroes: { classification: 'HOME_CMS', writable: false, roles: KOMDIGI_DASHBOARD_ROLE_IDS },
   about_page: { classification: 'ABOUT_CMS', writable: true, roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
   about_page_extended: { classification: 'ABOUT_CMS', writable: false },
   [CONTACT_CONFIG_KEY]: { classification: 'CONTACT_CMS', writable: true, roles: ORGANIZATION_DASHBOARD_ROLE_IDS },

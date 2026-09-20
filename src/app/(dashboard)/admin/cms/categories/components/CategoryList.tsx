@@ -5,10 +5,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Edit, Trash2, Plus } from 'lucide-react'
+import { Edit, Plus } from 'lucide-react'
 import { CategoryModal } from './CategoryModal'
-import { deleteCategoryAction } from '@/features/categories/actions'
-import { useRouter } from 'next/navigation'
 
 type CategoryListItem = {
   id: string
@@ -19,26 +17,14 @@ type CategoryListItem = {
 }
 
 export function CategoryList({ categories }: { categories: CategoryListItem[] }) {
-  const router = useRouter()
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<CategoryListItem | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isDeleting, setIsDeleting] = useState<string | null>(null)
-  const [error, setError] = useState('')
 
   const filtered = categories.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.slug.toLowerCase().includes(search.toLowerCase())
   )
-
-  const handleDelete = async (id: string) => {
-    setError('')
-    setIsDeleting(id)
-    const result = await deleteCategoryAction(id)
-    setIsDeleting(null)
-    if (result.error) setError(result.error)
-    else router.refresh()
-  }
 
   return (
     <div className="space-y-4">
@@ -56,11 +42,6 @@ export function CategoryList({ categories }: { categories: CategoryListItem[] })
 
       <Card>
         <CardContent className="p-0">
-          {error ? (
-            <div className="m-4 rounded-2xl bg-danger px-4 py-3 text-sm font-semibold text-primary" role="alert">
-              {error}
-            </div>
-          ) : null}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-surface border-b border-line text-muted">
@@ -92,14 +73,6 @@ export function CategoryList({ categories }: { categories: CategoryListItem[] })
                           onClick={() => { setSelectedCategory(category); setIsModalOpen(true); }}
                         >
                           <Edit className="h-4 w-4 text-primary" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(category.id)}
-                          disabled={isDeleting === category.id || (category._count?.posts || 0) > 0}
-                        >
-                          <Trash2 className="h-4 w-4 text-danger" />
                         </Button>
                       </div>
                     </td>

@@ -8,13 +8,12 @@ import { isKomdigi, requirePermission, requirePublisher } from '@/features/cms/a
 import { SessionUser } from '@/core/authorization/rbac'
 import { isSuperAdminRole } from '@/core/auth/roles'
 import { sanitizeArticleHtml } from './article-html'
+import { PUBLICATION_CATEGORY_SLUGS } from '@/features/categories/schemas'
 
 type TxClient = Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>
 
-const publicationCategorySlugs = ['berita', 'opini', 'artikel', 'kajian'] as const
-
 function isAllowedPublicationCategory(category: { name: string; slug: string }) {
-  return publicationCategorySlugs.includes(category.slug.trim().toLowerCase() as typeof publicationCategorySlugs[number])
+  return PUBLICATION_CATEGORY_SLUGS.includes(category.slug.trim().toLowerCase() as (typeof PUBLICATION_CATEGORY_SLUGS)[number])
 }
 
 function canManagePost(user: SessionUser, post: { authorId: string; author: { departmentId: string | null } }, komdigi: boolean, isGlobal: boolean) {

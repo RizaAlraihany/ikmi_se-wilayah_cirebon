@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { CheckCircle2 } from 'lucide-react'
 import { PublicPageHero } from '../_components/public-page-hero'
 import { RegisterForm } from './register-form'
+import { webConfigQueries } from '@/features/web-config/queries'
 
 export const metadata: Metadata = {
   title: 'Gabung Bersama IKMI Cirebon',
@@ -15,15 +16,18 @@ const joiningNotes = [
   'Tim IKMI akan menghubungi Anda melalui WhatsApp.',
 ] as const
 
-export default function JoinPage() {
+export default async function JoinPage() {
+  const pageHeroes = await webConfigQueries.getPublicPageHeroes()
+  const gabungHero = pageHeroes.gabung
+
   return (
     <main className="public-page-root text-primary">
       <PublicPageHero
         items={[{ label: 'Gabung Bersama Kami' }]}
         eyebrow="Keanggotaan IKMI Cirebon"
-        title="Tumbuh, belajar, dan bergerak bersama."
-        lead="Ceritakan sedikit tentang diri Anda. Data ini membantu pengurus mengenal dan menindaklanjuti minat bergabung Anda dengan tepat."
-        image="https://res.cloudinary.com/dsgldeuuy/image/upload/v1781228245/ChatGPT_Image_12_Jun_2026_08.31.44_bnzje5.png"
+        title={gabungHero.title}
+        lead={gabungHero.lead}
+        image={gabungHero.imageUrl}
       />
 
       <section className="px-4 py-10 sm:px-6 md:py-16" aria-labelledby="join-form-title">

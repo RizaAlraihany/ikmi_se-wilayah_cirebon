@@ -25,5 +25,6 @@ describe('public footer Agenda navigation', () => {
     render(await PublicFooter())
 
     expect(screen.getByRole('link', { name: /Agenda & Kegiatan/i })).toHaveAttribute('href', '/kegiatan')
+    expect(screen.getByRole('link', { name: /Tentang IKMI/i })).toHaveAttribute('href', '/tentang')
   })
 })

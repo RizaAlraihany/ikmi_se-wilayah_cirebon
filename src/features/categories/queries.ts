@@ -1,18 +1,20 @@
 import { prisma } from '@/core/database/prisma'
 import { requirePermission } from '@/core/authorization/guards'
+import { PUBLICATION_CATEGORY_SLUGS } from './schemas'
 
 export const categoryQueries = {
   async getPublicationCategories() {
     await requirePermission('post.view')
     return prisma.category.findMany({
-      where: { deletedAt: null, slug: { in: ['berita', 'opini', 'artikel', 'kajian'] } },
+      where: { deletedAt: null, slug: { in: [...PUBLICATION_CATEGORY_SLUGS] } },
       select: { id: true, name: true, slug: true },
       orderBy: { name: 'asc' },
     })
   },
   async getAllCategories() {
+    await requirePermission('cms.view')
     return prisma.category.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, slug: { in: [...PUBLICATION_CATEGORY_SLUGS] } },
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {

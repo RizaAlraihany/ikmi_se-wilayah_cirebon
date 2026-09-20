@@ -5,6 +5,7 @@ import {
 } from '@/features/agendas/domain'
 import { getPublicAgendaOccurrences } from '@/features/public/public-agenda'
 import { publicPlainText } from '@/features/public/public-text'
+import { webConfigQueries } from '@/features/web-config/queries'
 
 import { PublicPageHero } from '../_components/public-page-hero'
 import { AgendaListingInteraction, type AgendaListingItem } from './agenda-listing-interaction'
@@ -19,16 +20,18 @@ function statusTone(status: AgendaDerivedStatus) {
 
 export async function AgendaListingPage() {
   const now = new Date()
-  const agendas = await getPublicAgendaOccurrences(now)
+  const [agendas, pageHeroes] = await Promise.all([
+    getPublicAgendaOccurrences(now),
+    webConfigQueries.getPublicPageHeroes(),
+  ])
+
+  const kegiatanHero = pageHeroes.kegiatan
 
   const items: AgendaListingItem[] = agendas.map((agenda) => {
     const status = deriveAgendaStatus({
       startDatetime: agenda.start,
       endDatetime: agenda.end,
       status: agenda.status,
-      // Each expanded row is a concrete occurrence. Treat it as a fixed
-      // instance so recurring/relative master metadata cannot override its
-      // actual start/end status.
       scheduleType: 'FIXED_DATE',
     }, now)
     const dayParts = new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', timeZone: 'Asia/Jakarta' }).formatToParts(agenda.start)
@@ -57,9 +60,9 @@ export async function AgendaListingPage() {
     <main className="public-page-root min-h-screen">
       <PublicPageHero
         items={[{ label: 'Agenda' }]}
-        title="Agenda IKMI Cirebon"
-        lead="Agenda publik diurutkan berdasarkan waktu agar rencana kegiatan mudah dipindai."
-        image="https://res.cloudinary.com/dsgldeuuy/image/upload/v1781225577/ChatGPT_Image_12_Jun_2026_07.49.13_wzkx4s.png"
+        title={kegiatanHero.title}
+        lead={kegiatanHero.lead}
+        image={kegiatanHero.imageUrl}
       />
       <section className="public-page-content public-container" aria-label="Daftar Agenda">
         <AgendaListingInteraction items={items} />

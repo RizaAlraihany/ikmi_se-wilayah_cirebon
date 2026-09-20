@@ -35,7 +35,7 @@ describe('Tentang officer preview', () => {
   })
 
   it('keeps the complete roster available through the structure route', () => {
-    expect(pageSource).toContain('href="/struktur"')
-    expect(pageSource).toContain('Lihat Seluruh Pengurus')
+    expect(pageSource).toContain('href={aboutContent.structureCta.href}')
+    expect(pageSource).toContain('{aboutContent.structureCta.label}')
   })
 })

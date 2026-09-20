@@ -5,17 +5,12 @@ import { homepageBannerSchema, type HomepageBannerInput } from './schema'
 
 async function validateProgram(programId: string | null | undefined) {
   if (!programId) return null
-  const program = await prisma.program.findFirst({
-    where: {
-      id: programId,
-      deletedAt: null,
-      visibility: 'PUBLIC',
-      campaignEnabled: true,
-    },
+  const program = await prisma.program.findUnique({
+    where: { id: programId },
     select: { id: true },
   })
   if (!program) {
-    throw new ValidationError('Program terkait harus publik dan opsi campaign-nya aktif.')
+    throw new ValidationError('Program terkait tidak ditemukan.')
   }
   return program
 }

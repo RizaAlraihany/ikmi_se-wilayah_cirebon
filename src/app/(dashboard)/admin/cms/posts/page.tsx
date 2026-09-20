@@ -1,6 +1,6 @@
 import { FileText, Import, Plus, Search, Edit } from 'lucide-react'
 import { postQueries } from '@/features/blog/queries'
-import { Button, ButtonLink } from '@/components/ui/button'
+import { ButtonLink } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -90,20 +90,23 @@ export default async function AdminPostsPage({
             </>
           )}
 
-          <Pagination page={meta.page} totalPages={meta.totalPages} total={meta.total} />
+          <Pagination page={meta.page} totalPages={meta.totalPages} total={meta.total} q={q} />
         </CardContent>
       </Card>
     </div>
   )
 }
 
-function Pagination({ page, totalPages, total }: { page: number; totalPages: number; total: number }) {
+function Pagination({ page, totalPages, total, q }: { page: number; totalPages: number; total: number; q?: string }) {
+  const prevHref = page > 1 ? `/admin/cms/posts?page=${page - 1}${q ? `&q=${encodeURIComponent(q)}` : ''}` : '#'
+  const nextHref = page < totalPages ? `/admin/cms/posts?page=${page + 1}${q ? `&q=${encodeURIComponent(q)}` : ''}` : '#'
+
   return (
     <div className="flex flex-col gap-3 border-t border-line pt-4 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
       <span>Halaman {page} dari {totalPages || 1} ({total} artikel)</span>
       <div className="flex gap-2">
-        <Button variant="secondary" size="sm" disabled={page <= 1}>Sebelumnya</Button>
-        <Button variant="secondary" size="sm" disabled={page >= totalPages}>Berikutnya</Button>
+        <ButtonLink href={prevHref} variant="secondary" size="sm" aria-disabled={page <= 1} className={page <= 1 ? 'pointer-events-none opacity-50' : ''}>Sebelumnya</ButtonLink>
+        <ButtonLink href={nextHref} variant="secondary" size="sm" aria-disabled={page >= totalPages || totalPages === 0} className={page >= totalPages || totalPages === 0 ? 'pointer-events-none opacity-50' : ''}>Berikutnya</ButtonLink>
       </div>
     </div>
   )

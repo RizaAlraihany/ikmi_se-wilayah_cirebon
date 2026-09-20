@@ -85,18 +85,34 @@ describe('public calendar mobile interaction', () => {
     expect(push).toHaveBeenCalledWith('?year=2026&month=7&date=2026-08-10&type=agenda', { scroll: false })
   })
 
-  it('sends desktop Agenda calendar items to the canonical listing', () => {
+  it.each(events)('sends desktop $type calendar items to the canonical listing', (event) => {
     render(
       <DesktopCalendarGrid
         year={2026}
         month={7}
         days={[new Date('2026-08-10T00:00:00.000Z')]}
-        eventsByDate={new Map([['2026-08-10', [events[1]!]]])}
+        eventsByDate={new Map([['2026-08-10', [event]]])}
         today="2026-08-11"
-        selectedType="agenda"
+        selectedType={event.type}
       />,
     )
 
-    expect(screen.getByTitle('Agenda Bersama').closest('a')).toHaveAttribute('href', '/kegiatan')
+    expect(screen.getByTitle(event.name).closest('a')).toHaveAttribute('href', '/kegiatan')
+  })
+
+  it('sends mobile Program calendar items to the canonical listing', () => {
+    render(
+      <MobileCalendar
+        year={2026}
+        month={7}
+        days={buildCalendarGrid(2026, 7)}
+        eventsByDate={new Map([['2026-08-10', [events[0]!]]])}
+        today="2026-08-11"
+        selectedDate="2026-08-10"
+        selectedType="program"
+      />,
+    )
+
+    expect(screen.getByText('Program Bersama').closest('a')).toHaveAttribute('href', '/kegiatan')
   })
 })

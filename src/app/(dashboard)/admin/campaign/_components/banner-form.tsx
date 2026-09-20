@@ -11,7 +11,7 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { archiveHomepageBanner, createHomepageBanner, updateHomepageBanner } from '@/features/homepage-banner/actions'
 import { formatJakartaCampaignDatetime } from '@/features/homepage-banner/domain'
-import { uploadWebConfigImageAction } from '@/features/web-config/actions'
+import { uploadKomdigiWebImageAction } from '@/features/web-config/actions'
 import { actionPayloadError } from '@/core/storage/action-payload'
 
 type BannerFormData = {
@@ -48,6 +48,7 @@ export function BannerForm({ banner, programs, publications }: Props) {
   const [mobileImage, setMobileImage] = useState(banner?.mobileImage || '')
   const [ctaUrl, setCtaUrl] = useState(banner?.ctaUrl || '')
   const [ctaLabel, setCtaLabel] = useState(banner?.ctaLabel || '')
+  const [programCtaGenerated, setProgramCtaGenerated] = useState(false)
 
   async function uploadImage(file: File | undefined, target: 'desktop' | 'mobile') {
     if (!file) return
@@ -58,7 +59,7 @@ export function BannerForm({ banner, programs, publications }: Props) {
       data.set('file', file)
       const sizeError = actionPayloadError(data)
       if (sizeError) { setError(sizeError); return }
-      const result = await uploadWebConfigImageAction(data)
+      const result = await uploadKomdigiWebImageAction(data)
       if (result.url) (target === 'desktop' ? setDesktopImage : setMobileImage)(result.url)
       else setError(result.error || 'Gambar belum dapat diunggah.')
     } catch {
@@ -147,19 +148,29 @@ export function BannerForm({ banner, programs, publications }: Props) {
           <p className="mt-1 text-sm leading-6 text-text-secondary">CTA bersifat opsional, tetapi label dan URL harus diisi bersama.</p>
           <div className="mt-6 grid gap-5 md:grid-cols-2">
             <Field label="Label CTA" htmlFor="ctaLabel">
-              <Input id="ctaLabel" name="ctaLabel" maxLength={48} value={ctaLabel} onChange={(event) => setCtaLabel(event.target.value)} placeholder="Contoh: Baca Berita Acara" />
+              <Input id="ctaLabel" name="ctaLabel" maxLength={48} value={ctaLabel} onChange={(event) => { setCtaLabel(event.target.value); setProgramCtaGenerated(false) }} placeholder="Contoh: Baca Berita Acara" />
             </Field>
             <Field label="URL CTA" htmlFor="ctaUrl" description="Untuk setelah kegiatan, pilih publikasi yang sudah terbit.">
-              <Input id="ctaUrl" name="ctaUrl" type="text" inputMode="url" maxLength={2048} value={ctaUrl} onChange={(event) => setCtaUrl(event.target.value)} placeholder="/publikasi/berita-acara" />
+              <Input id="ctaUrl" name="ctaUrl" type="text" inputMode="url" maxLength={2048} value={ctaUrl} onChange={(event) => { setCtaUrl(event.target.value); setProgramCtaGenerated(false) }} placeholder="/publikasi/berita-acara" />
             </Field>
             <Field label="Publikasi tujuan" htmlFor="publicationSlug">
-              <Select id="publicationSlug" value={publications.some((post) => `/publikasi/${post.slug}` === ctaUrl) ? ctaUrl : ''} onChange={(event) => { setCtaUrl(event.target.value); if (event.target.value) setCtaLabel('Baca Berita Acara') }}>
+              <Select id="publicationSlug" value={publications.some((post) => `/publikasi/${post.slug}` === ctaUrl) ? ctaUrl : ''} onChange={(event) => { setCtaUrl(event.target.value); if (event.target.value) setCtaLabel('Baca Berita Acara'); setProgramCtaGenerated(false) }}>
                 <option value="">Pilih publikasi</option>
                 {publications.map((post) => <option key={post.id} value={`/publikasi/${post.slug}`}>{post.title}</option>)}
               </Select>
             </Field>
             <Field label="Program terkait" htmlFor="programId" description="Hanya Program PUBLIC dengan campaign diaktifkan yang dapat dipilih." className="md:col-span-2">
-              <Select id="programId" name="programId" defaultValue={banner?.programId || ''}>
+              <Select id="programId" name="programId" defaultValue={banner?.programId || ''} onChange={(event) => {
+                if (event.target.value && !ctaUrl) {
+                  setCtaUrl('/kegiatan')
+                  setCtaLabel('Lihat Kegiatan')
+                  setProgramCtaGenerated(true)
+                } else if (!event.target.value && programCtaGenerated) {
+                  setCtaUrl('')
+                  setCtaLabel('')
+                  setProgramCtaGenerated(false)
+                }
+              }}>
                 <option value="">Tanpa Program terkait</option>
                 {programs.map((program) => <option key={program.id} value={program.id}>{program.name}</option>)}
               </Select>

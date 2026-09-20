@@ -27,4 +27,12 @@ describe('Publication workflow controls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Simpan Jadwal' }))
     await waitFor(() => expect(schedulePostAction).toHaveBeenCalledWith('post-14', '2026-08-20T09:00'))
   })
+
+  it('shows a direct publish action only for trusted CMS drafts', () => {
+    const { rerender } = render(<PostWorkflowActions postId="post-14" status="DRAFT" canPublishDirectly />)
+    expect(screen.getByRole('button', { name: 'Publikasikan Sekarang' })).toBeInTheDocument()
+
+    rerender(<PostWorkflowActions postId="post-14" status="DRAFT" canPublishDirectly={false} />)
+    expect(screen.queryByRole('button', { name: 'Publikasikan Sekarang' })).not.toBeInTheDocument()
+  })
 })

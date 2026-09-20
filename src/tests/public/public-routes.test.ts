@@ -15,13 +15,13 @@ describe('public route privacy regression', () => {
     expect(structureCard).not.toContain('member.campus')
   })
 
-  it('does not select or render program budgets on public Program routes', () => {
+  it('redirects frozen public Program routes without querying or rendering Program data', () => {
     const publicProgramQuery = readSource('src/features/public/public-program.ts')
     const programPage = readSource('src/app/(public)/program/[slug]/page.tsx')
 
     expect(publicProgramQuery).not.toContain('budgetPlan')
     expect(publicProgramQuery).not.toContain('plannedBudget')
-    expect(programPage).not.toContain('budgetPlan')
-    expect(programPage).toContain('getPublicProgramBySlug')
+    expect(programPage).toContain("permanentRedirect('/kegiatan')")
+    expect(programPage).not.toContain('getPublicProgramBySlug')
   })
 })

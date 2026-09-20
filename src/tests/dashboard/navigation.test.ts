@@ -34,7 +34,9 @@ describe('dashboard navigation', () => {
       '/admin',
       '/admin/kirim-tulisan',
       '/admin/campaign',
+      '/admin/campaign/pages',
       '/admin/cms/posts',
+      '/admin/cms/categories',
       '/admin/cms/media',
     ])
   })
@@ -50,6 +52,7 @@ describe('dashboard navigation', () => {
     expect(getMobileNavigationItems('admin_komdigi').map((item) => item.href)).toEqual([
       '/admin',
       '/admin/campaign',
+      '/admin/campaign/pages',
       '/admin/cms/posts',
       '/admin/kirim-tulisan',
       '/admin/cms/media',

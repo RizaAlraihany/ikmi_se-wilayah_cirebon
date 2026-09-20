@@ -34,6 +34,7 @@ describe('public structure read model', () => {
         },
       ] as never)
       .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
     prismaMock.user.findMany.mockResolvedValueOnce([
       {
         id: 'officer-1',
@@ -63,7 +64,7 @@ describe('public structure read model', () => {
     expect(prismaMock.period.findFirst).toHaveBeenCalledWith({
       where: { status: 'ACTIVE', deletedAt: null },
       select: { id: true, name: true, cabinetName: true },
-      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      orderBy: [{ startDate: 'desc' }, { updatedAt: 'desc' }, { id: 'desc' }],
     })
     expect(prismaMock.structureAssignment.findMany).toHaveBeenNthCalledWith(
       1,
@@ -133,12 +134,12 @@ describe('public structure read model', () => {
     expect(prismaMock.period.findFirst).toHaveBeenNthCalledWith(1, {
       where: { status: 'ACTIVE', deletedAt: null },
       select: { id: true, name: true, cabinetName: true },
-      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      orderBy: [{ startDate: 'desc' }, { updatedAt: 'desc' }, { id: 'desc' }],
     })
     expect(prismaMock.period.findFirst).toHaveBeenNthCalledWith(2, {
       where: { status: 'ACTIVE', deletedAt: null },
       select: { id: true, name: true, cabinetName: true },
-      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      orderBy: [{ startDate: 'desc' }, { updatedAt: 'desc' }, { id: 'desc' }],
     })
   })
 

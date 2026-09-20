@@ -3,6 +3,7 @@ import { KirimTulisanForm } from './kirim-tulisan-form'
 import { CheckCircle2 } from 'lucide-react'
 import { siteUrl } from '@/core/seo/site'
 import { PublicPageHero } from '../_components/public-page-hero'
+import { webConfigQueries } from '@/features/web-config/queries'
 
 export const metadata: Metadata = {
   title: 'Kirim Tulisan',
@@ -11,14 +12,17 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function KirimTulisanPage() {
+export default async function KirimTulisanPage() {
+  const pageHeroes = await webConfigQueries.getPublicPageHeroes()
+  const kirimTulisanHero = pageHeroes['kirim-tulisan']
+
   return (
     <main className="public-page-root min-h-screen">
       <PublicPageHero
         items={[{ label: 'Kirim Tulisan' }]}
-        title="Kirim Tulisan"
-        lead="Tulis opini, artikel, atau kajian langsung dari halaman ini. Prosesnya tanpa akun dan langsung masuk ke antrean editorial."
-        image="https://res.cloudinary.com/dsgldeuuy/image/upload/v1781230548/psda_yufbw9.png"
+        title={kirimTulisanHero.title}
+        lead={kirimTulisanHero.lead}
+        image={kirimTulisanHero.imageUrl}
       />
 
       <div className="public-page-content public-container grid max-w-5xl gap-8 md:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] md:gap-10">

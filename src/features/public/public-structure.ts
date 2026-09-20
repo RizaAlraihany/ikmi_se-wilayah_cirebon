@@ -16,7 +16,7 @@ export async function getCurrentStructurePeriod() {
   return prisma.period.findFirst({
     where: { status: 'ACTIVE', deletedAt: null },
     select: { id: true, name: true, cabinetName: true },
-    orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+    orderBy: [{ startDate: 'desc' }, { updatedAt: 'desc' }, { id: 'desc' }],
   })
 }
 

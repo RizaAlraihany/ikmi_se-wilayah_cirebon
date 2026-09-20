@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { KaryaTulisStatus, Prisma } from '@prisma/client'
 import { cache } from '@/core/cache/cache'
+import { revalidatePath } from 'next/cache'
 import { prismaMock } from '../prisma-mock'
 
 jest.mock('next/headers', () => ({ headers: jest.fn(async () => new Headers({ 'x-forwarded-for': '127.0.0.1' })) }))
@@ -95,6 +96,7 @@ describe('WritingSubmission action behavior', () => {
     const result = await submitKaryaTulisAction(submissionForm('<h1>Judul body</h1><p onclick="alert(1)">Isi tulisan yang cukup aman.</p><img src="data:image/png;base64,AAAA" alt="Tidak boleh">'))
 
     expect(result).toEqual(expect.objectContaining({ success: true }))
+    expect(revalidatePath).toHaveBeenCalledWith('/admin/kirim-tulisan')
     const persisted = prismaMock.karyaTulis.create.mock.calls[0][0].data.content
     expect(persisted).toContain('<h2>Judul body</h2>')
     expect(persisted).not.toMatch(/data:image|onclick|<img/i)

@@ -5,6 +5,7 @@ import { siteUrl } from "@/core/seo/site";
 import { postQueries } from "@/features/blog/queries";
 import { BlogList } from "../_components/blog-list";
 import { PublicBreadcrumb } from "../_components/public-breadcrumb";
+import { webConfigQueries } from "@/features/web-config/queries";
 
 export const metadata = {
   title: "Publikasi dan Ruang Gagasan",
@@ -28,7 +29,11 @@ export default async function BlogPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const params = await searchParams;
-  const posts = await postQueries.getPublishedPosts();
+  const [posts, pageHeroes] = await Promise.all([
+    postQueries.getPublishedPosts(),
+    webConfigQueries.getPublicPageHeroes(),
+  ]);
+  const publikasiHero = pageHeroes.publikasi;
   const serializedPosts = posts.map((post) => ({
     id: post.id,
     slug: post.slug,
@@ -57,7 +62,7 @@ export default async function BlogPage({
     >
       <header className="publication-hero">
         <Image
-          src="https://res.cloudinary.com/dsgldeuuy/image/upload/v1781230578/komdigi_mht7vt.png"
+          src={publikasiHero.imageUrl}
           alt=""
           fill
           priority
@@ -75,12 +80,9 @@ export default async function BlogPage({
 
           <div className="publication-hero-grid">
             <div className="publication-hero-copy">
-              <h1>Indeks Publikasi</h1>
+              <h1>{publikasiHero.title}</h1>
 
-              <p className="publication-hero-lead">
-                Berita, kajian, artikel, dan opini yang diterbitkan IKMI Cirebon
-                untuk merawat pengetahuan, percakapan, dan gagasan bersama.
-              </p>
+              <p className="publication-hero-lead">{publikasiHero.lead}</p>
             </div>
 
             <dl

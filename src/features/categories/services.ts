@@ -1,5 +1,5 @@
 import { prisma } from '@/core/database/prisma'
-import { CategoryCreateInput, CategoryUpdateInput, categoryCreateSchema, categoryUpdateSchema } from './schemas'
+import { CategoryCreateInput, CategoryUpdateInput, PUBLICATION_CATEGORY_SLUGS, PUBLICATION_CATEGORY_NAMES, categoryCreateSchema, categoryUpdateSchema } from './schemas'
 import { categoryQueries } from './queries'
 import { ValidationError, NotFoundError } from '@/core/errors/custom-errors'
 import { requireCmsUpdate } from '@/features/cms/access'
@@ -15,15 +15,15 @@ export const categoryService = {
       throw new ValidationError('Slug sudah digunakan')
     }
 
-    const existingName = await categoryQueries.getCategoryByName(validated.name)
-    if (existingName) {
-      throw new ValidationError('Nama kategori sudah digunakan')
+    const expectedName = PUBLICATION_CATEGORY_NAMES[validated.slug as (typeof PUBLICATION_CATEGORY_SLUGS)[number]]
+    if (validated.name !== expectedName) {
+      throw new ValidationError(`Nama kategori untuk slug "${validated.slug}" harus "${expectedName}"`)
     }
 
     return prisma.$transaction(async (tx) => {
       const newCategory = await tx.category.create({
         data: {
-          name: validated.name,
+          name: expectedName,
           slug: validated.slug,
           description: validated.description,
           createdBy: userId,
@@ -52,26 +52,20 @@ export const categoryService = {
 
     const existing = await categoryQueries.getCategoryById(validated.id)
     if (!existing) throw new NotFoundError('Kategori tidak ditemukan')
-
-    if (validated.slug && validated.slug !== existing.slug) {
-      if (await prisma.post.count({ where: { categoryId: existing.id, deletedAt: null } })) {
-        throw new ValidationError('Slug kategori yang digunakan publikasi tidak dapat diubah.')
-      }
-      const existingSlug = await categoryQueries.getCategoryBySlug(validated.slug)
-      if (existingSlug) throw new ValidationError('Slug sudah digunakan')
+    if (!PUBLICATION_CATEGORY_SLUGS.includes(existing.slug as (typeof PUBLICATION_CATEGORY_SLUGS)[number])) {
+      throw new ValidationError('Kategori historis tidak dapat diubah dari UI publikasi aktif.')
     }
 
-    if (validated.name && validated.name !== existing.name) {
-      const existingName = await categoryQueries.getCategoryByName(validated.name)
-      if (existingName) throw new ValidationError('Nama kategori sudah digunakan')
+    if (validated.description !== undefined) {
+      if (validated.description.trim().length < 5) {
+        throw new ValidationError('Deskripsi minimal 5 karakter')
+      }
     }
 
     return prisma.$transaction(async (tx) => {
       const updatedCategory = await tx.category.update({
         where: { id: validated.id },
         data: {
-          name: validated.name !== undefined ? validated.name : undefined,
-          slug: validated.slug !== undefined ? validated.slug : undefined,
           description: validated.description !== undefined ? validated.description : undefined,
           updatedBy: userId,
         }
@@ -97,8 +91,10 @@ export const categoryService = {
 
     const existing = await categoryQueries.getCategoryById(id)
     if (!existing) throw new NotFoundError('Kategori tidak ditemukan')
+    if (PUBLICATION_CATEGORY_SLUGS.includes(existing.slug as (typeof PUBLICATION_CATEGORY_SLUGS)[number])) {
+      throw new ValidationError('Kategori publikasi utama tidak dapat dihapus.')
+    }
 
-    // Cek apakah kategori sedang digunakan
     const postCount = await prisma.post.count({ where: { categoryId: id, deletedAt: null } })
     if (postCount > 0) throw new ValidationError('Kategori sedang digunakan pada artikel, tidak dapat dihapus')
 

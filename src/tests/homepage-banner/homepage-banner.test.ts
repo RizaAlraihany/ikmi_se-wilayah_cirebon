@@ -1,4 +1,8 @@
+import { createElement } from 'react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { ForbiddenError, UnauthorizedError, ValidationError } from '@/core/errors/custom-errors'
+import { BannerForm } from '@/app/(dashboard)/admin/campaign/_components/banner-form'
 import { requireAuth } from '@/core/authorization/guards'
 import { requireCmsUpdate, requireCmsView } from '@/features/cms/access'
 import {
@@ -28,6 +32,7 @@ jest.mock('@/features/cms/access', () => ({
   requireCmsView: jest.fn(),
 }))
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
+jest.mock('next/navigation', () => ({ useRouter: () => ({ push: jest.fn(), refresh: jest.fn(), back: jest.fn() }) }))
 
 const requireAuthMock = jest.mocked(requireAuth)
 const requireCmsUpdateMock = jest.mocked(requireCmsUpdate)
@@ -76,6 +81,28 @@ describe('Homepage Campaign lifecycle and security', () => {
     expect(() => parseJakartaCampaignDatetime('2026-02-30T09:00')).toThrow(ValidationError)
   })
 
+  it('clears only an auto-generated Program CTA when Program is deselected', async () => {
+    const user = userEvent.setup()
+    render(createElement(BannerForm, { programs: [{ id: 'program-1', name: 'Program Satu' }], publications: [] }))
+    const program = screen.getByLabelText('Program terkait')
+    const label = screen.getByLabelText('Label CTA')
+    const url = screen.getByLabelText('URL CTA')
+
+    await user.selectOptions(program, 'program-1')
+    expect(label).toHaveValue('Lihat Kegiatan')
+    expect(url).toHaveValue('/kegiatan')
+    await user.selectOptions(program, '')
+    expect(label).toHaveValue('')
+    expect(url).toHaveValue('')
+
+    await user.type(label, 'CTA manual')
+    await user.type(url, '/manual')
+    await user.selectOptions(program, 'program-1')
+    await user.selectOptions(program, '')
+    expect(label).toHaveValue('CTA manual')
+    expect(url).toHaveValue('/manual')
+  })
+
   it('requires paired CTA fields, valid schedule order, and safe images', () => {
     expect(homepageBannerSchema.safeParse({ ...validInput, ctaUrl: null }).success).toBe(false)
     expect(homepageBannerSchema.safeParse({ ...validInput, endAt: validInput.startAt }).success).toBe(false)
@@ -96,10 +123,17 @@ describe('Homepage Campaign lifecycle and security', () => {
     expect(prismaMock.homepageBanner.findFirst).not.toHaveBeenCalled()
   })
 
-  it('does not force a Program with campaign disabled into a public campaign', async () => {
-    prismaMock.program.findFirst.mockResolvedValueOnce(null)
-    await expect(homepageBannerService.create({ ...validInput, programId: 'program-disabled' }, actor.id)).rejects.toBeInstanceOf(ValidationError)
-    expect(prismaMock.homepageBanner.create).not.toHaveBeenCalled()
+  it('accepts any existing linked Program without inheriting its campaign lifecycle', async () => {
+    prismaMock.program.findUnique.mockResolvedValueOnce({ id: 'program-disabled' } as never)
+    prismaMock.homepageBanner.create.mockResolvedValueOnce({ id: 'banner-1' } as never)
+    prismaMock.auditLog.create.mockResolvedValueOnce({ id: 'audit-1' } as never)
+    prismaMock.$transaction.mockImplementation((async (callback: unknown) => {
+      if (typeof callback !== 'function') throw new Error('Expected interactive transaction')
+      return callback(prismaMock)
+    }) as never)
+
+    await expect(homepageBannerService.create({ ...validInput, programId: 'program-disabled' }, actor.id)).resolves.toEqual(expect.objectContaining({ id: 'banner-1' }))
+    expect(prismaMock.program.findUnique).toHaveBeenCalledWith({ where: { id: 'program-disabled' }, select: { id: true } })
   })
 
   it('creates a banner and its audit record in one transaction', async () => {
@@ -190,9 +224,14 @@ describe('Homepage Campaign lifecycle and security', () => {
       orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
     })
     expect(JSON.stringify(publicHomepageBannerSelect)).not.toMatch(/internalTitle|createdBy|deletedAt/i)
-    expect(result[0]).toEqual(expect.objectContaining({ ctaLabel: null, ctaUrl: null }))
-    expect(JSON.stringify(activePublicBannerWhere(now))).toContain('campaignEnabled')
-    expect(JSON.stringify(activePublicBannerWhere(now))).toContain('PUBLIC')
+    expect(result[0]).toEqual(expect.objectContaining({
+      phase: 'GENERAL',
+      desktopImage: validInput.desktopImage,
+      mobileImage: validInput.mobileImage,
+      ctaLabel: null,
+      ctaUrl: null,
+    }))
+    expect(JSON.stringify(activePublicBannerWhere(now))).not.toMatch(/program|campaignEnabled|visibility/)
     expect(JSON.stringify(activePublicBannerWhere(now))).not.toContain('PAUSED')
   })
 

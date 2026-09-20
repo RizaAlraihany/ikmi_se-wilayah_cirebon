@@ -28,6 +28,7 @@ export async function assignStructureAction(periodId: string, data: AssignStruct
 
     revalidatePath('/admin/organization/structure')
     revalidatePath('/struktur')
+    revalidatePath('/tentang')
     revalidatePath('/tentang-kami')
     revalidatePath('/tentang/struktur')
 
@@ -45,6 +46,7 @@ export async function removeStructureAssignmentAction(assignmentId: string) {
 
     revalidatePath('/admin/organization/structure')
     revalidatePath('/struktur')
+    revalidatePath('/tentang')
     revalidatePath('/tentang-kami')
     revalidatePath('/tentang/struktur')
 

@@ -64,6 +64,16 @@ describe('bloggerImportService', () => {
     expect(fetchMock).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({ cache: 'no-store' }))
   })
 
+  it('rejects a category outside the canonical four', async () => {
+    mockBloggerResponse()
+    prismaMock.category.findMany.mockResolvedValue([{ id: 'category-legacy', slug: 'kegiatan' }] as never)
+
+    await expect(bloggerImportService.importSelected({
+      posts: [{ sourcePostId: bloggerPost.id, categoryId: 'category-legacy' }],
+    }, actor)).rejects.toThrow('Kategori import harus berupa BERITA, OPINI, ARTIKEL, atau KAJIAN yang aktif.')
+    expect(prismaMock.post.create).not.toHaveBeenCalled()
+  })
+
   it('imports a selected source once with its original publication date and audit trail', async () => {
     mockBloggerResponse()
     prismaMock.category.findMany.mockResolvedValue([{ id: 'category-artikel', slug: 'artikel' }] as never)

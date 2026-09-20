@@ -1,6 +1,7 @@
 'use server'
 
-import { requireAuth, requirePermission } from '@/core/authorization/guards'
+import { requireAuth, requireRoleForUser } from '@/core/authorization/guards'
+import { KOMDIGI_DASHBOARD_ROLE_IDS, ORGANIZATION_DASHBOARD_ROLE_IDS } from '@/core/auth/roles'
 import { webConfigService } from './services'
 import { requireCmsUpdate } from '@/features/cms/access'
 import { contactInfoSchema, type ContactInfoInput, type WebConfigInput } from './schemas'
@@ -11,7 +12,7 @@ import { cloudinaryFolders, storageService } from '@/core/storage/storage-servic
 import { safeActionError } from '@/core/errors/safe-action-error'
 import { CONTACT_CONFIG_KEY } from './contact-contract'
 import { isWritableWebConfigKey } from './policy'
-import { aboutContentSchema, homepageContentSchema, type AboutContentInput, type HomepageContentInput } from './content-contract'
+import { aboutContentSchema, homepageContentSchema, pageHeroesContentSchema, type AboutContentInput, type HomepageContentInput, type PageHeroesContentInput } from './content-contract'
 
 function revalidatePublicContact() {
   revalidatePath('/admin/cms/settings')
@@ -27,6 +28,15 @@ function revalidateHomepageContent() {
 function revalidateAboutContent() {
   revalidatePath('/admin/organization/about')
   revalidatePath('/tentang')
+}
+
+function revalidatePageHeroesContent() {
+  revalidatePath('/admin/campaign/pages')
+  revalidatePath('/kegiatan')
+  revalidatePath('/publikasi')
+  revalidatePath('/kirim-tulisan')
+  revalidatePath('/gabung')
+  revalidatePath('/kontak')
 }
 
 export async function updateContactInfoAction(input: ContactInfoInput) {
@@ -65,6 +75,19 @@ export async function updateAboutContentAction(input: AboutContentInput) {
   }
 }
 
+export async function updatePageHeroesContentAction(input: PageHeroesContentInput) {
+  try {
+    const actor = await requireAuth()
+    await requireCmsUpdate(actor.id)
+    await rateLimit(`cms:page-heroes:${actor.id}`, 30, 3600)
+    await webConfigService.updatePageHeroesContent(pageHeroesContentSchema.parse(input), actor)
+    revalidatePageHeroesContent()
+    return { success: true }
+  } catch (error) {
+    return { error: safeActionError(error, 'Hero halaman belum dapat disimpan.', 'web_config.page_heroes_update') }
+  }
+}
+
 /** Compatibility boundary for the retired generic WebConfig form. */
 export async function upsertWebConfigAction(data: WebConfigInput) {
   try {
@@ -77,11 +100,11 @@ export async function upsertWebConfigAction(data: WebConfigInput) {
   }
 }
 
-export async function uploadWebConfigImageAction(formData: FormData) {
+async function uploadWebConfigImage(formData: FormData, roles: typeof KOMDIGI_DASHBOARD_ROLE_IDS | typeof ORGANIZATION_DASHBOARD_ROLE_IDS, purpose: string) {
   try {
-    const actor = await requirePermission('cms.update')
-    await requireCmsUpdate(actor.id)
-    await rateLimit(`cms:web-config:image:${actor.id}`, 40, 3600)
+    const actor = await requireAuth()
+    await requireRoleForUser(actor, roles)
+    await rateLimit(`cms:web-config:${purpose}:image:${actor.id}`, 40, 3600)
 
     const file = formData.get('file')
     if (!(file instanceof File) || file.size === 0) {
@@ -94,6 +117,18 @@ export async function uploadWebConfigImageAction(formData: FormData) {
     const uploaded = await storageService.uploadImage(file, cloudinaryFolders.website)
     return { success: true, url: uploaded.secureUrl, publicId: uploaded.publicId }
   } catch (error) {
-    return { error: safeActionError(error, 'Gambar website belum dapat diunggah.', 'web_config.image_upload') }
+    return { error: safeActionError(error, 'Gambar website belum dapat diunggah.', `web_config.${purpose}_image_upload`) }
   }
+}
+
+export async function uploadHomepageImageAction(formData: FormData) {
+  return uploadWebConfigImage(formData, KOMDIGI_DASHBOARD_ROLE_IDS, 'homepage')
+}
+
+export async function uploadAboutImageAction(formData: FormData) {
+  return uploadWebConfigImage(formData, ORGANIZATION_DASHBOARD_ROLE_IDS, 'about')
+}
+
+export async function uploadKomdigiWebImageAction(formData: FormData) {
+  return uploadWebConfigImage(formData, KOMDIGI_DASHBOARD_ROLE_IDS, 'komdigi')
 }

@@ -524,20 +524,9 @@ export default async function TentangPage() {
   const periodCabinet = period ? asRecord(webConfig[`cabinet:${period.id}`]) : null;
   const cabinet = normalizeCabinet(period ? { ...period, cabinet: periodCabinet } : null, fallbackCabinet);
 
-  const heroImage =
-    readMediaUrl(mediaRecord, [
-      "heroImageUrl",
-      "heroImage",
-      "hero",
-      "coverImageUrl",
-    ]) ??
-    readMediaUrl(aboutRecord, ["heroImageUrl", "heroImage", "hero"]) ??
-    webConfig.landing_hero?.slides?.[0]?.url ??
-    "https://res.cloudinary.com/fvggnar7/image/upload/v1789385069/BPHU.png";
+  const heroImage = aboutContent.hero.imageUrl;
 
-  const profileImage =
-    readMediaUrl(mediaRecord, ["profileImageUrl", "profileImage", "profile"]) ??
-    readMediaUrl(aboutRecord, ["profileImageUrl", "profileImage", "profile"]);
+  const profileImage = aboutContent.profile.imageUrl;
 
   const cabinetImage =
     readMediaUrl(mediaRecord, [
@@ -593,20 +582,17 @@ export default async function TentangPage() {
           <div className="about-reveal about-hero-copy">
             <PublicBreadcrumb items={[{ label: "Tentang" }]} tone="inverse" />
             <h1>
-              Rumah Mahasiswa
-              <span>Indramayu di Cirebon</span>
+              {aboutContent.hero.title}
+              <span>{aboutContent.hero.accent}</span>
             </h1>
 
             <p className="about-hero-lead">
-              IKMI Se-Wilayah Cirebon adalah ruang bagi mahasiswa asal Indramayu
-              di Cirebon untuk bersilaturahmi, bertumbuh, dan bergerak bersama.
-              Di sini, kekeluargaan bertemu dengan pengembangan potensi dan
-              kontribusi nyata bagi daerah.
+              {aboutContent.hero.lead}
             </p>
 
             <p className="about-motto">
               <span aria-hidden="true" />
-              Memayu Ing Jagat
+              {aboutContent.hero.motto}
               <span aria-hidden="true" />
             </p>
 
@@ -636,23 +622,16 @@ export default async function TentangPage() {
 
           <div className="about-reveal about-copy">
             <SectionHeading number="01" eyebrow="Profil" id="profil-title">
-              Rumah Mahasiswa Indramayu
+              {aboutContent.profile.title}
             </SectionHeading>
 
             <p>
-              IKMI adalah ruang bagi mahasiswa Indramayu untuk bertemu,
-              bertumbuh, dan bergerak bersama melalui ikatan kekeluargaan,
-              menjaga identitas, menebar kebaikan, dan menyiapkan aksi nyata
-              untuk daerah.
+              {aboutContent.profile.description}
             </p>
 
             <blockquote className="about-quote">
               <Quote aria-hidden="true" />
-              <p>
-                Dari tanah rantau, kami belajar.
-                <br />
-                Untuk Indramayu, kami bergerak.
-              </p>
+              <p>{aboutContent.profile.quote}</p>
             </blockquote>
 
             <Link href="#sejarah" className="public-text-link about-action">
@@ -673,21 +652,17 @@ export default async function TentangPage() {
           <div className="about-reveal about-copy about-history-copy">
             <SectionHeading number="02" eyebrow="Sejarah" id="sejarah-title">
               <>
-                {aboutContent.historyTitle}
+                {aboutContent.history.title}
               </>
             </SectionHeading>
 
             <p>
-              {aboutContent.history}
+              {aboutContent.history.description}
             </p>
 
             <blockquote className="about-quote">
               <Quote aria-hidden="true" />
-              <p>
-                Dari percakapan sederhana,
-                <br />
-                lahir perjalanan lintas generasi.
-              </p>
+              <p>{aboutContent.history.quote}</p>
             </blockquote>
 
             <Link href="#kabinet" className="public-text-link about-action">
@@ -938,20 +913,15 @@ export default async function TentangPage() {
             </div>
 
             <div>
-              <h2>Berbeda Peran, Satu Tujuan</h2>
-              <p>
-                Setiap departemen mempunyai fokus yang berbeda. Namun semuanya
-                bergerak menuju arah yang sama: membangun organisasi yang kuat,
-                anggota yang berkembang, dan kontribusi yang terasa bagi
-                masyarakat.
-              </p>
+              <h2>{aboutContent.structureCta.title}</h2>
+              <p>{aboutContent.structureCta.description}</p>
             </div>
 
             <Link
-              href="/struktur"
+              href={aboutContent.structureCta.href}
               className="public-text-link about-closing-action"
             >
-              Lihat Seluruh Pengurus
+              {aboutContent.structureCta.label}
               <ArrowRight aria-hidden="true" />
             </Link>
           </div>

@@ -14,7 +14,7 @@ import { IKMI_LOGO_URL } from '@/core/brand/assets'
 import { webConfigQueries } from '@/features/web-config/queries'
 
 const explorationLinks = [
-  { label: 'Tentang IKMI', href: '/tentang-kami' },
+  { label: 'Tentang IKMI', href: '/tentang' },
   { label: 'Agenda & Kegiatan', href: '/kegiatan' },
   { label: 'Publikasi Terbaru', href: '/publikasi' },
   { label: 'Hubungi Kami', href: '/kontak' },

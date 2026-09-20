@@ -77,20 +77,6 @@ export function activePublicBannerWhere(now: Date): Prisma.HomepageBannerWhereIn
     AND: [
       {
         OR: [
-          { programId: null },
-          {
-            program: {
-              is: {
-                campaignEnabled: true,
-                visibility: 'PUBLIC',
-                deletedAt: null,
-              },
-            },
-          },
-        ],
-      },
-      {
-        OR: [
           {
             status: HomepageBannerStatus.PUBLISHED,
             AND: [

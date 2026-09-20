@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function RegistrationsRedirectPage() {
-  redirect('/admin/registrations')
+  redirect('/admin/organization/registrations')
 }

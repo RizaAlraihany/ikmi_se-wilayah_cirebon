@@ -99,6 +99,44 @@ describe('Blog Service', () => {
       }))
       expect(prismaMock.auditLog.create).toHaveBeenCalled()
     })
+
+    it('publishes an internal CMS draft directly, but preserves review for public submissions', async () => {
+      prismaMock.user.findFirst.mockResolvedValueOnce({
+        id: 'admin-1',
+        roleId: 'admin_komdigi',
+        department: { code: 'KOMDIGI', name: 'Komunikasi & Digitalisasi' },
+      } as any)
+      prismaMock.post.findFirst.mockResolvedValueOnce({ id: 'cms-draft', status: PostStatus.DRAFT, writingSubmissionId: null } as any)
+      prismaMock.post.update.mockResolvedValueOnce({ id: 'cms-draft', status: PostStatus.PUBLISHED } as any)
+
+      await expect(blogService.publishPost('cms-draft', 'admin-1')).resolves.toEqual(expect.objectContaining({ status: PostStatus.PUBLISHED }))
+
+      prismaMock.user.findFirst.mockResolvedValueOnce({
+        id: 'admin-1',
+        roleId: 'admin_komdigi',
+        department: { code: 'KOMDIGI', name: 'Komunikasi & Digitalisasi' },
+      } as any)
+      prismaMock.post.findFirst.mockResolvedValueOnce({ id: 'submission-draft', status: PostStatus.DRAFT, writingSubmissionId: 'submission-1' } as any)
+
+      await expect(blogService.publishPost('submission-draft', 'admin-1')).rejects.toBeInstanceOf(ValidationError)
+    })
+  })
+
+  describe('updatePost', () => {
+    it('clears optional Program and Agenda relations submitted as empty dashboard values', async () => {
+      prismaMock.user.findFirst
+        .mockResolvedValueOnce({ id: 'admin-1', roleId: 'admin_komdigi', department: { code: 'KOMDIGI' } } as any)
+      prismaMock.post.findFirst.mockResolvedValueOnce({ id: 'post-1', status: PostStatus.DRAFT, authorId: 'admin-1', author: { departmentId: 'komdigi' } } as any)
+      prismaMock.post.update.mockResolvedValueOnce({ id: 'post-1' } as any)
+
+      await blogService.updatePost({ id: 'post-1', programId: '', agendaId: '' }, {
+        id: 'admin-1', roleId: 'admin_komdigi', departmentId: 'komdigi', positionId: null,
+      })
+
+      expect(prismaMock.post.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ programId: null, agendaId: null }),
+      }))
+    })
   })
 
   describe('review and scheduling workflow', () => {

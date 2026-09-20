@@ -4,8 +4,7 @@ import { publicPostSelect } from '@/features/public/public-data'
 import { requirePermission } from '@/core/authorization/guards'
 import { KOMDIGI_DASHBOARD_ROLE_IDS } from '@/core/auth/roles'
 import { ForbiddenError } from '@/core/errors/custom-errors'
-
-const publicPublicationCategorySlugs = ['berita', 'opini', 'artikel', 'kajian']
+import { PUBLICATION_CATEGORY_SLUGS } from '@/features/categories/schemas'
 
 async function requirePublicationReader() {
   const user = await requirePermission('post.view')
@@ -99,7 +98,7 @@ export const postQueries = {
       where: {
         status: PostStatus.PUBLISHED,
         deletedAt: null,
-        category: { deletedAt: null, slug: { in: publicPublicationCategorySlugs } },
+        category: { deletedAt: null, slug: { in: [...PUBLICATION_CATEGORY_SLUGS] } },
       },
       select: publicPostSelect,
       orderBy: { publishedAt: 'desc' },
@@ -113,7 +112,7 @@ export const postQueries = {
         slug,
         status: PostStatus.PUBLISHED,
         deletedAt: null,
-        category: { deletedAt: null, slug: { in: publicPublicationCategorySlugs } },
+        category: { deletedAt: null, slug: { in: [...PUBLICATION_CATEGORY_SLUGS] } },
       },
       select: publicPostSelect,
     })

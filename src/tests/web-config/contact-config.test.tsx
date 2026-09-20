@@ -2,8 +2,10 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import type { Prisma, WebConfig } from '@prisma/client'
 import { ForbiddenError, UnauthorizedError } from '@/core/errors/custom-errors'
-import { updateAboutContentAction, updateContactInfoAction, updateHomepageContentAction, upsertWebConfigAction } from '@/features/web-config/actions'
+import { updateAboutContentAction, updateContactInfoAction, updateHomepageContentAction, updatePageHeroesContentAction, upsertWebConfigAction } from '@/features/web-config/actions'
 import { normalizePublicContactInfo } from '@/features/web-config/contact-contract'
+import { defaultWebConfig } from '@/features/web-config/default-config'
+import { aboutContentSchema, homepageContentSchema, normalizeAboutContent, normalizeHomepageContent, normalizePageHeroesContent, pageHeroesContentSchema } from '@/features/web-config/content-contract'
 import { webConfigQueries } from '@/features/web-config/queries'
 import { webConfigService } from '@/features/web-config/services'
 import { classifyWebConfigKey, isWritableWebConfigKey, webConfigKeyPolicy } from '@/features/web-config/policy'
@@ -22,6 +24,7 @@ jest.mock('@/core/security/rate-limiter', () => ({
   rateLimit: jest.fn().mockResolvedValue(1),
   RateLimitError: class RateLimitError extends Error {},
 }))
+jest.mock('@/features/cms/access', () => ({ requireCmsUpdate: jest.fn().mockResolvedValue(undefined) }))
 jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }))
 jest.mock('next/image', () => ({
   __esModule: true,
@@ -58,9 +61,18 @@ const homepageContent = {
     secondaryCtaLabel: 'Tentang X',
     secondaryCtaHref: '/tentang',
   },
-  profile: { title: 'Profil X', description: 'Deskripsi profil X' },
-  cta: { title: 'Gabung X', description: 'Deskripsi CTA X' },
+  profile: { title: 'Profil X', description: 'Deskripsi profil X', imageUrl: defaultWebConfig.landing_about.imageUrl, imageAlt: 'Profil X', ctaLabel: 'Tentang X', ctaHref: '/tentang' },
+  cta: { title: 'Gabung X', description: 'Deskripsi CTA X', label: 'Gabung X', href: '/gabung' },
 }
+
+const aboutContent = {
+  hero: defaultWebConfig.about_page.hero,
+  profile: defaultWebConfig.about_page.profile,
+  history: { ...defaultWebConfig.about_page.history, title: 'Sejarah X', description: 'Narasi sejarah X' },
+  structureCta: defaultWebConfig.about_page.structureCta,
+}
+
+const pageHeroesContent = defaultWebConfig.page_heroes
 
 let storedWebConfigs: Map<string, WebConfig>
 
@@ -114,6 +126,8 @@ describe('ALIGN-001 WebConfig Contact contract', () => {
     expect(classifyWebConfigKey('unknown')).toBe('UNKNOWN')
     expect(isWritableWebConfigKey('contact_info')).toBe(true)
     expect(isWritableWebConfigKey('landing_hero')).toBe(false)
+    expect(isWritableWebConfigKey('page_heroes')).toBe(false)
+    expect(webConfigKeyPolicy.page_heroes.writable).toBe(false)
     expect(webConfigKeyPolicy.contact_info.roles).toContain('admin_organization')
     expect(webConfigKeyPolicy.contact_info.roles).not.toContain('admin_komdigi')
   })
@@ -175,9 +189,35 @@ describe('ALIGN-001 WebConfig Contact contract', () => {
     }))
   })
 
+  it('rejects unsafe editorial paths and images while normalizing legacy records safely', () => {
+    expect(homepageContentSchema.safeParse({ ...homepageContent, cta: { ...homepageContent.cta, href: 'https://evil.test' } }).success).toBe(false)
+    expect(homepageContentSchema.safeParse({ ...homepageContent, profile: { ...homepageContent.profile, imageUrl: 'https://evil.test/image.jpg' } }).success).toBe(false)
+    expect(aboutContentSchema.safeParse({ ...aboutContent, structureCta: { ...aboutContent.structureCta, href: '//evil.test' } }).success).toBe(false)
+    expect(normalizeHomepageContent({ landing_about: { imageUrl: 'javascript:alert(1)', ctaHref: '//evil.test' } }).profile).toEqual(expect.objectContaining({ imageUrl: defaultWebConfig.landing_about.imageUrl, ctaHref: '/tentang' }))
+    expect(normalizeAboutContent({ historyTitle: 'Legacy title', history: 'Legacy history', hero: { imageUrl: 'data:image/svg+xml,unsafe' } })).toEqual(expect.objectContaining({ history: expect.objectContaining({ title: 'Legacy title', description: 'Legacy history' }), hero: expect.objectContaining({ imageUrl: defaultWebConfig.about_page.hero.imageUrl }) }))
+  })
+
+  it('applies the shared public image policy to page heroes and safely normalizes blank or unsafe records', () => {
+    const withImage = (imageUrl: string) => ({ ...pageHeroesContent, kegiatan: { ...pageHeroesContent.kegiatan, imageUrl } })
+    expect(pageHeroesContentSchema.safeParse(withImage('/uploads/hero.webp')).success).toBe(true)
+    expect(pageHeroesContentSchema.safeParse(withImage('https://res.cloudinary.com/example/image/upload/hero.webp')).success).toBe(true)
+    expect(pageHeroesContentSchema.safeParse(withImage('javascript:alert(1)')).success).toBe(false)
+    expect(pageHeroesContentSchema.safeParse(withImage('https://evil.test/hero.webp')).success).toBe(false)
+    expect(pageHeroesContentSchema.safeParse(withImage('')).success).toBe(false)
+    expect(normalizePageHeroesContent({ kegiatan: { imageUrl: '' } }).kegiatan.imageUrl).toBe(pageHeroesContent.kegiatan.imageUrl)
+    expect(normalizePageHeroesContent({ kegiatan: { imageUrl: 'data:image/svg+xml,unsafe' } }).kegiatan.imageUrl).toBe(pageHeroesContent.kegiatan.imageUrl)
+  })
+
+  it('rejects unsafe page-hero image URLs at the action boundary without persistence', async () => {
+    jest.mocked(requireAuth).mockResolvedValueOnce(komdigiActor as never)
+    const unsafe = { ...pageHeroesContent, kegiatan: { ...pageHeroesContent.kegiatan, imageUrl: 'https://evil.test/hero.webp' } }
+    await expect(updatePageHeroesContentAction(unsafe)).resolves.toEqual(expect.objectContaining({ error: expect.any(String) }))
+    expect(prismaMock.webConfig.upsert).not.toHaveBeenCalled()
+  })
+
   it('uses the same persistence record for About CMS writes and the real public reader', async () => {
-    const aboutX = { historyTitle: 'Sejarah X', history: 'Narasi sejarah X' }
-    const aboutY = { historyTitle: 'Sejarah Y', history: 'Narasi sejarah Y' }
+    const aboutX = aboutContent
+    const aboutY = { ...aboutContent, history: { ...aboutContent.history, title: 'Sejarah Y', description: 'Narasi sejarah Y' } }
 
     await expect(updateAboutContentAction(aboutX)).resolves.toEqual({ success: true })
     await expect(webConfigQueries.getPublicAboutContent()).resolves.toEqual(aboutX)
@@ -193,7 +233,7 @@ describe('ALIGN-001 WebConfig Contact contract', () => {
     await expect(updateHomepageContentAction(homepageContent)).resolves.toEqual({ success: true })
 
     jest.mocked(requireAuth).mockResolvedValueOnce(komdigiActor as never)
-    await expect(updateAboutContentAction({ historyTitle: 'Sejarah', history: 'Narasi sejarah yang valid.' })).resolves.toEqual(expect.objectContaining({ error: expect.any(String) }))
+    await expect(updateAboutContentAction(aboutContent)).resolves.toEqual(expect.objectContaining({ error: expect.any(String) }))
   })
 
   it('persists only the explicit contact fields and revalidates the contact page and public layout', async () => {
