@@ -56,7 +56,9 @@ export type DashboardNavGroup = DashboardVisibleNavGroup
 
 function isActivePath(pathname: string, href: string) {
   const routeHref = href.split('#', 1)[0]
-  if (routeHref === '/admin') return pathname === routeHref
+  // These are workspace roots, not parent menu entries. Matching them by
+  // prefix made both the root and a nested menu look active at once.
+  if (routeHref === '/admin' || routeHref === '/admin/organization' || routeHref === '/admin/campaign') return pathname === routeHref
   return pathname === routeHref || pathname.startsWith(`${routeHref}/`)
 }
 
@@ -182,7 +184,7 @@ export function DashboardMobileDrawer({ groups }: { groups: DashboardNavGroup[] 
         onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="dashboard-mobile-navigation"
-        className="flex h-11 w-11 items-center justify-center rounded-md text-primary transition hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="flex size-11 items-center justify-center rounded-md text-primary transition hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <Menu className="h-5 w-5" aria-hidden="true" />
         <span className="sr-only">Buka menu dashboard</span>
@@ -194,7 +196,7 @@ export function DashboardMobileDrawer({ groups }: { groups: DashboardNavGroup[] 
         description="Pilih area kerja yang dapat Anda akses."
         side="left"
       >
-        <nav id="dashboard-mobile-navigation" className="max-h-[calc(100vh-9rem)] space-y-2 overflow-y-auto" aria-label="Navigasi dashboard">
+        <nav id="dashboard-mobile-navigation" className="max-h-[calc(100dvh-9rem)] space-y-2 overflow-y-auto" aria-label="Navigasi dashboard">
           {groups.map((group) => (
             <div key={group.label} className="space-y-1 py-2">
               <p className="px-3 text-[11px] font-bold uppercase tracking-widest text-text-muted">{group.label}</p>
@@ -233,14 +235,15 @@ const dashboardBreadcrumbs = [
   ['/admin/kirim-tulisan', 'Kiriman Tulisan'],
   ['/admin/campaign', 'CMS Beranda'],
   ['/admin/cms/posts', 'Publikasi'],
-  ['/admin/cms/media', 'Media'],
   ['/admin/cms/settings', 'Kontak Publik'],
-  ['/admin/programs', 'Program'],
+  ['/admin/programs', 'Kegiatan'],
   ['/admin/agendas', 'Agenda'],
   ['/admin/events', 'Kalender'],
   ['/admin/organization/registrations', 'Anggota'],
-  ['/admin/organization/structure', 'Struktur'],
-  ['/admin/organization', 'Periode & Unit'],
+  ['/admin/organization/structure', 'Struktur Pengurus'],
+  ['/admin/organization/about', 'CMS Tentang'],
+  ['/admin/organization/settings', 'Pengaturan'],
+  ['/admin/organization', 'Profil Organisasi'],
   ['/admin/documents', 'Dokumen'],
   ['/admin/users', 'Pengguna & Role'],
   ['/admin/system/audit-logs', 'Audit Log'],

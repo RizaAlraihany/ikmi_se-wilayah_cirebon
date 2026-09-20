@@ -67,7 +67,7 @@ async function validateReferences(data: AgendaInput) {
       where: { id: data.organizationalUnitId, deletedAt: null, status: 'ACTIVE' },
       select: { id: true, periodId: true },
     }),
-    prisma.period.findFirst({ where: { id: data.periodId, deletedAt: null }, select: { id: true } }),
+    prisma.period.findFirst({ where: { id: data.periodId, deletedAt: null }, select: { id: true, status: true } }),
     data.picId
       ? prisma.member.findFirst({ where: { id: data.picId, deletedAt: null }, select: { id: true, periodId: true } })
       : null,
@@ -97,7 +97,7 @@ async function validateReferences(data: AgendaInput) {
     throw new ValidationError('Program pemicu tidak berada pada periode yang dipilih.')
   }
 
-  return { relativeProgram }
+  return { relativeProgram, period }
 }
 
 function normalizedStatus(data: AgendaInput, relativeProgram: { actualEnd: Date | null } | null) {
@@ -169,6 +169,7 @@ export const agendaService = {
     assertRegistrationPolicy(data)
     await assertAgendaUnitScope(actor, data.organizationalUnitId)
     const references = await validateReferences(data)
+    if (references.period?.status !== 'ACTIVE') throw new ValidationError('Agenda baru hanya dapat dibuat pada periode aktif.')
     const stored = storageData(data, references.relativeProgram)
     const slug = await uniqueAgendaSlug(data.name)
 

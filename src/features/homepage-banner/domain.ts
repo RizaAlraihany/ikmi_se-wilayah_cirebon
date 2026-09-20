@@ -39,10 +39,10 @@ export function campaignStateLabel(state: CampaignState) {
 
 export function campaignPhaseLabel(phase: string) {
   const labels: Record<string, string> = {
-    BEFORE: 'Sebelum kegiatan',
-    PRA: 'Sedang berlangsung',
-    AFTER: 'Setelah kegiatan',
-    GENERAL: 'Umum',
+    BEFORE: 'Coming Soon',
+    PRA: 'Banner Utama',
+    AFTER: 'Berita Acara',
+    GENERAL: 'Umum (legacy)',
   }
   return labels[phase] ?? phase
 }

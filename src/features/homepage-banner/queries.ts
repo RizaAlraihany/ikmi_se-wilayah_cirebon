@@ -103,7 +103,7 @@ export async function getActivePublicBanners(now = new Date()) {
   })
 
   // Legacy rows may predate schema validation; omit unsafe images instead of crashing Next Image.
-  return banners
+  const eligible = banners
     .filter((banner) => (
       isSafeCampaignImageUrl(banner.desktopImage) && isSafeCampaignImageUrl(banner.mobileImage)
     ))
@@ -115,6 +115,13 @@ export async function getActivePublicBanners(now = new Date()) {
         ctaUrl: safeCta ? banner.ctaUrl : null,
       }
     })
+
+  // The homepage intentionally carries one documentation banner and one
+  // promotional context at most. Priority ordering from the query decides
+  // which eligible record owns each slot without deleting older banners.
+  const after = eligible.find((banner) => banner.phase === 'AFTER')
+  const promotion = eligible.find((banner) => banner.phase !== 'AFTER')
+  return [promotion, after].filter((banner): banner is NonNullable<typeof banner> => Boolean(banner))
 }
 
 export async function getActivePublicBanner(now = new Date()) {

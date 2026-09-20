@@ -13,31 +13,28 @@ function visibleHrefs(roleId: string) {
 }
 
 describe('dashboard navigation', () => {
-  it('keeps system navigation exclusive to Super Admin', () => {
-    expect(visibleHrefs('super_admin')).toEqual(expect.arrayContaining(['/admin/users', '/admin/system/audit-logs']))
-    expect(visibleHrefs('admin_organization')).not.toEqual(expect.arrayContaining(['/admin/users', '/admin/system/audit-logs']))
-    expect(visibleHrefs('admin_komdigi')).not.toEqual(expect.arrayContaining(['/admin/users', '/admin/system/audit-logs']))
+  it('keeps legacy system administration out of the active sidebar', () => {
+    expect(visibleHrefs('super_admin')).not.toEqual(expect.arrayContaining(['/admin/users', '/admin/system/audit-logs']))
   })
 
   it('separates organization and Komdigi workspaces before permission checks', () => {
     expect(visibleHrefs('admin_organization')).toEqual([
       '/admin',
       '/admin/agendas',
+      '/admin/programs',
       '/admin/organization/registrations',
       '/admin/organization/structure',
       '/admin/organization/about',
       '/admin/organization',
       '/admin/cms/settings',
+      '/admin/organization/settings',
     ])
 
     expect(visibleHrefs('admin_komdigi')).toEqual([
       '/admin',
       '/admin/kirim-tulisan',
       '/admin/campaign',
-      '/admin/campaign/pages',
       '/admin/cms/posts',
-      '/admin/cms/categories',
-      '/admin/cms/media',
     ])
   })
 
@@ -45,17 +42,15 @@ describe('dashboard navigation', () => {
     expect(getMobileNavigationItems('admin_organization').map((item) => item.href)).toEqual([
       '/admin',
       '/admin/agendas',
+      '/admin/programs',
       '/admin/organization/registrations',
       '/admin/organization/structure',
-      '/admin/organization/about',
     ])
     expect(getMobileNavigationItems('admin_komdigi').map((item) => item.href)).toEqual([
       '/admin',
       '/admin/campaign',
-      '/admin/campaign/pages',
       '/admin/cms/posts',
       '/admin/kirim-tulisan',
-      '/admin/cms/media',
     ])
     expect(getMobileNavigationItems('user')).toEqual([])
   })

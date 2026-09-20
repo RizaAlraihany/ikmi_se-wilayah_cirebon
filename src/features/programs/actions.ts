@@ -14,11 +14,18 @@ function errorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
+function revalidateProgramViews(id?: string) {
+  revalidatePath('/admin')
+  revalidatePath('/admin/programs')
+  if (id) revalidatePath(`/admin/programs/${id}`)
+  revalidatePath('/')
+}
+
 export async function createProgramAction(data: unknown) {
   try {
     const actor = await requirePermission('program.create')
     const program = await programService.create(data, actor.id)
-    revalidatePath('/admin/programs')
+    revalidateProgramViews(program.id)
     return { success: true, data: program }
   } catch (error) {
     return { success: false, error: errorMessage(error, 'Gagal membuat program.') }
@@ -29,8 +36,7 @@ export async function updateProgramAction(id: string, data: unknown) {
   try {
     const actor = await requirePermission('program.update')
     const program = await programService.update(id, data, actor.id)
-    revalidatePath('/admin/programs')
-    revalidatePath(`/admin/programs/${id}`)
+    revalidateProgramViews(id)
     return { success: true, data: program }
   } catch (error) {
     return { success: false, error: errorMessage(error, 'Gagal memperbarui program.') }
@@ -41,8 +47,7 @@ export async function updateProgramStatusOverrideAction(id: string, data: unknow
   try {
     const actor = await requirePermission('program.update')
     const program = await programService.setStatusOverride(id, data, actor.id)
-    revalidatePath('/admin/programs')
-    revalidatePath(`/admin/programs/${id}`)
+    revalidateProgramViews(id)
     return { success: true, data: program }
   } catch (error) {
     return { success: false, error: errorMessage(error, 'Gagal mengubah status program.') }
@@ -53,7 +58,7 @@ export async function archiveProgramAction(id: string) {
   try {
     const actor = await requirePermission('program.delete')
     await programService.archive(id, actor.id)
-    revalidatePath('/admin/programs')
+    revalidateProgramViews(id)
     return { success: true }
   } catch (error) {
     return { success: false, error: errorMessage(error, 'Gagal mengarsipkan program.') }

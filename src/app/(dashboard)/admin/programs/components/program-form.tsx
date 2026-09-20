@@ -47,7 +47,7 @@ export function ProgramForm({ units, periods, members }: { units: Unit[]; period
     })
     setIsSubmitting(false)
     if (!result.success || !result.data) {
-      setError(result.error ?? 'Program belum dapat disimpan.')
+      setError(result.error ?? 'Kegiatan belum dapat disimpan.')
       return
     }
     router.push(`/admin/programs/${result.data.id}`)
@@ -58,10 +58,10 @@ export function ProgramForm({ units, periods, members }: { units: Unit[]; period
 
   return (
     <div className="space-y-5">
-      <div className="rounded-3xl bg-gradient-card p-6 text-surface shadow-card">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-surface/70">Manajemen organisasi</p>
-        <h1 className="mt-2 font-heading text-3xl font-extrabold">Buat Program</h1>
-        <p className="mt-2 text-sm leading-6 text-surface/80">Program adalah satu entitas. Agenda dikelola melalui modul Agenda terpisah.</p>
+      <div className="rounded-3xl border-y-2 border-primary bg-surface p-6 text-primary">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">Manajemen organisasi</p>
+        <h1 className="mt-2 font-heading text-3xl font-extrabold">Buat Kegiatan</h1>
+        <p className="mt-2 text-sm leading-6 text-text-secondary">Kegiatan adalah satu entitas. Agenda dikelola melalui modul Agenda terpisah.</p>
       </div>
 
       {error ? <div role="alert" className="flex gap-2 rounded-2xl border border-danger/25 bg-danger/10 p-4 text-sm font-semibold text-primary"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</div> : null}
@@ -70,7 +70,7 @@ export function ProgramForm({ units, periods, members }: { units: Unit[]; period
       <form action={submit} className="space-y-5">
         <Card><CardHeader><CardTitle>Identitas program</CardTitle></CardHeader><CardContent className="grid gap-4 md:grid-cols-2">
           <Field label="Unit Organisasi" htmlFor="organizationalUnitId"><select id="organizationalUnitId" name="organizationalUnitId" defaultValue={units[0]?.id ?? ''} disabled={disabled} className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm font-semibold text-primary">{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></Field>
-          <Field label="Nama Program" htmlFor="name"><Input id="name" name="name" required disabled={disabled} placeholder="Contoh: IKMI SOSIAL" /></Field>
+          <Field label="Nama Kegiatan" htmlFor="name"><Input id="name" name="name" required disabled={disabled} placeholder="Contoh: IKMI SOSIAL" /></Field>
           <Field label="Nama Lengkap" htmlFor="fullName"><Input id="fullName" name="fullName" disabled={disabled} placeholder="Opsional" /></Field>
           <Field label="Periode" htmlFor="periodId"><select id="periodId" name="periodId" defaultValue={periods.find((period) => period.status === 'ACTIVE')?.id ?? periods[0]?.id ?? ''} disabled={disabled} className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm font-semibold text-primary">{periods.map((period) => <option key={period.id} value={period.id}>{period.name} ({periodStatusLabel(period.status)})</option>)}</select></Field>
           <Field label="PIC" htmlFor="picId"><select id="picId" name="picId" defaultValue="" disabled={disabled} className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm font-semibold text-primary"><option value="">Belum ditentukan</option>{members.map((member) => <option key={member.id} value={member.id}>{member.fullName} ({member.membershipStatus})</option>)}</select></Field>
@@ -87,12 +87,12 @@ export function ProgramForm({ units, periods, members }: { units: Unit[]; period
           <Field label="Lokasi" htmlFor="location"><Input id="location" name="location" disabled={disabled} placeholder="Opsional" /></Field>
           <Field label="Anggaran rencana (Rp)" htmlFor="plannedBudget"><Input id="plannedBudget" name="plannedBudget" type="number" min="1" disabled={disabled} placeholder="Kosongkan bila belum diverifikasi" /></Field>
           <Field label="Visibilitas" htmlFor="visibility"><select id="visibility" name="visibility" defaultValue="HIDDEN" disabled={disabled} className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm font-semibold text-primary"><option value="HIDDEN">Disembunyikan</option><option value="INTERNAL">Internal</option><option value="PUBLIC">Publik</option></select></Field>
-          <div className="grid gap-3 md:col-span-2 md:grid-cols-2"><label className="flex items-center gap-3 rounded-xl border border-border bg-surface-alt p-4 text-sm font-semibold text-primary"><input type="checkbox" checked={campaignEnabled} onChange={(event) => setCampaignEnabled(event.target.checked)} disabled={disabled} className="h-4 w-4" />Aktifkan campaign beranda bila diperlukan.</label><label className="flex items-center gap-3 rounded-xl border border-border bg-surface-alt p-4 text-sm font-semibold text-primary"><input type="checkbox" checked={featured} onChange={(event) => setFeatured(event.target.checked)} disabled={disabled} className="h-4 w-4" />Tandai sebagai Program unggulan.</label></div>
-          <label className="flex items-center gap-3 rounded-xl border border-border bg-surface-alt p-4 text-sm font-semibold text-primary md:col-span-2"><input type="checkbox" checked={requiresRegistration} onChange={(event) => setRequiresRegistration(event.target.checked)} disabled={disabled} className="h-4 w-4" />Program ini memerlukan pendaftaran.</label>
+          <div className="grid gap-3 md:col-span-2 md:grid-cols-2"><label className="flex items-center gap-3 rounded-xl border border-border bg-surface-alt p-4 text-sm font-semibold text-primary"><input type="checkbox" checked={campaignEnabled} onChange={(event) => setCampaignEnabled(event.target.checked)} disabled={disabled} className="h-4 w-4" />Aktifkan banner beranda bila diperlukan.</label><label className="flex items-center gap-3 rounded-xl border border-border bg-surface-alt p-4 text-sm font-semibold text-primary"><input type="checkbox" checked={featured} onChange={(event) => setFeatured(event.target.checked)} disabled={disabled} className="h-4 w-4" />Tandai sebagai Kegiatan unggulan.</label></div>
+          <label className="flex items-center gap-3 rounded-xl border border-border bg-surface-alt p-4 text-sm font-semibold text-primary md:col-span-2"><input type="checkbox" checked={requiresRegistration} onChange={(event) => setRequiresRegistration(event.target.checked)} disabled={disabled} className="h-4 w-4" />Kegiatan ini memerlukan pendaftaran.</label>
           {requiresRegistration ? <Field label="Jenis pendaftaran" htmlFor="registrationType"><select id="registrationType" name="registrationType" defaultValue="GENERAL_REGISTRATION" disabled={disabled} className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm font-semibold text-primary"><option value="GENERAL_REGISTRATION">Pendaftaran umum</option><option value="MEMBERSHIP_RECRUITMENT">Rekrutmen anggota</option><option value="INTERNAL_REGISTRATION">Pendaftaran internal</option><option value="EXTERNAL_LINK">Tautan eksternal</option></select></Field> : null}
         </CardContent></Card>
 
-        <div className="flex justify-end"><Button type="submit" disabled={disabled}><Save className="mr-2 h-4 w-4" />{isSubmitting ? 'Menyimpan…' : 'Simpan Program'}</Button></div>
+        <div className="flex justify-end"><Button type="submit" disabled={disabled}><Save className="mr-2 h-4 w-4" />{isSubmitting ? 'Menyimpan…' : 'Simpan Kegiatan'}</Button></div>
       </form>
     </div>
   )

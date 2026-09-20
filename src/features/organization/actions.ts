@@ -7,9 +7,11 @@ import {
   organizationalPositionSchema,
   organizationalUnitSchema,
   periodSchema,
+  startNewPeriodSchema,
   type OrganizationalPositionInput,
   type OrganizationalUnitInput,
   type PeriodInput,
+  type StartNewPeriodInput,
 } from './schemas'
 import { safeActionError } from '@/core/errors/safe-action-error'
 import { ForbiddenError, ValidationError } from '@/core/errors/custom-errors'
@@ -35,7 +37,9 @@ export async function updateCabinetAction(periodId: string, input: CabinetInput)
 }
 
 function revalidateOrganizationViews() {
+  revalidatePath('/admin')
   revalidatePath('/admin/organization')
+  revalidatePath('/admin/organization/settings')
   revalidatePath('/admin/management')
   revalidatePath('/admin/programs')
   revalidatePath('/admin/agendas')
@@ -44,6 +48,64 @@ function revalidateOrganizationViews() {
   revalidatePath('/tentang-kami')
   revalidatePath('/struktur')
   revalidatePath('/')
+}
+
+/**
+ * Starts a clean period workspace without copying or deleting historical
+ * records. The advisory lock makes a double click or concurrent request safe.
+ */
+export async function startNewPeriodAction(input: StartNewPeriodInput) {
+  try {
+    const actor = await requireOrganizationAccess()
+    const data = startNewPeriodSchema.parse(input)
+
+    const period = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('organization:current-period'))`
+
+      const duplicate = await tx.period.findFirst({
+        where: { name: data.name, deletedAt: null },
+        select: { id: true },
+      })
+      if (duplicate) throw new ValidationError('Nama periode sudah digunakan. Gunakan nama periode yang berbeda.')
+
+      const previousPeriods = await tx.period.findMany({
+        where: { status: 'ACTIVE', deletedAt: null },
+        select: { id: true, name: true },
+      })
+
+      await tx.period.updateMany({
+        where: { status: 'ACTIVE', deletedAt: null },
+        data: { status: 'ARCHIVED' },
+      })
+
+      const created = await tx.period.create({
+        data: {
+          name: data.name,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          status: 'ACTIVE',
+        },
+      })
+
+      await tx.auditLog.create({
+        data: {
+          action: 'UPDATE',
+          entity: 'Period',
+          entityId: created.id,
+          userId: actor.id,
+          oldData: JSON.stringify({ action: 'ARCHIVE_ACTIVE_PERIODS', periods: previousPeriods }),
+          newData: JSON.stringify({ action: 'START_NEW_PERIOD', period: { id: created.id, ...data } }),
+        },
+      })
+
+      return created
+    })
+
+    revalidateOrganizationViews()
+    return { success: true as const, data: period }
+  } catch (error) {
+    return { error: safeActionError(error, 'Periode baru belum dapat dimulai.', 'organization.period_rollover') }
+  }
 }
 
 export async function createPeriodAction(input: PeriodInput) {

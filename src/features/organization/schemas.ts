@@ -17,6 +17,15 @@ export const periodSchema = z.object({
   path: ['endDate'],
 })
 
+export const startNewPeriodSchema = z.object({
+  name: z.string().trim().min(3, 'Nama periode minimal 3 karakter'),
+  startDate: optionalDate,
+  endDate: optionalDate,
+}).refine((value) => !value.startDate || !value.endDate || value.startDate <= value.endDate, {
+  message: 'Tanggal akhir periode harus setelah tanggal mulai.',
+  path: ['endDate'],
+})
+
 export const organizationalUnitSchema = z.object({
   name: z.string().trim().min(2, 'Nama unit minimal 2 karakter'),
   code: z.string().trim().min(2, 'Kode unit minimal 2 karakter').max(32).transform((value) => value.toUpperCase()),
@@ -36,5 +45,6 @@ export const organizationalPositionSchema = z.object({
 })
 
 export type PeriodInput = z.input<typeof periodSchema>
+export type StartNewPeriodInput = z.input<typeof startNewPeriodSchema>
 export type OrganizationalUnitInput = z.input<typeof organizationalUnitSchema>
 export type OrganizationalPositionInput = z.input<typeof organizationalPositionSchema>

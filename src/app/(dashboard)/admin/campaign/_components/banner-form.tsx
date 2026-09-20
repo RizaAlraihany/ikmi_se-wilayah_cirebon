@@ -114,9 +114,9 @@ export function BannerForm({ banner, programs, publications }: Props) {
             <Field label="Fase campaign" htmlFor="phase" required>
               <Select id="phase" name="phase" required defaultValue={banner?.phase || 'BEFORE'}>
                 {banner?.phase === 'GENERAL' ? <option value="GENERAL">Umum (arsip lama)</option> : null}
-                <option value="BEFORE">Sebelum kegiatan</option>
-                <option value="PRA">Sedang berlangsung</option>
-                <option value="AFTER">Setelah kegiatan</option>
+                <option value="BEFORE">Coming Soon</option>
+                <option value="PRA">Banner utama</option>
+                <option value="AFTER">Berita acara</option>
               </Select>
             </Field>
             <Field label="Headline" htmlFor="headline" required className="md:col-span-2">

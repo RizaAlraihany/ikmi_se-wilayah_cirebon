@@ -24,6 +24,12 @@ async function ensureMemberExists(memberId: string | null | undefined) {
   if (!member) throw new ValidationError('PIC harus memilih anggota yang tersedia.')
 }
 
+function assertProgramUnitScope(actor: { roleId: string | null; departmentId: string | null }, departmentId: string) {
+  if (!isSuperAdminRole(actor.roleId) && actor.departmentId !== departmentId) {
+    throw new ForbiddenError('Anda hanya dapat mengelola Kegiatan unit organisasi Anda.')
+  }
+}
+
 async function validateProgramReferences(data: {
   organizationalUnitId?: string
   periodId?: string | null
@@ -34,7 +40,7 @@ async function validateProgramReferences(data: {
       ? prisma.department.findFirst({ where: { id: data.organizationalUnitId, deletedAt: null, status: 'ACTIVE' }, select: { id: true, periodId: true } })
       : null,
     data.periodId
-      ? prisma.period.findFirst({ where: { id: data.periodId, deletedAt: null }, select: { id: true } })
+      ? prisma.period.findFirst({ where: { id: data.periodId, deletedAt: null }, select: { id: true, status: true } })
       : null,
     data.picId !== undefined ? ensureMemberExists(data.picId) : null,
   ])
@@ -43,6 +49,7 @@ async function validateProgramReferences(data: {
   if (unit?.periodId && data.periodId && unit.periodId !== data.periodId) {
     throw new ValidationError('Unit organisasi tidak berada pada periode yang dipilih.')
   }
+  return { unit, period }
 }
 
 function slugify(value: string) {
@@ -96,7 +103,9 @@ export const programService = {
   async create(input: unknown, actorId: string) {
     const actor = await requireProgramManager(actorId, 'program.create')
     const data = programCreateSchema.parse(input)
-    await validateProgramReferences(data)
+    const references = await validateProgramReferences(data)
+    assertProgramUnitScope(actor, data.organizationalUnitId)
+    if (references.period?.status !== 'ACTIVE') throw new ValidationError('Kegiatan baru hanya dapat dibuat pada periode aktif.')
     const slug = await uniqueProgramSlug(data.name)
 
     return prisma.$transaction(async (tx) => {
@@ -142,12 +151,17 @@ export const programService = {
     const data = programUpdateSchema.parse(input)
     const current = await prisma.program.findFirst({ where: { id, deletedAt: null } })
     if (!current) throw new NotFoundError('Program tidak ditemukan.')
+    assertProgramUnitScope(actor, current.departmentId)
+    if (data.organizationalUnitId) assertProgramUnitScope(actor, data.organizationalUnitId)
 
-    await validateProgramReferences({
+    const references = await validateProgramReferences({
       organizationalUnitId: data.organizationalUnitId ?? current.departmentId,
       periodId: data.periodId === undefined ? current.periodId : data.periodId,
       picId: data.picId,
     })
+    if (data.periodId && data.periodId !== current.periodId && references.period?.status !== 'ACTIVE') {
+      throw new ValidationError('Kegiatan hanya dapat dipindahkan ke periode aktif.')
+    }
 
     const plannedStart = data.plannedStart === undefined ? current.plannedStart : data.plannedStart
     const plannedEnd = data.plannedEnd === undefined ? current.plannedEnd : data.plannedEnd
@@ -202,6 +216,7 @@ export const programService = {
     const data = programStatusOverrideSchema.parse(input)
     const current = await prisma.program.findFirst({ where: { id, deletedAt: null } })
     if (!current) throw new NotFoundError('Program tidak ditemukan.')
+    assertProgramUnitScope(actor, current.departmentId)
 
     return prisma.$transaction(async (tx) => {
       const updated = await tx.program.update({
@@ -219,6 +234,7 @@ export const programService = {
     const actor = await requireProgramManager(actorId, 'program.delete')
     const current = await prisma.program.findFirst({ where: { id, deletedAt: null } })
     if (!current) throw new NotFoundError('Program tidak ditemukan.')
+    assertProgramUnitScope(actor, current.departmentId)
 
     await prisma.$transaction(async (tx) => {
       await tx.program.update({ where: { id }, data: { deletedAt: new Date(), updatedBy: actor.id } })
@@ -237,6 +253,12 @@ export const programService = {
       prisma.program.findFirst({ where: { id: data.targetProgramId, deletedAt: null }, select: { id: true } }),
     ])
     if (!source || !target) throw new NotFoundError('Program terkait tidak ditemukan.')
+    assertProgramUnitScope(actor, source.departmentId)
+    if (!isSuperAdminRole(actor.roleId) && target.id) {
+      const targetScope = await prisma.program.findFirst({ where: { id: target.id, deletedAt: null }, select: { departmentId: true } })
+      if (!targetScope) throw new NotFoundError('Program terkait tidak ditemukan.')
+      assertProgramUnitScope(actor, targetScope.departmentId)
+    }
     if (await wouldCreateProgramRelationshipCycle(sourceProgramId, data.targetProgramId)) {
       throw new ValidationError('Hubungan ini membentuk siklus program dan tidak dapat disimpan.')
     }

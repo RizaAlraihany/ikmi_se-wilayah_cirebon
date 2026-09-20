@@ -38,8 +38,10 @@ function formatSchedule(agenda: {
   return 'Menunggu kondisi terpenuhi'
 }
 
-export default async function AgendaListPage() {
-  const agendas = await agendaQueries.getAgendas()
+export default async function AgendaListPage({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
+  const params = await searchParams
+  const workspace = await agendaQueries.getAgendaWorkspace(params.period)
+  const agendas = workspace.agendas
 
   return (
     <div className="space-y-6">
@@ -57,11 +59,19 @@ export default async function AgendaListPage() {
         </ButtonLink>
       </div>
 
+      <form action="/admin/agendas" className="flex items-center gap-3 border-y border-border bg-surface px-1 py-3 sm:px-4">
+        <label htmlFor="period" className="text-sm font-semibold text-primary">Periode</label>
+        <select id="period" name="period" defaultValue={workspace.selectedPeriodId ?? ''} className="h-11 min-w-0 rounded-md border border-border bg-surface px-3 text-sm font-semibold text-primary">
+          {workspace.periods.map((period) => <option key={period.id} value={period.id}>{period.name}{period.id === workspace.activePeriodId ? ' · Aktif' : ''}</option>)}
+        </select>
+        <button type="submit" className="ikmi-button ikmi-button--secondary min-h-11 rounded-md px-4 text-sm font-semibold">Tampilkan</button>
+      </form>
+
       {agendas.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
           title="Belum ada Agenda"
-          description="Buat Agenda pertama untuk unit organisasi Anda."
+          description={workspace.selectedPeriodId === workspace.activePeriodId ? 'Buat Agenda pertama untuk periode aktif Anda.' : 'Tidak ada Agenda pada periode yang dipilih.'}
         />
       ) : (
         <ul className="divide-y divide-border border-y border-border bg-surface">

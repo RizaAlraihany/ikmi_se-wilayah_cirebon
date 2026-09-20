@@ -29,6 +29,7 @@ export const dashboardRoutePermissions: readonly DashboardRoutePermission[] = [
   { path: '/admin/organization/registrations', permission: 'registration.review', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
   { path: '/admin/organization/about', permission: 'organization.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
   { path: '/admin/organization/structure', permission: 'structure.manage', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
+  { path: '/admin/organization/settings', permission: 'organization.update', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
   { path: '/admin/organization', permission: 'organization.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
   { path: '/admin/agendas/new', permission: 'calendar.manage', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
   { path: '/admin/agendas', permission: 'calendar.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },

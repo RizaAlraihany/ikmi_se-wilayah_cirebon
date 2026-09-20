@@ -10,7 +10,7 @@ const requirePermissionForUserMock = jest.mocked(requirePermissionForUser)
 const actor = {
   id: 'admin-organization-1',
   roleId: 'admin_organization',
-  departmentId: null,
+  departmentId: 'unit-1',
   positionId: null,
 }
 
@@ -39,7 +39,7 @@ describe('Program security and domain contract', () => {
 
   it('rejects an organizational unit from a different period', async () => {
     prismaMock.department.findFirst.mockResolvedValueOnce({ id: 'unit-1', periodId: 'period-other' } as never)
-    prismaMock.period.findFirst.mockResolvedValueOnce({ id: 'period-1' } as never)
+    prismaMock.period.findFirst.mockResolvedValueOnce({ id: 'period-1', status: 'ACTIVE' } as never)
 
     await expect(programService.create(validInput, actor.id)).rejects.toBeInstanceOf(ValidationError)
     expect(prismaMock.$transaction).not.toHaveBeenCalled()
@@ -55,7 +55,7 @@ describe('Program security and domain contract', () => {
 
   it('creates a Program and audit record without legacy type or committee fields', async () => {
     prismaMock.department.findFirst.mockResolvedValueOnce({ id: 'unit-1', periodId: 'period-1' } as never)
-    prismaMock.period.findFirst.mockResolvedValueOnce({ id: 'period-1' } as never)
+    prismaMock.period.findFirst.mockResolvedValueOnce({ id: 'period-1', status: 'ACTIVE' } as never)
     prismaMock.program.findMany.mockResolvedValueOnce([])
     prismaMock.program.create.mockResolvedValueOnce({ id: 'program-1', name: validInput.name } as never)
     prismaMock.auditLog.create.mockResolvedValueOnce({ id: 'audit-1' } as never)
@@ -81,7 +81,7 @@ describe('Program security and domain contract', () => {
   })
 
   it('archives instead of permanently deleting a Program', async () => {
-    prismaMock.program.findFirst.mockResolvedValueOnce({ id: 'program-1', deletedAt: null } as never)
+    prismaMock.program.findFirst.mockResolvedValueOnce({ id: 'program-1', deletedAt: null, departmentId: 'unit-1' } as never)
     prismaMock.program.update.mockResolvedValueOnce({ id: 'program-1' } as never)
     prismaMock.auditLog.create.mockResolvedValueOnce({ id: 'audit-archive' } as never)
     prismaMock.$transaction.mockImplementation((async (callback: unknown) => {

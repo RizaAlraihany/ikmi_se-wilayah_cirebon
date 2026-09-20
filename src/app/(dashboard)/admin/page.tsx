@@ -11,6 +11,8 @@ import { requireAuth } from '@/core/authorization/guards'
 import { userQueries } from '@/features/users/queries'
 import { postQueries } from '@/features/blog/queries'
 import { registrationQueries } from '@/features/registration/queries'
+import { prisma } from '@/core/database/prisma'
+import { cabinetConfigKey, cabinetSchema } from '@/features/organization/cabinet'
 import { logger } from '@/core/monitoring/logger'
 import { OverviewActivityChart } from './overview-activity-chart'
 
@@ -62,6 +64,14 @@ async function renderAdminDashboardPage() {
   const canAccessOrganization = canManageSystem || roleId === 'admin_organization'
   const canAccessKomdigi = canManageSystem || roleId === 'admin_komdigi'
 
+  const activePeriod = await prisma.period.findFirst({
+    where: { status: 'ACTIVE', deletedAt: null },
+    orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+  })
+  const periodMetrics = activePeriod && canAccessOrganization
+    ? await getPeriodMetrics(activePeriod.id)
+    : null
+
   const [users, posts, registrations, postAnalytics, registrationAnalytics] = await Promise.all([
     canManageSystem ? userQueries.getPaginatedUsers(1, 1) : Promise.resolve({ meta: { total: 0 } }),
     canAccessKomdigi ? postQueries.getPaginatedPosts(1, 1) : Promise.resolve({ meta: { total: 0 } }),
@@ -72,9 +82,41 @@ async function renderAdminDashboardPage() {
 
   const allKpis = [
     {
-      key: 'users',
+      key: 'agendas',
+      icon: CalendarDays,
+      label: 'Agenda Periode',
+      value: periodMetrics?.agendaCount ?? 0,
+      trend: activePeriod?.name ?? 'Belum ada periode aktif',
+      roles: roleGroups.organization,
+    },
+    {
+      key: 'activities',
+      icon: Megaphone,
+      label: 'Kegiatan',
+      value: periodMetrics?.programCount ?? 0,
+      trend: `${periodMetrics?.scheduledProgramCount ?? 0} terjadwal`,
+      roles: roleGroups.organization,
+    },
+    {
+      key: 'members',
       icon: Users,
       label: 'Anggota Aktif',
+      value: periodMetrics?.activeMemberCount ?? 0,
+      trend: 'Data anggota',
+      roles: roleGroups.organization,
+    },
+    {
+      key: 'banners',
+      icon: Megaphone,
+      label: 'Banner Aktif',
+      value: periodMetrics?.bannerCount ?? 0,
+      trend: 'CMS Beranda',
+      roles: roleGroups.organization,
+    },
+    {
+      key: 'users',
+      icon: Users,
+      label: 'Akun Dashboard',
       value: users.meta.total,
       trend: 'Aktif',
       roles: roleGroups.superAdmin,
@@ -98,7 +140,7 @@ async function renderAdminDashboardPage() {
   ]
 
   const visibleKpis = allKpis.filter((kpi) => kpi.roles.includes(roleId))
-  const displayKpis = canManageSystem ? visibleKpis : visibleKpis.slice(0, 4)
+  const displayKpis = canManageSystem ? visibleKpis : visibleKpis.slice(0, 6)
   // Sections per role
   const dashboardSections = [
     {
@@ -122,6 +164,13 @@ async function renderAdminDashboardPage() {
   const compactKomdigiMobile = roleId === 'admin_komdigi' && !canManageSystem
   const organizationQuickActions = [
     {
+      title: 'Kegiatan',
+      description: 'Susun program kerja dan jadwal pelaksanaan.',
+      href: '/admin/programs',
+      icon: Megaphone,
+      metric: `${periodMetrics?.programCount ?? 0} data`,
+    },
+    {
       title: 'Agenda',
       description: 'Atur jadwal kegiatan terdekat.',
       href: '/admin/agendas',
@@ -136,14 +185,14 @@ async function renderAdminDashboardPage() {
       metric: `${registrations.meta.total} data`,
     },
     {
-      title: 'Struktur',
+      title: 'Struktur Pengurus',
       description: 'Kelola penugasan pengurus aktif.',
       href: '/admin/organization/structure',
       icon: Users,
       metric: 'Kelola',
     },
     {
-      title: 'Tentang',
+      title: 'CMS Tentang',
       description: 'Perbarui riwayat organisasi untuk halaman publik.',
       href: '/admin/organization/about',
       icon: BookOpen,
@@ -198,6 +247,14 @@ async function renderAdminDashboardPage() {
           </div>
         </div>
       </section>
+
+      {activePeriod ? (
+        <section className="grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-3" aria-label="Konteks periode aktif">
+          <div className="bg-surface p-4"><p className="text-xs font-bold uppercase text-text-muted">Periode Aktif</p><p className="mt-1 font-heading text-lg font-extrabold text-primary">{activePeriod.name}</p></div>
+          <div className="bg-surface p-4"><p className="text-xs font-bold uppercase text-text-muted">Kabinet</p><p className="mt-1 font-heading text-lg font-extrabold text-primary">{activePeriod.cabinetName || 'Belum diisi'}</p></div>
+          <div className="bg-surface p-4"><p className="text-xs font-bold uppercase text-text-muted">Status</p><p className="mt-1 font-heading text-lg font-extrabold text-success">{activePeriod.status}</p></div>
+        </section>
+      ) : null}
 
       {showOrganizationMobileMenu ? (
         <section className="space-y-3 lg:hidden" aria-labelledby="organization-mobile-menu">
@@ -281,6 +338,8 @@ async function renderAdminDashboardPage() {
         </section>
       ) : null}
 
+      {roleId === 'admin_organization' && periodMetrics && activePeriod ? <PeriodSetupSummary periodName={activePeriod.name} metrics={periodMetrics} /> : null}
+
       <section className="border-t-2 border-primary pt-5">
         <div className="mb-4">
           <p className="text-xs font-bold uppercase text-accent">Tindak lanjut</p>
@@ -333,4 +392,37 @@ async function renderAdminDashboardPage() {
       />
     </div>
   )
+}
+
+async function getPeriodMetrics(periodId: string) {
+  const [agendaCount, programCount, scheduledProgramCount, activeMemberCount, structureCount, bannerCount, cabinetConfig] = await Promise.all([
+    prisma.agenda.count({ where: { periodId, deletedAt: null } }),
+    prisma.program.count({ where: { periodId, deletedAt: null } }),
+    prisma.program.count({ where: { periodId, deletedAt: null, plannedStart: { not: null }, plannedEnd: { not: null } } }),
+    prisma.member.count({ where: { deletedAt: null, membershipStatus: 'ACTIVE_MEMBER' } }),
+    prisma.structureAssignment.count({ where: { periodId, deletedAt: null } }),
+    prisma.homepageBanner.count({ where: { deletedAt: null, program: { is: { periodId, deletedAt: null } } } }),
+    prisma.webConfig.findFirst({ where: { key: cabinetConfigKey(periodId), deletedAt: null }, select: { valueJson: true } }),
+  ])
+  let cabinetReady = false
+  let visionMissionReady = false
+  try {
+    const parsed = cabinetConfig ? cabinetSchema.safeParse(JSON.parse(cabinetConfig.valueJson)) : null
+    cabinetReady = Boolean(parsed?.success && (parsed.data.description || parsed.data.tagline))
+    visionMissionReady = Boolean(parsed?.success && parsed.data.vision && parsed.data.missions.length)
+  } catch { /* invalid legacy config remains incomplete */ }
+  return { agendaCount, programCount, scheduledProgramCount, activeMemberCount, structureCount, bannerCount, cabinetReady, visionMissionReady }
+}
+
+function PeriodSetupSummary({ periodName, metrics }: { periodName: string; metrics: Awaited<ReturnType<typeof getPeriodMetrics>> }) {
+  const rows = [
+    ['Kabinet', metrics.cabinetReady ? 'Lengkap' : 'Belum'],
+    ['Visi & Misi', metrics.visionMissionReady ? 'Lengkap' : 'Belum'],
+    ['Struktur Pengurus', `${metrics.structureCount} orang`],
+    ['Kegiatan', `${metrics.programCount}`],
+    ['Sudah Dijadwalkan', `${metrics.scheduledProgramCount} / ${metrics.programCount}`],
+    ['Agenda', `${metrics.agendaCount}`],
+    ['Banner Kegiatan', `${metrics.bannerCount}`],
+  ]
+  return <section className="border-l-2 border-primary bg-surface px-5 py-4"><p className="text-xs font-bold uppercase text-accent">Setup periode</p><h2 className="mt-1 font-heading text-xl font-extrabold text-balance text-primary">{periodName}</h2><dl className="mt-4 divide-y divide-border border-y border-border">{rows.map(([label, value]) => <div key={label} className="flex min-h-11 items-center justify-between gap-4 py-2"><dt className="text-sm text-text-secondary">{label}</dt><dd className="text-sm font-bold tabular-nums text-primary">{value}</dd></div>)}</dl></section>
 }
