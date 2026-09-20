@@ -27,8 +27,8 @@ export function PeriodSettings({ activePeriod, history, setup }: { activePeriod:
       endDate: String(formData.get('endDate') ?? ''),
     })
     setSaving(false)
-    if (result.error) {
-      setMessage(result.error)
+    if (result.error || !result.data) {
+      setMessage(result.error ?? 'Periode belum dapat dimulai. Silakan coba lagi.')
       return
     }
     setDialogOpen(false)
