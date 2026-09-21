@@ -13065,23 +13065,21 @@ textarea:focus-visible {
 
 #view-beranda .quick-copy strong {
   display: block;
-  overflow: hidden;
+  overflow: visible;
   color: #fff;
   font-size: 0.625rem;
   line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 #view-beranda .quick-copy small {
   display: block;
   margin-top: 0.12rem;
-  overflow: hidden;
+  overflow: visible;
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.5rem;
   line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 #view-beranda .quick-arrow {
