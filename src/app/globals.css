@@ -13913,3 +13913,51 @@ textarea:focus-visible {
     box-shadow: 0 0.125rem 0.5rem rgba(0, 23, 105, 0.16);
   }
 }
+
+/* Screenshot review: keep the existing editorial layouts while allowing the
+ * complete, current public headings to fit in two natural lines. */
+.about-page-header .global-page-header__title > span {
+  display: inline;
+  color: inherit;
+}
+
+.about-page-header .global-page-header__title {
+  max-width: 30rem;
+  font-size: clamp(1.15rem, 4.7vw, 2.75rem) !important;
+}
+
+.join-page-hero .global-page-header__title {
+  max-width: 28rem;
+  font-size: clamp(1.1rem, 4.5vw, 2.5rem) !important;
+}
+
+.public-shell main:not(#view-beranda) h1.publication-detail-title {
+  font-size: clamp(1rem, 2.2vw, 2rem) !important;
+  line-height: 1.12 !important;
+}
+
+#publikasi-page .publication-featured-card h2 {
+  max-width: none;
+  font-size: clamp(1rem, 1.4vw, 1.2rem) !important;
+  line-height: 1.15 !important;
+}
+
+.structure-unit-caption {
+  min-height: 3.75rem;
+}
+
+.structure-unit-caption h2,
+.public-shell main .structure-unit-caption h2 {
+  overflow: visible !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  text-wrap: balance !important;
+  font-size: clamp(0.72rem, 1.15vw, 0.95rem) !important;
+  line-height: 1.12 !important;
+}
+
+@media (min-width: 1024px) {
+  #publikasi-page .publication-featured-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
