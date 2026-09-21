@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/run-structure-assignment-backfill.cjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
