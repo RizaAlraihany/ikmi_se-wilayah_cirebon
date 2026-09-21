@@ -14,14 +14,12 @@ import { safeActionError } from '@/core/errors/safe-action-error'
 
 export async function submitRegistrationAction(data: RegistrationCreateInput) {
   try {
+    const parsed = registrationCreateSchema.parse(data)
+    checkHoneypot(parsed.bot_field)
+
     const headerStore = await headers()
     const ip = headerStore.get('x-forwarded-for') || 'unknown-ip'
-    await rateLimit(`register:${ip}`, 3, 3600) // max 3 per hour
-
-    const parsed = registrationCreateSchema.parse(data)
-
-    // Anti-spam check
-    checkHoneypot(parsed.bot_field)
+    await rateLimit(`register:${ip}`, 3, 3600) // Valid submissions only; invalid form attempts do not consume the limit.
 
     const registration = await registrationService.submitRegistration(parsed)
     revalidatePath('/admin/organization/registrations')

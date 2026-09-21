@@ -26,6 +26,16 @@ describe('RegisterForm', () => {
     expect(screen.getByLabelText(/Nomor WhatsApp/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Kampus \/ institusi/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Alasan ingin bergabung/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Bidang yang diminati/i)).not.toBeInTheDocument()
+  })
+
+  it('limits village choices to the selected Indramayu district', () => {
+    render(<RegisterForm />)
+
+    fireEvent.change(screen.getByLabelText(/Kecamatan asal/i), { target: { value: 'Jatibarang' } })
+
+    expect(screen.getByRole('option', { name: 'Jatibarang Baru' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Haurkolot' })).not.toBeInTheDocument()
   })
 
   it('submits valid data and routes to the reference page', async () => {

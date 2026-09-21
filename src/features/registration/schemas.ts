@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { indramayuDistricts, villagesForDistrict } from './indramayu-regions'
 
 export const registrationCreateSchema = z.object({
   fullName: z.string().trim().min(3, { message: 'Nama lengkap minimal 3 karakter' }).max(160),
@@ -13,9 +14,17 @@ export const registrationCreateSchema = z.object({
   whatsapp: z.string().trim().regex(/^(?:\+62|62|0)8\d{8,11}$/, 'Nomor WhatsApp Indonesia tidak valid'),
   reasons: z.string().trim().min(20, { message: 'Alasan bergabung minimal 20 karakter' }).max(2000),
   organizationExperience: z.string().trim().max(2000).optional(),
-  interests: z.string().trim().max(1000).optional(),
   bot_field: z.string().optional(), // Honeypot
   consent: z.boolean().refine(val => val === true, { message: 'Anda harus menyetujui syarat dan ketentuan' })
+}).superRefine(({ district, village }, context) => {
+  if (!indramayuDistricts.includes(district)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ['district'], message: 'Pilih kecamatan asal dari daftar.' })
+    return
+  }
+
+  if (!(villagesForDistrict(district) as readonly string[]).includes(village)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ['village'], message: 'Pilih desa atau kelurahan yang sesuai dengan kecamatan.' })
+  }
 })
 
 export type RegistrationCreateInput = z.infer<typeof registrationCreateSchema>

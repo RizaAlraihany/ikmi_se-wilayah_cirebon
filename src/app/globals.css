@@ -12941,3 +12941,36 @@ textarea:focus-visible {
     box-shadow: none !important;
   }
 }
+
+/* Membership form: compact the page-specific hero and keep the short form easy to scan. */
+.public-page-root > .join-page-hero {
+  min-height: 0;
+  padding-block: clamp(1.75rem, 4vw, 3rem);
+}
+
+.join-page-hero .public-page-title {
+  max-width: 38rem;
+  font-size: clamp(2.125rem, 4.25vw, 3.5rem);
+}
+
+.join-page-hero .public-page-lead {
+  margin-top: 0.75rem;
+  max-width: 38rem;
+  text-wrap: pretty;
+}
+
+@media (max-width: 639px) {
+  .public-page-root > .join-page-hero {
+    padding-block: 1.75rem !important;
+  }
+
+  .join-page-hero .public-page-title {
+    max-width: 21rem;
+    font-size: clamp(1.75rem, 7vw, 2.25rem) !important;
+  }
+
+  .join-page-hero .public-page-lead {
+    margin-top: 0.625rem;
+    line-height: 1.5;
+  }
+}

@@ -37,7 +37,6 @@ export const registrationService = {
       whatsapp: data.whatsapp,
       reasons: data.reasons,
       organizationExperience: data.organizationExperience || null,
-      interests: data.interests || null,
       consentAt: new Date(),
       status: 'NEW',
     } }) })

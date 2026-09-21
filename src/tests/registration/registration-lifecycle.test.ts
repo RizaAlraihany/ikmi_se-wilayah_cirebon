@@ -48,8 +48,10 @@ it('continues registration numbering beyond four digits', async () => {
 })
 
 it('bounds public PII input and rejects non-phone text', () => {
-  const data = { fullName: 'Development Applicant', email: 'dev@example.test', campus: 'Test Campus', major: 'Test Study', semester: '3', entryYear: 2026, district: 'Test District', village: 'Test Village', address: 'Development address only', whatsapp: '081234567890', reasons: 'Development registration validation', consent: true }
+  const data = { fullName: 'Development Applicant', email: 'dev@example.test', campus: 'Test Campus', major: 'Test Study', semester: '3', entryYear: 2026, district: 'Jatibarang', village: 'Jatibarang Baru', address: 'Development address only', whatsapp: '081234567890', reasons: 'Development registration validation', consent: true }
   expect(registrationCreateSchema.safeParse(data).success).toBe(true)
+  expect(registrationCreateSchema.safeParse({ ...data, village: 'Haurkolot' }).success).toBe(false)
+  expect(registrationCreateSchema.safeParse({ ...data, district: 'Bukan Kecamatan' }).success).toBe(false)
   expect(registrationCreateSchema.safeParse({ ...data, whatsapp: 'abcdefghijk' }).success).toBe(false)
   expect(registrationCreateSchema.safeParse({ ...data, reasons: 'x'.repeat(2001) }).success).toBe(false)
 })
