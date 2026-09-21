@@ -38,6 +38,16 @@ describe('dashboard navigation', () => {
     ])
   })
 
+  it('keeps settings as the final independent sidebar section', () => {
+    const labels = dashboardNavigationGroups.map((group) => group.label)
+    const settingsGroup = dashboardNavigationGroups.at(-1)
+
+    expect(labels).toEqual(['Overview', 'Organisasi', 'Komdigi', 'Sistem'])
+    expect(settingsGroup?.items).toEqual([
+      expect.objectContaining({ href: '/admin/organization/settings', label: 'Pengaturan' }),
+    ])
+  })
+
   it('uses role-specific mobile shortcuts and rejects unknown roles', () => {
     expect(getMobileNavigationItems('admin_organization').map((item) => item.href)).toEqual([
       '/admin',

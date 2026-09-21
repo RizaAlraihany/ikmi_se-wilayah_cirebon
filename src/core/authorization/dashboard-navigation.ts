@@ -68,7 +68,6 @@ export const dashboardNavigationGroups: readonly DashboardNavigationGroup[] = [
       { href: '/admin/organization/about', label: 'CMS Tentang', icon: 'profile', permission: 'organization.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
       { href: '/admin/organization', label: 'Profil Organisasi', icon: 'profile', permission: 'organization.view', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
       { href: '/admin/cms/settings', label: 'Kontak Publik', icon: 'settings', permission: null, roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
-      { href: '/admin/organization/settings', label: 'Pengaturan', icon: 'settings', permission: 'organization.update', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
     ],
   },
   {
@@ -77,6 +76,12 @@ export const dashboardNavigationGroups: readonly DashboardNavigationGroup[] = [
       { href: '/admin/kirim-tulisan', label: 'Kiriman Tulisan', icon: 'book', permission: 'post.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
       { href: '/admin/campaign', label: 'CMS Beranda', icon: 'image', permission: 'cms.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
       { href: '/admin/cms/posts', label: 'Publikasi', icon: 'newspaper', permission: 'post.view', roles: KOMDIGI_DASHBOARD_ROLE_IDS },
+    ],
+  },
+  {
+    label: 'Sistem',
+    items: [
+      { href: '/admin/organization/settings', label: 'Pengaturan', icon: 'settings', permission: 'organization.update', roles: ORGANIZATION_DASHBOARD_ROLE_IDS },
     ],
   },
 ] as const
