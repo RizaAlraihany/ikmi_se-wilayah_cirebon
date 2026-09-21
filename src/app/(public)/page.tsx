@@ -30,13 +30,6 @@ type UnknownRecord = Record<string, unknown>;
 
 const quickAccess = [
   {
-    id: "agenda",
-    href: "/kegiatan",
-    label: "Agenda",
-    description: "Jadwal terdekat",
-    Icon: CalendarDays,
-  },
-  {
     id: "join",
     href: "/#gabung",
     label: "Gabung IKMI",

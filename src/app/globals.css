@@ -12574,16 +12574,68 @@ textarea:focus-visible {
 }
 
 #view-beranda .quick-access-shell {
-  border-color: var(--border) !important;
+  width: min(100%, 31rem);
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  overflow: visible;
+  border-color: rgba(255, 255, 255, 0.48) !important;
   border-radius: var(--radius-md) !important;
-  background: var(--surface) !important;
-  box-shadow: var(--shadow-sm) !important;
+  background: rgba(0, 23, 105, 0.84) !important;
+  box-shadow: 0 14px 30px rgba(0, 23, 105, 0.22) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
 
+#view-beranda .quick-access-wrap {
+  z-index: 4;
+  margin-top: clamp(-7rem, -8vw, -4.75rem);
+  margin-bottom: clamp(1.5rem, 4vw, 3rem);
+}
+
 #view-beranda .quick-link {
+  min-width: 0;
+  padding: 1rem;
   border-radius: 0 !important;
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #fff;
+}
+
+#view-beranda .quick-link:last-child {
+  border-right: 0;
+}
+
+#view-beranda .quick-icon {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+#view-beranda .quick-copy strong {
+  color: #fff;
+  font-size: 0.875rem;
+}
+
+#view-beranda .quick-copy small,
+#view-beranda .quick-arrow {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+#view-beranda .quick-link:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid #fff;
+  outline-offset: -3px;
+}
+
+@media (hover: hover) {
+  #view-beranda .quick-link:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (min-width: 768px) {
+  #view-beranda .quick-access-wrap {
+    margin-top: -7rem;
+  }
 }
 
 #view-beranda
