@@ -13851,7 +13851,7 @@ textarea:focus-visible {
 
 #view-beranda .home-hero h1 {
   color: #fff;
-  font-size: clamp(1.45rem, 5.4vw, 3.25rem) !important;
+  font-size: clamp(1.3rem, 3.7vw, 2.75rem) !important;
   line-height: 1.02 !important;
 }
 
