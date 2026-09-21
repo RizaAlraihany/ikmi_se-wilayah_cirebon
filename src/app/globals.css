@@ -12966,7 +12966,7 @@ textarea:focus-visible {
 
   .join-page-hero .public-page-title {
     max-width: 21rem;
-    font-size: clamp(1.75rem, 7vw, 2.25rem) !important;
+    font-size: clamp(1.4rem, 5.75vw, 2.125rem) !important;
   }
 
   .join-page-hero .public-page-lead {

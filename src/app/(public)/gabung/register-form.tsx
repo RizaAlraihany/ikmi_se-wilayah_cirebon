@@ -18,6 +18,7 @@ export function RegisterForm() {
   const [globalError, setGlobalError] = useState('')
   const {
     register,
+    clearErrors,
     handleSubmit,
     setFocus,
     setValue,
@@ -108,7 +109,8 @@ export function RegisterForm() {
               {...districtField}
               onChange={(event) => {
                 onDistrictChange(event)
-                setValue('village', '', { shouldDirty: true, shouldValidate: true })
+                setValue('village', '', { shouldDirty: true })
+                clearErrors('village')
               }}
               disabled={isSubmitting}
               aria-invalid={Boolean(errors.district)}
