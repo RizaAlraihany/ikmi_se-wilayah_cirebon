@@ -22,6 +22,7 @@ type HeroSlideshowProps = {
   primaryCta: HeroAction;
   secondaryCta: HeroAction;
   children?: ReactNode;
+  mediaChildren?: ReactNode;
 };
 
 const AUTOPLAY_DELAY = 10000;
@@ -38,7 +39,7 @@ function splitTitle(title: string) {
   return [words.slice(0, splitAt).join(" "), words.slice(splitAt).join(" ")];
 }
 
-export function HeroSlideshow({ slides, eyebrow, title, description, motto, primaryCta, secondaryCta, children }: HeroSlideshowProps) {
+export function HeroSlideshow({ slides, eyebrow, title, description, motto, primaryCta, secondaryCta, children, mediaChildren }: HeroSlideshowProps) {
   const validSlides = useMemo(() => slides.filter((slide) => Boolean(slide.desktopImage) || Boolean(slide.mobileImage)), [slides]);
   const titleLines = splitTitle(title);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -71,16 +72,19 @@ export function HeroSlideshow({ slides, eyebrow, title, description, motto, prim
         <p className="home-hero-description">{description}</p>
         <blockquote className="home-hero-motto"><span aria-hidden="true">“</span>{motto}<span aria-hidden="true">”</span></blockquote>
         <div className="home-hero-actions"><Link href={primaryCta.href} className="home-hero-primary">{primaryCta.label}<ArrowRight aria-hidden="true" /></Link><Link href={secondaryCta.href} className="home-hero-secondary">{secondaryCta.label}<ArrowRight aria-hidden="true" /></Link></div>
+        {children}
       </div>
     </div>
-    <div className={`home-hero-media${validSlides.length ? "" : " home-hero-media--empty"}`} aria-label="Dokumentasi IKMI Cirebon">
-      {validSlides.map((slide, index) => {
-        const image = slide.desktopImage || slide.mobileImage;
-        return image ? <Image key={slide.id} src={image} alt={slide.alt || "Dokumentasi IKMI Cirebon"} fill priority={index === 0} sizes="(min-width: 1024px) 62vw, 100vw" className={`home-hero-image${index === activeIndex ? " is-active" : ""}`} /> : null;
-      })}
-      <span className="home-hero-photo-blend" aria-hidden="true" />
-      {validSlides.length > 1 ? <div className="home-hero-dots" aria-label="Pilih foto dokumentasi">{validSlides.map((slide, index) => <button key={slide.id} type="button" className={index === activeIndex ? "is-active" : ""} aria-label={`Tampilkan foto ${index + 1}`} aria-pressed={index === activeIndex} onClick={() => setActiveIndex(index)} />)}</div> : null}
+    <div className="home-hero-media-frame">
+      <div className={`home-hero-media${validSlides.length ? "" : " home-hero-media--empty"}`} aria-label="Dokumentasi IKMI Cirebon">
+        {validSlides.map((slide, index) => {
+          const image = slide.desktopImage || slide.mobileImage;
+          return image ? <Image key={slide.id} src={image} alt={slide.alt || "Dokumentasi IKMI Cirebon"} fill priority={index === 0} sizes="(min-width: 1024px) 62vw, 100vw" className={`home-hero-image${index === activeIndex ? " is-active" : ""}`} /> : null;
+        })}
+        <span className="home-hero-photo-blend" aria-hidden="true" />
+        {validSlides.length > 1 ? <div className="home-hero-dots" aria-label="Pilih foto dokumentasi">{validSlides.map((slide, index) => <button key={slide.id} type="button" className={index === activeIndex ? "is-active" : ""} aria-label={`Tampilkan foto ${index + 1}`} aria-pressed={index === activeIndex} onClick={() => setActiveIndex(index)} />)}</div> : null}
+      </div>
+      {mediaChildren}
     </div>
-    {children}
   </section>;
 }

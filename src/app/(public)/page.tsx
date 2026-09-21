@@ -45,6 +45,17 @@ const quickAccess = [
   },
 ] as const;
 
+function QuickAccessLink({ item, className }: { item: (typeof quickAccess)[number]; className?: string }) {
+  const { href, label, description, Icon } = item;
+  return (
+    <Link href={href} className={className ? `quick-link ${className}` : "quick-link"}>
+      <span className="quick-icon" aria-hidden="true"><Icon /></span>
+      <span className="quick-copy"><strong>{label}</strong><small>{description}</small></span>
+      <ArrowRight className="quick-arrow" aria-hidden="true" />
+    </Link>
+  );
+}
+
 const homeFaqs = [
   {
     question: "Apa itu IKMI Se-Wilayah Cirebon?",
@@ -259,16 +270,11 @@ export default async function Home() {
           label: homepageContent.hero.secondaryCtaLabel,
           href: homepageContent.hero.secondaryCtaHref,
         }}
+        mediaChildren={<QuickAccessLink item={quickAccess[0]} className="hero-join-card" />}
       >
-        <nav id="quick-access" className="quick-access-wrap" aria-label="Akses cepat">
+        <nav id="quick-access" className="quick-access-wrap quick-access-flow" aria-label="Akses cepat">
           <div className="quick-access-shell">
-            {quickAccess.map(({ id, href, label, description, Icon }) => (
-              <Link key={id} href={href} className="quick-link">
-                <span className="quick-icon" aria-hidden="true"><Icon /></span>
-                <span className="quick-copy"><strong>{label}</strong><small>{description}</small></span>
-                <ArrowRight className="quick-arrow" aria-hidden="true" />
-              </Link>
-            ))}
+            <QuickAccessLink item={quickAccess[1]} className="quick-publication-card" />
           </div>
         </nav>
       </HeroSlideshow>
