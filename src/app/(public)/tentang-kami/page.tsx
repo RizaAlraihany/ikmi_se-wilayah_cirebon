@@ -571,7 +571,7 @@ export default async function TentangPage() {
         id="profil"
         className="about-page-header"
         items={[{ label: "Tentang" }]}
-        title={<>{aboutContent.hero.title}<span>{aboutContent.hero.accent}</span></>}
+        title={<>{aboutContent.hero.title}{' '}<span>{aboutContent.hero.accent}</span></>}
         description={aboutContent.hero.lead}
         image={heroImage}
       >

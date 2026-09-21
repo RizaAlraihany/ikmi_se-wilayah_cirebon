@@ -13961,3 +13961,15 @@ textarea:focus-visible {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
+
+@media (max-width: 767px) {
+  .about-page-header .global-page-header__title,
+  .join-page-hero .global-page-header__title {
+    max-width: 100%;
+    font-size: clamp(0.95rem, 4vw, 1.1rem) !important;
+  }
+
+  .public-shell main:not(#view-beranda) h1.publication-detail-title {
+    font-size: clamp(0.9rem, 3.6vw, 1rem) !important;
+  }
+}
