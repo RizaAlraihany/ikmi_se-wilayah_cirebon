@@ -13923,16 +13923,16 @@ textarea:focus-visible {
 
 .about-page-header .global-page-header__title {
   max-width: 30rem;
-  font-size: clamp(1.15rem, 4.7vw, 2.75rem) !important;
+  font-size: clamp(1rem, 2.2vw, 2.25rem) !important;
 }
 
 .join-page-hero .global-page-header__title {
   max-width: 28rem;
-  font-size: clamp(1.1rem, 4.5vw, 2.5rem) !important;
+  font-size: clamp(1rem, 2.2vw, 2.25rem) !important;
 }
 
 .public-shell main:not(#view-beranda) h1.publication-detail-title {
-  font-size: clamp(1rem, 2.2vw, 2rem) !important;
+  font-size: clamp(0.72rem, 1.6vw, 1.6rem) !important;
   line-height: 1.12 !important;
 }
 
@@ -13962,19 +13962,7 @@ textarea:focus-visible {
   }
 }
 
-@media (max-width: 900px) {
-  .about-page-header .global-page-header__title,
-  .join-page-hero .global-page-header__title {
-    max-width: 100%;
-    font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
-  }
-
-  .public-shell main:not(#view-beranda) h1.publication-detail-title {
-    font-size: clamp(0.72rem, 1.5vw, 0.86rem) !important;
-  }
-
-  .public-shell main .publication-detail-title + p {
-    font-size: clamp(0.68rem, 1.4vw, 0.76rem) !important;
-    line-height: 1.55 !important;
-  }
+.public-shell main .publication-detail-title + p {
+  font-size: clamp(0.68rem, 1.45vw, 0.9rem) !important;
+  line-height: 1.55 !important;
 }
