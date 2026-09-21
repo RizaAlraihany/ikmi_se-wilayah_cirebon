@@ -13276,3 +13276,193 @@ textarea:focus-visible {
     animation: none !important;
   }
 }
+
+/* Dynamic hero gallery and combined floating menu. */
+#view-beranda .home-hero-media {
+  overflow: hidden;
+  box-shadow: inset 0 0 2.5rem rgba(0, 23, 105, 0.3);
+}
+
+#view-beranda .home-hero-slider {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+#view-beranda .home-hero-photo-blend {
+  z-index: 1;
+  pointer-events: none;
+}
+
+#view-beranda .home-hero-mobile-gallery {
+  display: none;
+}
+
+#view-beranda .home-hero-slider-control {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.3);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: background 180ms ease, opacity 180ms ease;
+}
+
+#view-beranda .home-hero-slider-control svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+#view-beranda .home-hero-slider-control--previous {
+  left: 1rem;
+}
+
+#view-beranda .home-hero-slider-control--next {
+  right: 1rem;
+}
+
+#view-beranda .home-hero-media:hover .home-hero-slider-control,
+#view-beranda .home-hero-slider-control:focus-visible {
+  opacity: 1;
+}
+
+#view-beranda .hero-floating-menu {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 20;
+  display: grid;
+  width: min(140px, calc(100% - 1rem));
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 24px rgba(0, 23, 105, 0.22);
+  pointer-events: auto;
+  animation: hero-card-float 6s ease-in-out infinite;
+}
+
+#view-beranda .hero-floating-menu .quick-link {
+  position: static !important;
+  width: 100%;
+  min-height: 2.75rem;
+  gap: 0.45rem;
+  padding: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 0.75rem !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #fff;
+  pointer-events: auto;
+  animation: none;
+}
+
+#view-beranda .hero-floating-menu .quick-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.4rem;
+}
+
+#view-beranda .hero-floating-menu .quick-icon svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+#view-beranda .hero-floating-menu .quick-copy strong {
+  font-size: 0.625rem;
+}
+
+#view-beranda .hero-floating-menu .quick-copy small {
+  font-size: 0.5rem;
+}
+
+@media (max-width: 767px) {
+  #view-beranda .home-hero-mobile-gallery {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    opacity: 0.6;
+  }
+
+  #view-beranda .home-hero-mobile-tile {
+    position: relative;
+    min-width: 0;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 0.75rem;
+  }
+
+  #view-beranda .home-hero-mobile-image {
+    object-fit: cover;
+  }
+
+  #view-beranda .home-hero-slider {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  #view-beranda .hero-floating-menu {
+    top: 2.5rem;
+    right: 1rem;
+    width: auto;
+    min-width: 12rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  #view-beranda .hero-floating-menu .quick-link {
+    min-height: 4rem;
+    gap: 0.625rem;
+    padding: 0.75rem;
+    border-radius: 0.875rem !important;
+  }
+
+  #view-beranda .hero-floating-menu .quick-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.625rem;
+  }
+
+  #view-beranda .hero-floating-menu .quick-icon svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  #view-beranda .hero-floating-menu .quick-copy strong {
+    font-size: 0.875rem;
+  }
+
+  #view-beranda .hero-floating-menu .quick-copy small {
+    font-size: 0.6875rem;
+  }
+
+  #view-beranda .home-hero-slider-control {
+    opacity: 0.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #view-beranda .hero-floating-menu {
+    animation: none !important;
+  }
+}

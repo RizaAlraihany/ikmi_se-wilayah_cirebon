@@ -14,6 +14,11 @@ export const homepageContentSchema = z.object({
     eyebrow: requiredText('Eyebrow hero', 80),
     title: requiredText('Judul hero', 160),
     subtitle: requiredText('Deskripsi hero', 500),
+    images: z.array(safeImageUrl).min(1, 'Minimal satu foto hero wajib dipilih.').max(12, 'Maksimal 12 foto hero dapat disimpan.'),
+    floatingMenu1Text: requiredText('Label menu floating pertama', 80),
+    floatingMenu1Link: publicPath,
+    floatingMenu2Text: requiredText('Label menu floating kedua', 80),
+    floatingMenu2Link: publicPath,
     primaryCtaLabel: requiredText('Label CTA utama', 80),
     primaryCtaHref: publicPath,
     secondaryCtaLabel: requiredText('Label CTA kedua', 80),
@@ -103,12 +108,29 @@ export function normalizeHomepageContent(value: unknown): HomepageContentInput {
   const fallbackHero = defaultWebConfig.landing_hero
   const fallbackProfile = defaultWebConfig.landing_about
   const fallbackCta = defaultWebConfig.landing_cta
+  const configuredImages = Array.isArray(hero.images)
+    ? hero.images.filter((image): image is string => typeof image === 'string' && isSafeCampaignImageUrl(image))
+    : Array.isArray(hero.slides)
+      ? hero.slides
+        .map((slide) => objectValue(slide).url)
+        .filter((image): image is string => typeof image === 'string' && isSafeCampaignImageUrl(image))
+      : []
+  const fallbackImages = Array.isArray(fallbackHero.slides)
+    ? fallbackHero.slides
+      .map((slide) => objectValue(slide).url)
+      .filter((image): image is string => typeof image === 'string' && isSafeCampaignImageUrl(image))
+    : []
 
   return {
     hero: {
       eyebrow: textValue(hero.eyebrow, fallbackHero.eyebrow),
       title: textValue(hero.title, fallbackHero.title),
       subtitle: textValue(hero.subtitle, fallbackHero.subtitle),
+      images: configuredImages.length > 0 ? configuredImages : fallbackImages,
+      floatingMenu1Text: textValue(hero.floatingMenu1Text, 'Gabung IKMI'),
+      floatingMenu1Link: internalPathValue(hero.floatingMenu1Link, '/#gabung'),
+      floatingMenu2Text: textValue(hero.floatingMenu2Text, 'Publikasi'),
+      floatingMenu2Link: internalPathValue(hero.floatingMenu2Link, '/publikasi'),
       primaryCtaLabel: textValue(hero.primaryCtaLabel, fallbackHero.primaryCtaLabel),
       primaryCtaHref: internalPathValue(hero.primaryCtaHref, fallbackHero.primaryCtaHref),
       secondaryCtaLabel: textValue(hero.secondaryCtaLabel, fallbackHero.secondaryCtaLabel),

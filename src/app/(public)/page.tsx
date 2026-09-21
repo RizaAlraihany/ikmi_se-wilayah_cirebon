@@ -45,7 +45,15 @@ const quickAccess = [
   },
 ] as const;
 
-function QuickAccessLink({ item, className }: { item: (typeof quickAccess)[number]; className?: string }) {
+type QuickAccessItem = {
+  id: string;
+  href: string;
+  label: string;
+  description: string;
+  Icon: typeof UserPlus | typeof Newspaper;
+};
+
+function QuickAccessLink({ item, className }: { item: QuickAccessItem; className?: string }) {
   const { href, label, description, Icon } = item;
   return (
     <Link href={href} className={className ? `quick-link ${className}` : "quick-link"}>
@@ -188,29 +196,38 @@ const campaignPhasePresentation = {
 export default async function Home() {
   const now = new Date();
 
-  const [activeCampaigns, agendas, posts, webConfig, homepageContent] =
+  const [activeCampaigns, agendas, posts, homepageContent] =
     await Promise.all([
       getActivePublicBanners(),
       getPublicAgendaOccurrences(),
       postQueries.getPublishedPosts(4),
-      webConfigQueries.getMergedWebConfig(),
       webConfigQueries.getPublicHomepageContent(),
     ]);
-
-  const hero = webConfig.landing_hero;
 
   /*
    * Hero sekarang hanya memakai foto dokumentasi.
    * Campaign BEFORE / ONGOING / AFTER tidak lagi mengubah copy hero.
    */
-  const heroSlides: PublicHeroSlide[] = hero.slides
-    .filter((slide) => Boolean(slide.url))
-    .map((slide, index) => ({
+  const heroSlides: PublicHeroSlide[] = homepageContent.hero.images
+    .map((url, index) => ({
       id: `hero-photo-${index + 1}`,
-      desktopImage: slide.url,
-      mobileImage: slide.url,
+      desktopImage: url,
+      mobileImage: url,
       alt: `Dokumentasi IKMI Cirebon ${index + 1}`,
     }));
+
+  const heroQuickAccess: QuickAccessItem[] = [
+    {
+      ...quickAccess[0],
+      label: homepageContent.hero.floatingMenu1Text,
+      href: homepageContent.hero.floatingMenu1Link,
+    },
+    {
+      ...quickAccess[1],
+      label: homepageContent.hero.floatingMenu2Text,
+      href: homepageContent.hero.floatingMenu2Link,
+    },
+  ];
 
   const aboutImage = homepageContent.profile.imageUrl;
   const aboutImageAlt = homepageContent.profile.imageAlt;
@@ -270,13 +287,14 @@ export default async function Home() {
           label: homepageContent.hero.secondaryCtaLabel,
           href: homepageContent.hero.secondaryCtaHref,
         }}
-        mediaChildren={<QuickAccessLink item={quickAccess[0]} className="hero-join-card" />}
-      >
-        <nav id="quick-access" className="quick-access-wrap quick-access-flow" aria-label="Akses cepat">
-          <div className="quick-access-shell">
-            <QuickAccessLink item={quickAccess[1]} className="quick-publication-card" />
+        mediaChildren={(
+          <div className="hero-floating-menu" aria-label="Akses cepat">
+            {heroQuickAccess.map((item, index) => (
+              <QuickAccessLink key={item.id} item={item} className={index === 0 ? "hero-join-card" : "hero-publication-card"} />
+            ))}
           </div>
-        </nav>
+        )}
+      >
       </HeroSlideshow>
 
       {/* TENTANG */}

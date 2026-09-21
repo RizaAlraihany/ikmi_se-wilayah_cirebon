@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 export type PublicHeroSlide = {
@@ -77,12 +77,26 @@ export function HeroSlideshow({ slides, eyebrow, title, description, motto, prim
     </div>
     <div className="home-hero-media-frame">
       <div className={`home-hero-media${validSlides.length ? "" : " home-hero-media--empty"}`} aria-label="Dokumentasi IKMI Cirebon">
-        {validSlides.map((slide, index) => {
-          const image = slide.desktopImage || slide.mobileImage;
-          return image ? <Image key={slide.id} src={image} alt={slide.alt || "Dokumentasi IKMI Cirebon"} fill priority={index === 0} sizes="(min-width: 1024px) 62vw, 100vw" className={`home-hero-image${index === activeIndex ? " is-active" : ""}`} /> : null;
-        })}
+        <div className="home-hero-mobile-gallery" aria-label="Galeri dokumentasi IKMI Cirebon">
+          {validSlides.slice(0, 4).map((slide, index) => {
+            const image = slide.mobileImage || slide.desktopImage;
+            return image ? <div key={slide.id} className="home-hero-mobile-tile"><Image src={image} alt={slide.alt || `Dokumentasi IKMI Cirebon ${index + 1}`} fill sizes="50vw" className="home-hero-mobile-image" /></div> : null;
+          })}
+        </div>
+        <div className="home-hero-slider" aria-live="polite">
+          {validSlides.map((slide, index) => {
+            const image = slide.desktopImage || slide.mobileImage;
+            return image ? <Image key={slide.id} src={image} alt={slide.alt || "Dokumentasi IKMI Cirebon"} fill priority={index === 0} sizes="(min-width: 1024px) 62vw, 100vw" className={`home-hero-image${index === activeIndex ? " is-active" : ""}`} /> : null;
+          })}
+          {validSlides.length > 1 ? (
+            <>
+              <button type="button" className="home-hero-slider-control home-hero-slider-control--previous" aria-label="Foto sebelumnya" onClick={() => setActiveIndex((current) => current === 0 ? validSlides.length - 1 : current - 1)}><ChevronLeft aria-hidden="true" /></button>
+              <button type="button" className="home-hero-slider-control home-hero-slider-control--next" aria-label="Foto berikutnya" onClick={() => setActiveIndex((current) => (current + 1) % validSlides.length)}><ChevronRight aria-hidden="true" /></button>
+            </>
+          ) : null}
+          {validSlides.length > 1 ? <div className="home-hero-dots" aria-label="Pilih foto dokumentasi">{validSlides.map((slide, index) => <button key={slide.id} type="button" className={index === activeIndex ? "is-active" : ""} aria-label={`Tampilkan foto ${index + 1}`} aria-pressed={index === activeIndex} onClick={() => setActiveIndex(index)} />)}</div> : null}
+        </div>
         <span className="home-hero-photo-blend" aria-hidden="true" />
-        {validSlides.length > 1 ? <div className="home-hero-dots" aria-label="Pilih foto dokumentasi">{validSlides.map((slide, index) => <button key={slide.id} type="button" className={index === activeIndex ? "is-active" : ""} aria-label={`Tampilkan foto ${index + 1}`} aria-pressed={index === activeIndex} onClick={() => setActiveIndex(index)} />)}</div> : null}
       </div>
       {mediaChildren}
     </div>

@@ -11,5 +11,5 @@ export default async function HomepageEditorialPage() {
   await requireRoleForUser(actor, KOMDIGI_DASHBOARD_ROLE_IDS)
   const initialContent = await webConfigQueries.getPublicHomepageContent()
 
-  return <div className="space-y-7"><KomdigiPageHeader title="Konten Beranda" description="Kelola copy editorial Beranda tanpa mengubah data Agenda, Struktur, Publikasi, atau banner program." /><HomepageEditorialForm initialContent={initialContent} /></div>
+  return <div className="space-y-7"><KomdigiPageHeader title="Konten Beranda" description="Kelola copy hero, galeri foto, dan menu floating Beranda tanpa mengubah data Agenda, Struktur, Publikasi, atau banner program." /><HomepageEditorialForm initialContent={initialContent} /></div>
 }

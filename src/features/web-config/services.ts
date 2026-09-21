@@ -60,8 +60,15 @@ export const webConfigService = {
     const allowedActor = await requireRoleForUser(actor, KOMDIGI_DASHBOARD_ROLE_IDS)
     const keys = ['landing_hero', 'landing_about', 'landing_cta'] as const
     const existing = await Promise.all(keys.map((key) => webConfigQueries.getWebConfigByKey(key)))
+    const heroValue = {
+      ...parseObject(existing[0]?.valueJson),
+      ...validated.hero,
+      // Keep the legacy slide shape readable for older consumers while the
+      // public contract uses the simpler ordered images array.
+      slides: validated.hero.images.map((url, index) => ({ url, label: `Foto hero ${index + 1}` })),
+    }
     const valueByKey = {
-      landing_hero: JSON.stringify({ ...parseObject(existing[0]?.valueJson), ...validated.hero }),
+      landing_hero: JSON.stringify(heroValue),
       landing_about: JSON.stringify({ ...parseObject(existing[1]?.valueJson), ...validated.profile }),
       landing_cta: JSON.stringify({ ...parseObject(existing[2]?.valueJson), ...validated.cta }),
     }

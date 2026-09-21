@@ -9,6 +9,10 @@ export const defaultWebConfig = {
     primaryCtaHref: '/#faq',
     secondaryCtaLabel: 'Jelajahi Visi Misi',
     secondaryCtaHref: '/tentang',
+    floatingMenu1Text: 'Gabung IKMI',
+    floatingMenu1Link: '/#gabung',
+    floatingMenu2Text: 'Publikasi',
+    floatingMenu2Link: '/publikasi',
     pillarsLabel: 'Garis Besar Haluan IKMI',
     pillars: [
       { title: 'Intelektual', description: 'Peningkatan kapasitas akademik dan riset.' },
