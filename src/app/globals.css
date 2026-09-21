@@ -12577,6 +12577,7 @@ textarea:focus-visible {
   width: min(100%, 31rem);
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  transform: translateY(calc(-100% - 1rem));
   overflow: visible;
   border-color: rgba(255, 255, 255, 0.48) !important;
   border-radius: var(--radius-md) !important;
@@ -12588,8 +12589,6 @@ textarea:focus-visible {
 
 #view-beranda .quick-access-wrap {
   z-index: 4;
-  margin-top: clamp(-7rem, -8vw, -4.75rem);
-  margin-bottom: clamp(1.5rem, 4vw, 3rem);
 }
 
 #view-beranda .quick-link {
@@ -12629,12 +12628,6 @@ textarea:focus-visible {
 @media (hover: hover) {
   #view-beranda .quick-link:hover {
     background: rgba(255, 255, 255, 0.12);
-  }
-}
-
-@media (min-width: 768px) {
-  #view-beranda .quick-access-wrap {
-    margin-top: -7rem;
   }
 }
 
