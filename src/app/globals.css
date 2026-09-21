@@ -12625,6 +12625,47 @@ textarea:focus-visible {
   outline-offset: -3px;
 }
 
+/* The dock remains part of the hero at every breakpoint. Its compact mobile
+ * form avoids hiding the two primary actions behind the navigation drawer. */
+@media (max-width: 767px) {
+  #view-beranda .home-hero-content {
+    padding-bottom: 9rem;
+  }
+
+  #view-beranda .quick-access-wrap {
+    display: block !important;
+  }
+
+  #view-beranda .quick-access-shell {
+    transform: translateY(calc(-100% - 0.75rem));
+  }
+
+  #view-beranda .quick-link {
+    min-height: 4rem;
+    padding: 0.75rem;
+  }
+
+  #view-beranda .quick-copy strong {
+    font-size: 0.8125rem;
+  }
+
+  #view-beranda .quick-copy small {
+    display: none;
+  }
+}
+
+/* HeroSlideshow deliberately creates two title lines. Reduce the type scale
+ * with the available hero column so neither complete line wraps or clips. */
+#view-beranda .home-hero h1 {
+  font-size: clamp(1.3rem, 4.5vw, 3.25rem);
+}
+
+@media (min-width: 768px) {
+  #view-beranda .home-hero h1 {
+    font-size: clamp(1.35rem, 3.3vw, 3.25rem);
+  }
+}
+
 @media (hover: hover) {
   #view-beranda .quick-link:hover {
     background: rgba(255, 255, 255, 0.12);
