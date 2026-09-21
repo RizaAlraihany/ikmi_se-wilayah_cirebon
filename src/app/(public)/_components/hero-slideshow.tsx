@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 export type PublicHeroSlide = {
   id: string;
@@ -21,6 +21,7 @@ type HeroSlideshowProps = {
   motto: string;
   primaryCta: HeroAction;
   secondaryCta: HeroAction;
+  children?: ReactNode;
 };
 
 const AUTOPLAY_DELAY = 10000;
@@ -37,11 +38,13 @@ function splitTitle(title: string) {
   return [words.slice(0, splitAt).join(" "), words.slice(splitAt).join(" ")];
 }
 
-export function HeroSlideshow({ slides, eyebrow, title, description, motto, primaryCta, secondaryCta }: HeroSlideshowProps) {
+export function HeroSlideshow({ slides, eyebrow, title, description, motto, primaryCta, secondaryCta, children }: HeroSlideshowProps) {
   const validSlides = useMemo(() => slides.filter((slide) => Boolean(slide.desktopImage) || Boolean(slide.mobileImage)), [slides]);
   const titleLines = splitTitle(title);
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [isHeroVisible, setIsHeroVisible] = useState(true);
+  const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (activeIndex >= validSlides.length) setActiveIndex(0);
@@ -53,7 +56,14 @@ export function HeroSlideshow({ slides, eyebrow, title, description, motto, prim
     return () => window.clearInterval(timer);
   }, [paused, validSlides.length]);
 
-  return <section id="hero-slider" className="home-hero" aria-labelledby="home-hero-title" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}>
+  useEffect(() => {
+    if (!heroRef.current || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setIsHeroVisible(entry.isIntersecting), { threshold: 0 });
+    observer.observe(heroRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return <section ref={heroRef} id="hero-slider" className={`home-hero${isHeroVisible ? " is-visible" : ""}`} aria-labelledby="home-hero-title" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}>
     <div className="home-hero-content">
       <div className="home-hero-copy">
         <p className="home-hero-eyebrow">{eyebrow}</p>
@@ -71,5 +81,6 @@ export function HeroSlideshow({ slides, eyebrow, title, description, motto, prim
       <span className="home-hero-photo-blend" aria-hidden="true" />
       {validSlides.length > 1 ? <div className="home-hero-dots" aria-label="Pilih foto dokumentasi">{validSlides.map((slide, index) => <button key={slide.id} type="button" className={index === activeIndex ? "is-active" : ""} aria-label={`Tampilkan foto ${index + 1}`} aria-pressed={index === activeIndex} onClick={() => setActiveIndex(index)} />)}</div> : null}
     </div>
+    {children}
   </section>;
 }

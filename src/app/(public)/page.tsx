@@ -259,31 +259,19 @@ export default async function Home() {
           label: homepageContent.hero.secondaryCtaLabel,
           href: homepageContent.hero.secondaryCtaHref,
         }}
-      />
-
-      {/* QUICK ACCESS */}
-      <nav
-        id="quick-access"
-        className="quick-access-wrap"
-        aria-label="Akses cepat"
       >
-        <div className="quick-access-shell">
-          {quickAccess.map(({ id, href, label, description, Icon }) => (
-            <Link key={id} href={href} className="quick-link">
-              <span className="quick-icon" aria-hidden="true">
-                <Icon />
-              </span>
-
-              <span className="quick-copy">
-                <strong>{label}</strong>
-                <small>{description}</small>
-              </span>
-
-              <ArrowRight className="quick-arrow" aria-hidden="true" />
-            </Link>
-          ))}
-        </div>
-      </nav>
+        <nav id="quick-access" className="quick-access-wrap" aria-label="Akses cepat">
+          <div className="quick-access-shell">
+            {quickAccess.map(({ id, href, label, description, Icon }) => (
+              <Link key={id} href={href} className="quick-link">
+                <span className="quick-icon" aria-hidden="true"><Icon /></span>
+                <span className="quick-copy"><strong>{label}</strong><small>{description}</small></span>
+                <ArrowRight className="quick-arrow" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
+        </nav>
+      </HeroSlideshow>
 
       {/* TENTANG */}
       <section
