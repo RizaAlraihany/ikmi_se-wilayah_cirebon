@@ -3,6 +3,7 @@ import { ArrowRight, Check, Mail } from 'lucide-react'
 import { siteUrl } from '@/core/seo/site'
 import { webConfigQueries } from '@/features/web-config/queries'
 import { GlobalPageHeader } from '../_components/global-page-header'
+import { GlobalSectionHeader } from '../_components/global-section-header'
 
 export const metadata: Metadata = {
   title: 'Kontak Resmi',
@@ -67,14 +68,13 @@ export default async function ContactPage() {
 
       <section className="public-editorial-section" aria-labelledby="contact-guide-title">
         <div className="public-editorial-container contact-editorial-grid">
-          <div className="contact-editorial-intro">
-            <p className="public-section-kicker">Sebelum mengirim</p>
-            <h2 id="contact-guide-title">Bantu kami memahami pesanmu sejak awal.</h2>
-            <p>
-              Pesan yang ringkas dan memiliki konteks lengkap lebih mudah
-              diarahkan kepada pengurus yang tepat.
-            </p>
-          </div>
+          <GlobalSectionHeader
+            className="contact-editorial-intro"
+            eyebrow="Sebelum mengirim"
+            id="contact-guide-title"
+            title="Bantu kami memahami pesanmu sejak awal."
+            description="Pesan yang ringkas dan memiliki konteks lengkap lebih mudah diarahkan kepada pengurus yang tepat."
+          />
 
           <ul className="contact-message-list" aria-label="Panduan mengirim pesan">
             {messageChecklist.map((item) => (

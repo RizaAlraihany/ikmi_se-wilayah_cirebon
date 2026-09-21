@@ -41,6 +41,9 @@ describe('HeroSlideshow', () => {
 
     expect(screen.getByTestId('home-hero-desktop-gallery')).toBeInTheDocument()
     expect(container.querySelectorAll('.home-hero-mobile-tile')).toHaveLength(2)
+    expect(container.querySelector('.home-hero-mobile-gallery')).toHaveClass('grid', 'grid-cols-2', 'gap-3', 'w-full')
+    expect(container.querySelector('.home-hero-mobile-tile')).toHaveClass('aspect-square', 'rounded-2xl', 'shadow-sm')
+    expect(container.querySelector('.home-hero-desktop-slide')).toHaveClass('md:h-[450px]', 'md:min-w-[320px]', 'md:snap-center')
 
     fireEvent.click(screen.getByRole('button', { name: 'Foto berikutnya' }))
 

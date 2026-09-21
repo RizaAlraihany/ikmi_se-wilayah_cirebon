@@ -8645,17 +8645,6 @@ textarea:focus-visible {
   line-height: 1.2;
 }
 
-/* Explicit card-title exception: keep Publikasi previews compact at every viewport. */
-#publikasi-page .publication-card-title {
-  display: -webkit-box !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-}
-
 /* Article detail titles scale down responsively while keeping the complete title visible. */
 .public-shell main:not(#view-beranda) h1.publication-detail-title {
   font-size: clamp(1.5rem, 4.8vw, 3rem) !important;
@@ -10442,7 +10431,7 @@ textarea:focus-visible {
 }
 #view-beranda .home-hero h1 span {
   display: block;
-  white-space: nowrap;
+  white-space: normal;
 }
 #view-beranda .home-hero-description {
   max-width: 31rem;
@@ -13791,5 +13780,136 @@ textarea:focus-visible {
 
   #view-beranda .home-hero-desktop-gallery {
     display: flex;
+  }
+}
+
+/* Universal public typography: complete headings use fluid sizing and never clip. */
+.public-shell main :is(h1, h2, h3):not(.sr-only) {
+  display: block !important;
+  max-width: 100%;
+  overflow: visible !important;
+  overflow-wrap: normal;
+  word-break: normal;
+  -webkit-box-orient: initial !important;
+  -webkit-line-clamp: unset !important;
+  line-clamp: unset !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  text-wrap: balance;
+  font-family: var(--font-display), Arial, sans-serif;
+  font-weight: 800;
+}
+
+.public-shell main h1:not(.sr-only) {
+  font-size: clamp(1.35rem, 5.2vw, 3rem) !important;
+  line-height: 1.05 !important;
+}
+
+.public-shell main h2:not(.sr-only) {
+  font-size: clamp(1.1rem, 4.25vw, 1.9rem) !important;
+  line-height: 1.12 !important;
+}
+
+.public-shell main h3:not(.sr-only) {
+  font-size: clamp(0.95rem, 3.6vw, 1.3rem) !important;
+  line-height: 1.18 !important;
+}
+
+.public-shell main :is(h1, h2, h3):not(.sr-only) + p {
+  font-size: clamp(0.8125rem, 2vw, 1rem) !important;
+  font-weight: 400;
+  line-height: 1.6 !important;
+  text-wrap: pretty;
+}
+
+.global-section-header {
+  min-width: 0;
+}
+
+.global-section-header__eyebrow {
+  margin: 0 0 0.45rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.global-section-header__title {
+  margin: 0;
+  color: var(--primary);
+}
+
+.global-section-header__description {
+  max-width: 42rem;
+  margin: 0.55rem 0 0;
+  color: var(--text-secondary);
+  font-size: clamp(0.8125rem, 2vw, 1rem);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+#view-beranda .home-hero h1 {
+  color: #fff;
+  font-size: clamp(1.45rem, 5.4vw, 3.25rem) !important;
+  line-height: 1.02 !important;
+}
+
+#view-beranda .home-hero-media {
+  padding: 0.5rem;
+  border-radius: 1.5rem;
+  background: rgba(248, 250, 252, 0.5);
+  box-shadow: inset 0 0.125rem 0.625rem rgba(0, 0, 0, 0.05);
+}
+
+#view-beranda .home-hero-desktop-gallery {
+  inset: 0.5rem;
+  gap: 1rem;
+  padding: 0;
+}
+
+#view-beranda .home-hero-desktop-slide {
+  flex-basis: clamp(20rem, 68vw, 55rem);
+  min-width: 20rem;
+  height: 28.125rem;
+  min-height: 28.125rem;
+  border-radius: 1rem;
+}
+
+#view-beranda .home-hero-slider-control {
+  width: 3rem;
+  height: 3rem;
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #1f2937;
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0.625rem 1.5rem rgba(0, 23, 105, 0.22);
+}
+
+@media (hover: hover) {
+  #view-beranda .home-hero-slider-control:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: translateY(-50%) scale(1.05);
+  }
+}
+
+@media (max-width: 767px) {
+  #view-beranda .home-hero-media-frame {
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  #view-beranda .home-hero-media-frame > .home-hero-media {
+    height: 100%;
+    padding: 0.5rem;
+  }
+
+  #view-beranda .home-hero-mobile-gallery {
+    gap: 0.75rem;
+  }
+
+  #view-beranda .home-hero-mobile-tile {
+    aspect-ratio: 1 / 1;
+    border-radius: 1rem;
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 23, 105, 0.16);
   }
 }

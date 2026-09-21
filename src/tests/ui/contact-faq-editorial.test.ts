@@ -15,6 +15,7 @@ describe('Contact and homepage FAQ editorial presentation', () => {
   it('keeps contact content compact, accessible, and configuration-backed', () => {
     expect(contactSource).toContain('className="contact-official-link"')
     expect(contactSource).toContain('className="contact-message-list"')
+    expect(contactSource).toContain('GlobalSectionHeader')
     expect(contactSource).toContain('aria-label="Panduan mengirim pesan"')
     expect(contactSource).toContain('getPublicContactInfo')
     expect(contactSource).toContain('Kontak resmi sedang diperbarui.')
@@ -49,7 +50,11 @@ describe('Contact and homepage FAQ editorial presentation', () => {
     expect(styles).toContain('font-size: clamp(1.25rem, 4.6vw, 2rem)')
     expect(styles).toContain('font-size: clamp(1rem, 3.6vw, 1.25rem)')
 
-    const typographyAuthority = styles.slice(styles.indexOf('/* Public typography authority'))
-    expect(typographyAuthority).not.toContain('line-clamp')
+    const typographyAuthority = styles.slice(styles.lastIndexOf('/* Universal public typography'))
+    expect(typographyAuthority).toContain('-webkit-line-clamp: unset !important')
+    expect(typographyAuthority).toContain('font-size: clamp(1.35rem, 5.2vw, 3rem)')
+    expect(typographyAuthority).toContain('font-size: clamp(1.1rem, 4.25vw, 1.9rem)')
+    expect(typographyAuthority).toContain('font-size: clamp(0.95rem, 3.6vw, 1.3rem)')
+    expect(styles).not.toMatch(/#publikasi-page \.publication-card-title\s*\{[\s\S]*?line-clamp/)
   })
 })

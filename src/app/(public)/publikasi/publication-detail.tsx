@@ -152,7 +152,7 @@ export function PublicationDetail({ post, relatedPosts }: { post: PublishedPost;
                 <div className="flex items-center gap-4">
                   <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-extrabold text-text-inverse">{getInitials(displayAuthor)}</span>
                   <div className="min-w-0">
-                    <h2 className="truncate font-heading text-base font-extrabold text-primary">{displayAuthor}</h2>
+                    <h2 className="font-heading text-base font-extrabold text-balance text-primary">{displayAuthor}</h2>
                     <p className="mt-1 text-xs font-semibold text-text-muted">{authorPosition}</p>
                   </div>
                 </div>

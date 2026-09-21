@@ -72,20 +72,20 @@ export function HeroSlideshow({ slides, eyebrow, title, description, motto, prim
       </div>
     </div>
     <div className="home-hero-media-frame">
-      <div className={`home-hero-media${validSlides.length ? "" : " home-hero-media--empty"}`} aria-label="Dokumentasi IKMI Cirebon">
-        <div className="home-hero-mobile-gallery" aria-label="Galeri dokumentasi IKMI Cirebon">
+      <div className={`home-hero-media relative overflow-hidden rounded-3xl bg-gray-50/50 p-2${validSlides.length ? "" : " home-hero-media--empty"}`} aria-label="Dokumentasi IKMI Cirebon">
+        <div className="home-hero-mobile-gallery grid w-full grid-cols-2 gap-3" aria-label="Galeri dokumentasi IKMI Cirebon">
           {validSlides.slice(0, 4).map((slide, index) => {
             const image = slide.mobileImage || slide.desktopImage;
-            return image ? <div key={slide.id} className="home-hero-mobile-tile"><Image src={image} alt={slide.alt || `Dokumentasi IKMI Cirebon ${index + 1}`} fill sizes="50vw" className="home-hero-mobile-image" /></div> : null;
+            return image ? <div key={slide.id} className="home-hero-mobile-tile aspect-square overflow-hidden rounded-2xl shadow-sm"><Image src={image} alt={slide.alt || `Dokumentasi IKMI Cirebon ${index + 1}`} fill sizes="50vw" className="home-hero-mobile-image object-cover" /></div> : null;
           })}
         </div>
-        <div ref={desktopGalleryRef} data-testid="home-hero-desktop-gallery" className="home-hero-desktop-gallery" aria-label="Galeri dokumentasi IKMI Cirebon">
+        <div ref={desktopGalleryRef} data-testid="home-hero-desktop-gallery" className="home-hero-desktop-gallery md:flex md:overflow-x-auto md:snap-x md:gap-4 md:scroll-smooth hide-scrollbar" aria-label="Galeri dokumentasi IKMI Cirebon">
           {validSlides.map((slide, index) => {
             const image = slide.desktopImage || slide.mobileImage;
-            return image ? <div key={slide.id} data-hero-slide className="home-hero-desktop-slide"><Image src={image} alt={slide.alt || `Dokumentasi IKMI Cirebon ${index + 1}`} fill priority={index === 0} sizes="(min-width: 1024px) 62vw, 100vw" className="home-hero-desktop-image" /></div> : null;
+            return image ? <div key={slide.id} data-hero-slide className="home-hero-desktop-slide md:h-[450px] md:min-w-[320px] md:snap-center"><Image src={image} alt={slide.alt || `Dokumentasi IKMI Cirebon ${index + 1}`} fill priority={index === 0} sizes="(min-width: 1024px) 62vw, 100vw" className="home-hero-desktop-image object-cover rounded-2xl shadow-md" /></div> : null;
           })}
         </div>
-        {validSlides.length > 1 ? <><button type="button" className="home-hero-slider-control home-hero-slider-control--previous" aria-label="Foto sebelumnya" onClick={() => scrollGallery(-1)}><ChevronLeft aria-hidden="true" /></button><button type="button" className="home-hero-slider-control home-hero-slider-control--next" aria-label="Foto berikutnya" onClick={() => scrollGallery(1)}><ChevronRight aria-hidden="true" /></button></> : null}
+        {validSlides.length > 1 ? <><button type="button" className="home-hero-slider-control home-hero-slider-control--previous flex h-12 w-12 items-center justify-center rounded-full bg-white/30 text-gray-800 shadow-lg" aria-label="Foto sebelumnya" onClick={() => scrollGallery(-1)}><ChevronLeft aria-hidden="true" /></button><button type="button" className="home-hero-slider-control home-hero-slider-control--next flex h-12 w-12 items-center justify-center rounded-full bg-white/30 text-gray-800 shadow-lg" aria-label="Foto berikutnya" onClick={() => scrollGallery(1)}><ChevronRight aria-hidden="true" /></button></> : null}
         <span className="home-hero-photo-blend" aria-hidden="true" />
       </div>
       {mediaChildren}
