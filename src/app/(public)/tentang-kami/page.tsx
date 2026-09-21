@@ -14,7 +14,7 @@ import Link from "next/link";
 import { siteUrl } from "@/core/seo/site";
 import { getActivePublicStructure } from "@/features/public/public-structure";
 import { webConfigQueries } from "@/features/web-config/queries";
-import { PublicBreadcrumb } from "../_components/public-breadcrumb";
+import { GlobalPageHeader } from "../_components/global-page-header";
 
 /* =========================================================
    ABOUT — CONTENT FALLBACK
@@ -567,42 +567,25 @@ export default async function TentangPage() {
       {/* =====================================================
           HERO / PROFILE INTRO
           ===================================================== */}
-      <header className="about-hero" id="profil">
-        <Image
-          src={heroImage}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="about-hero-image"
-          aria-hidden="true"
-        />
-        <div className="about-hero-overlay" aria-hidden="true" />
-        <div className="about-container about-hero-inner">
-          <div className="about-reveal about-hero-copy">
-            <PublicBreadcrumb items={[{ label: "Tentang" }]} tone="inverse" />
-            <h1>
-              {aboutContent.hero.title}
-              <span>{aboutContent.hero.accent}</span>
-            </h1>
+      <GlobalPageHeader
+        id="profil"
+        className="about-page-header"
+        items={[{ label: "Tentang" }]}
+        title={<>{aboutContent.hero.title}<span>{aboutContent.hero.accent}</span></>}
+        description={aboutContent.hero.lead}
+        image={heroImage}
+      >
+        <p className="about-motto">
+          <span aria-hidden="true" />
+          {aboutContent.hero.motto}
+          <span aria-hidden="true" />
+        </p>
 
-            <p className="about-hero-lead">
-              {aboutContent.hero.lead}
-            </p>
-
-            <p className="about-motto">
-              <span aria-hidden="true" />
-              {aboutContent.hero.motto}
-              <span aria-hidden="true" />
-            </p>
-
-            <Link href="#sejarah" className="public-text-link about-action">
-              Selengkapnya tentang IKMI
-              <ArrowDown aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
-      </header>
+        <Link href="#sejarah" className="public-text-link about-action">
+          Selengkapnya tentang IKMI
+          <ArrowDown aria-hidden="true" />
+        </Link>
+      </GlobalPageHeader>
 
       {/* =====================================================
           01 — PROFIL

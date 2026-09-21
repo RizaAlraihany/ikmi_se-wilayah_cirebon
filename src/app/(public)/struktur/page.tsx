@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { Info } from "lucide-react";
-import Image from "next/image";
 
 import { siteUrl } from "@/core/seo/site";
 import { getActivePublicStructure } from "@/features/public/public-structure";
 import { webConfigQueries } from "@/features/web-config/queries";
 import { DepartmentGrid, type DepartmentData } from "./department-grid";
 import type { StrukturCardMember } from "./struktur-card";
-import { PublicBreadcrumb } from "../_components/public-breadcrumb";
+import { GlobalPageHeader } from "../_components/global-page-header";
 
 export const metadata: Metadata = {
   title: "Struktur Pengurus",
@@ -243,72 +242,37 @@ export default async function PengurusPage() {
 
   return (
     <main className="structure-page public-page-root">
-      <header className="structure-hero">
-        {heroImage ? (
-          <Image
-            src={heroImage}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="structure-hero-image"
-            aria-hidden="true"
-          />
-        ) : null}
-
-        <div className="structure-hero-overlay" aria-hidden="true" />
-
-        <div className="public-container structure-hero-inner">
-          <PublicBreadcrumb
-            tone="inverse"
-            className="structure-breadcrumb"
-            items={[
-              { label: "Tentang", href: "/tentang" },
-              { label: "Struktur Pengurus" },
-            ]}
-          />
-
-          <div className="structure-hero-layout">
-            <div className="structure-hero-copy">
-              <h1>Struktur Pengurus</h1>
-              <p>
-                Kenali orang-orang di balik gerak IKMI Se-Wilayah Cirebon. Klik
-                setiap divisi untuk melihat detail pengurus.
-              </p>
-
-              <aside className="structure-hint" aria-label="Petunjuk interaksi">
-                <span className="structure-hint-icon" aria-hidden="true">
-                  <Info />
-                </span>
-                <span className="structure-hint-copy">
-                  <strong>Lihat detail setiap divisi</strong>
-                  <span>
-                    Pilih foto divisi untuk membuka susunan pengurusnya.
-                  </span>
-                </span>
-              </aside>
+      <GlobalPageHeader
+        className="structure-page-header"
+        items={[{ label: "Tentang", href: "/tentang" }, { label: "Struktur Pengurus" }]}
+        title="Struktur Pengurus"
+        description="Kenali orang-orang di balik gerak IKMI Se-Wilayah Cirebon. Klik setiap divisi untuk melihat detail pengurus."
+        image={heroImage}
+        aside={
+          <dl className="structure-summary" aria-label="Ringkasan kepengurusan aktif">
+            <div className="structure-summary-item structure-summary-item--period">
+              <dt>Periode</dt>
+              <dd>{period?.name ?? "Belum ditetapkan"}</dd>
             </div>
-
-            <dl
-              className="structure-summary"
-              aria-label="Ringkasan kepengurusan aktif"
-            >
-              <div className="structure-summary-item structure-summary-item--period">
-                <dt>Periode</dt>
-                <dd>{period?.name ?? "Belum ditetapkan"}</dd>
-              </div>
-              <div className="structure-summary-item">
-                <dt>Jumlah Unit</dt>
-                <dd>{sortedGroups.length}</dd>
-              </div>
-              <div className="structure-summary-item">
-                <dt>Jumlah Pengurus</dt>
-                <dd>{totalOfficerCount}</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      </header>
+            <div className="structure-summary-item">
+              <dt>Jumlah Unit</dt>
+              <dd>{sortedGroups.length}</dd>
+            </div>
+            <div className="structure-summary-item">
+              <dt>Jumlah Pengurus</dt>
+              <dd>{totalOfficerCount}</dd>
+            </div>
+          </dl>
+        }
+      >
+        <aside className="structure-hint" aria-label="Petunjuk interaksi">
+          <span className="structure-hint-icon" aria-hidden="true"><Info /></span>
+          <span className="structure-hint-copy">
+            <strong>Lihat detail setiap divisi</strong>
+            <span>Pilih foto divisi untuk membuka susunan pengurusnya.</span>
+          </span>
+        </aside>
+      </GlobalPageHeader>
 
       <section
         className="structure-content"

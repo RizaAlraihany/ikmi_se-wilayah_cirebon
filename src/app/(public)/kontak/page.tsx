@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import { ArrowRight, Check, Mail } from 'lucide-react'
 import { siteUrl } from '@/core/seo/site'
 import { webConfigQueries } from '@/features/web-config/queries'
-import { PublicBreadcrumb } from '../_components/public-breadcrumb'
+import { GlobalPageHeader } from '../_components/global-page-header'
 
 export const metadata: Metadata = {
   title: 'Kontak Resmi',
@@ -35,25 +34,13 @@ export default async function ContactPage() {
 
   return (
     <main className="public-page-root contact-editorial" id="view-kontak">
-      <header className="public-editorial-hero" aria-labelledby="contact-heading">
-        <Image
-          src={kontakHero.imageUrl}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="public-editorial-hero-image"
-          aria-hidden="true"
-        />
-        <div className="public-editorial-hero-overlay" aria-hidden="true" />
-        <div className="public-editorial-container public-editorial-hero-grid">
-          <div className="public-editorial-hero-copy">
-            <PublicBreadcrumb items={[{ label: 'Kontak' }]} tone="inverse" />
-            <h1 id="contact-heading">{kontakHero.title}</h1>
-            <p className="public-editorial-lead">{kontakHero.lead}</p>
-          </div>
-
-          <div className="contact-official-channel">
+      <GlobalPageHeader
+        className="contact-page-header"
+        items={[{ label: 'Kontak' }]}
+        title={kontakHero.title}
+        description={kontakHero.lead}
+        image={kontakHero.imageUrl}
+        aside={<div className="contact-official-channel">
             <p className="public-section-kicker">Kanal resmi organisasi</p>
             {contact.email ? (
               <a href={`mailto:${contact.email}`} className="contact-official-link">
@@ -75,9 +62,8 @@ export default async function ContactPage() {
               Satu alamat resmi agar setiap korespondensi tercatat dan dapat
               diarahkan kepada pengurus yang tepat.
             </p>
-          </div>
-        </div>
-      </header>
+          </div>}
+      />
 
       <section className="public-editorial-section" aria-labelledby="contact-guide-title">
         <div className="public-editorial-container contact-editorial-grid">

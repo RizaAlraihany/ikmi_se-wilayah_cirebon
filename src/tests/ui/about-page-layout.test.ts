@@ -24,10 +24,9 @@ describe('Tentang page editorial layout', () => {
     )
   })
 
-  it('replaces the About kicker with the shared public breadcrumb', () => {
-    expect(pageSource).toContain(
-      '<PublicBreadcrumb items={[{ label: "Tentang" }]} tone="inverse" />',
-    )
+  it('uses the shared GlobalPageHeader for the About introduction', () => {
+    expect(pageSource).toContain('<GlobalPageHeader')
+    expect(pageSource).toContain('items={[{ label: "Tentang" }]}')
     expect(pageSource).not.toContain(
       '<p className="about-kicker">Tentang IKMI</p>',
     )
@@ -53,7 +52,7 @@ describe('Tentang page editorial layout', () => {
     expect(styles).toContain('.about-closing .about-closing-action')
   })
 
-  it('uses the accessible shared breadcrumb directly or through the shared public-page hero', () => {
+  it('uses the accessible shared breadcrumb through the standard page header', () => {
     expect(publicBreadcrumbSource).toContain('aria-label="Breadcrumb"')
     expect(publicBreadcrumbSource).toContain('aria-current={isCurrent')
     expect(publicBreadcrumbSource).toContain('<Home aria-hidden="true" />')
@@ -62,7 +61,14 @@ describe('Tentang page editorial layout', () => {
       path.join(process.cwd(), 'src/app/(public)/_components/public-page-hero.tsx'),
       'utf8',
     )
-    expect(publicPageHeroSource).toContain('PublicBreadcrumb')
+    expect(publicPageHeroSource).toContain('GlobalPageHeader')
+
+    const globalPageHeaderSource = readFileSync(
+      path.join(process.cwd(), 'src/app/(public)/_components/global-page-header.tsx'),
+      'utf8',
+    )
+    expect(globalPageHeaderSource).toContain('PublicBreadcrumb')
+    expect(globalPageHeaderSource).toContain('global-page-header__title')
 
     const heroRoutes = [
       'agenda/agenda-listing-page.tsx',
@@ -71,10 +77,9 @@ describe('Tentang page editorial layout', () => {
       'kirim-tulisan/revisi/[token]/page.tsx',
     ]
 
-    const directBreadcrumbRoutes = [
+    const standardizedHeaderRoutes = [
       'kontak/page.tsx',
       'publikasi/page.tsx',
-      'publikasi/publication-detail.tsx',
       'struktur/page.tsx',
       'tentang-kami/page.tsx',
     ]
@@ -88,14 +93,20 @@ describe('Tentang page editorial layout', () => {
       expect(routeSource).toContain('PublicPageHero')
     }
 
-    for (const route of directBreadcrumbRoutes) {
+    for (const route of standardizedHeaderRoutes) {
       const routeSource = readFileSync(
         path.join(process.cwd(), 'src/app/(public)', route),
         'utf8',
       )
 
-      expect(routeSource).toContain('PublicBreadcrumb')
+      expect(routeSource).toContain('GlobalPageHeader')
     }
+
+    const detailSource = readFileSync(
+      path.join(process.cwd(), 'src/app/(public)/publikasi/publication-detail.tsx'),
+      'utf8',
+    )
+    expect(detailSource).toContain('PublicBreadcrumb')
   })
 
   it('uses the five-section order from the approved copywriting document', () => {
@@ -125,7 +136,7 @@ describe('Tentang page editorial layout', () => {
   })
 
   it('keeps headings complete and controls wrapping through responsive type sizes', () => {
-    expect(pageSource).toContain('<h1>')
+    expect(pageSource).toContain('title={<>{aboutContent.hero.title}')
     expect(pageSource).not.toContain('truncate')
     expect(styles).toContain('.about-heading h2')
     expect(styles).toContain('font-size: clamp(1.75rem, 6.8vw, 2.85rem)')

@@ -14,9 +14,13 @@ describe('public structure page layout', () => {
     'src/app/(public)/struktur/struktur-card.tsx',
   )
   const cssSource = readSource('src/app/globals.css')
+  const globalHeaderSource = readSource(
+    'src/app/(public)/_components/global-page-header.tsx',
+  )
 
   it('keeps the original public structure information', () => {
-    expect(pageSource).toContain('<h1>Struktur Pengurus</h1>')
+    expect(pageSource).toContain('GlobalPageHeader')
+    expect(pageSource).toContain('title="Struktur Pengurus"')
     expect(pageSource).toContain('alternates: { canonical: "/struktur" }')
     expect(pageSource).toContain('type: "website"')
     expect(pageSource).toContain(
@@ -56,8 +60,8 @@ describe('public structure page layout', () => {
     )
     expect(pageSource).toContain('className="structure-hint-icon"')
     expect(pageSource).toContain('className="structure-hint-copy"')
-    expect(pageSource.indexOf('className="structure-hint-copy"')).toBeLessThan(
-      pageSource.indexOf('className="structure-summary"'),
+    expect(globalHeaderSource.indexOf('{children}')).toBeLessThan(
+      globalHeaderSource.lastIndexOf('{aside ?'),
     )
     expect(pageSource.indexOf('className="structure-summary"')).toBeLessThan(
       pageSource.indexOf('className="structure-content"'),
@@ -73,7 +77,8 @@ describe('public structure page layout', () => {
   })
 
   it('places the active-period summary in a responsive liquid-glass card', () => {
-    expect(pageSource).toContain('className="structure-hero-layout"')
+    expect(pageSource).toContain('className="structure-page-header"')
+    expect(cssSource).toContain('global-page-header__layout--with-aside')
     expect(cssSource).toContain(
       'grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem)',
     )

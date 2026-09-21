@@ -30,12 +30,20 @@ describe('HeroSlideshow', () => {
     expect(screen.getByRole('link', { name: heroProps.secondaryCta.label })).toHaveAttribute('href', '/tentang-kami')
   })
 
-  it('lets visitors select a documentary photo', () => {
-    render(<HeroSlideshow slides={slides} {...heroProps} />)
+  it('uses a real horizontal desktop gallery with integrated controls', () => {
+    const scrollBy = jest.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollBy', {
+      configurable: true,
+      value: scrollBy,
+    })
 
-    const secondPhoto = screen.getByRole('button', { name: 'Tampilkan foto 2' })
-    fireEvent.click(secondPhoto)
+    const { container } = render(<HeroSlideshow slides={slides} {...heroProps} />)
 
-    expect(secondPhoto).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByTestId('home-hero-desktop-gallery')).toBeInTheDocument()
+    expect(container.querySelectorAll('.home-hero-mobile-tile')).toHaveLength(2)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Foto berikutnya' }))
+
+    expect(scrollBy).toHaveBeenCalledWith({ left: expect.any(Number), behavior: 'smooth' })
   })
 })

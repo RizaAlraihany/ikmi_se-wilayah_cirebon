@@ -1,10 +1,9 @@
-import Image from "next/image";
 import { ArrowRight, PenLine } from "lucide-react";
 import Link from "next/link";
 import { siteUrl } from "@/core/seo/site";
 import { postQueries } from "@/features/blog/queries";
 import { BlogList } from "../_components/blog-list";
-import { PublicBreadcrumb } from "../_components/public-breadcrumb";
+import { GlobalPageHeader } from "../_components/global-page-header";
 import { webConfigQueries } from "@/features/web-config/queries";
 
 export const metadata = {
@@ -60,47 +59,25 @@ export default async function BlogPage({
       className="publication-page public-page-root flex-1 w-full bg-base"
       id="publikasi-page"
     >
-      <header className="publication-hero">
-        <Image
-          src={publikasiHero.imageUrl}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="publication-hero-image"
-          aria-hidden="true"
-        />
-        <div className="publication-hero-overlay" aria-hidden="true" />
-        <div className="publication-container publication-hero-inner">
-          <PublicBreadcrumb
-            items={[{ label: "Publikasi" }]}
-            tone="inverse"
-            className="publication-breadcrumb"
-          />
-
-          <div className="publication-hero-grid">
-            <div className="publication-hero-copy">
-              <h1>{publikasiHero.title}</h1>
-
-              <p className="publication-hero-lead">{publikasiHero.lead}</p>
+      <GlobalPageHeader
+        className="publication-page-header"
+        items={[{ label: "Publikasi" }]}
+        title={publikasiHero.title}
+        description={publikasiHero.lead}
+        image={publikasiHero.imageUrl}
+        aside={
+          <dl className="publication-archive-facts" aria-label="Ringkasan publikasi">
+            <div>
+              <dt>Terbit</dt>
+              <dd>{serializedPosts.length}</dd>
             </div>
-
-            <dl
-              className="publication-archive-facts"
-              aria-label="Ringkasan publikasi"
-            >
-              <div>
-                <dt>Terbit</dt>
-                <dd>{serializedPosts.length}</dd>
-              </div>
-              <div>
-                <dt>Kategori aktif</dt>
-                <dd>{categoryCount}</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      </header>
+            <div>
+              <dt>Kategori aktif</dt>
+              <dd>{categoryCount}</dd>
+            </div>
+          </dl>
+        }
+      />
 
       <section
         className="publication-index-section"

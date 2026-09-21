@@ -25,8 +25,6 @@ type HeroSlideshowProps = {
   mediaChildren?: ReactNode;
 };
 
-const AUTOPLAY_DELAY = 10000;
-
 function splitTitle(title: string) {
   const words = title.trim().split(/\s+/);
   const splitAt = words.slice(1).reduce((best, _, index) => {
@@ -42,20 +40,9 @@ function splitTitle(title: string) {
 export function HeroSlideshow({ slides, eyebrow, title, description, motto, primaryCta, secondaryCta, children, mediaChildren }: HeroSlideshowProps) {
   const validSlides = useMemo(() => slides.filter((slide) => Boolean(slide.desktopImage) || Boolean(slide.mobileImage)), [slides]);
   const titleLines = splitTitle(title);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [isHeroVisible, setIsHeroVisible] = useState(true);
   const heroRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (activeIndex >= validSlides.length) setActiveIndex(0);
-  }, [activeIndex, validSlides.length]);
-
-  useEffect(() => {
-    if (paused || validSlides.length <= 1) return;
-    const timer = window.setInterval(() => setActiveIndex((current) => (current + 1) % validSlides.length), AUTOPLAY_DELAY);
-    return () => window.clearInterval(timer);
-  }, [paused, validSlides.length]);
+  const desktopGalleryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!heroRef.current || typeof IntersectionObserver === "undefined") return;
@@ -64,7 +51,16 @@ export function HeroSlideshow({ slides, eyebrow, title, description, motto, prim
     return () => observer.disconnect();
   }, []);
 
-  return <section ref={heroRef} id="hero-slider" className={`home-hero${isHeroVisible ? " is-visible" : ""}`} aria-labelledby="home-hero-title" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}>
+  function scrollGallery(direction: -1 | 1) {
+    const gallery = desktopGalleryRef.current;
+    if (!gallery) return;
+
+    const slide = gallery.querySelector<HTMLElement>('[data-hero-slide]');
+    const distance = slide ? slide.getBoundingClientRect().width + 16 : gallery.clientWidth * 0.8;
+    gallery.scrollBy({ left: distance * direction, behavior: 'smooth' });
+  }
+
+  return <section ref={heroRef} id="hero-slider" className={`home-hero${isHeroVisible ? " is-visible" : ""}`} aria-labelledby="home-hero-title">
     <div className="home-hero-content">
       <div className="home-hero-copy">
         <p className="home-hero-eyebrow">{eyebrow}</p>
@@ -83,19 +79,13 @@ export function HeroSlideshow({ slides, eyebrow, title, description, motto, prim
             return image ? <div key={slide.id} className="home-hero-mobile-tile"><Image src={image} alt={slide.alt || `Dokumentasi IKMI Cirebon ${index + 1}`} fill sizes="50vw" className="home-hero-mobile-image" /></div> : null;
           })}
         </div>
-        <div className="home-hero-slider" aria-live="polite">
+        <div ref={desktopGalleryRef} data-testid="home-hero-desktop-gallery" className="home-hero-desktop-gallery" aria-label="Galeri dokumentasi IKMI Cirebon">
           {validSlides.map((slide, index) => {
             const image = slide.desktopImage || slide.mobileImage;
-            return image ? <Image key={slide.id} src={image} alt={slide.alt || "Dokumentasi IKMI Cirebon"} fill priority={index === 0} sizes="(min-width: 1024px) 62vw, 100vw" className={`home-hero-image${index === activeIndex ? " is-active" : ""}`} /> : null;
+            return image ? <div key={slide.id} data-hero-slide className="home-hero-desktop-slide"><Image src={image} alt={slide.alt || `Dokumentasi IKMI Cirebon ${index + 1}`} fill priority={index === 0} sizes="(min-width: 1024px) 62vw, 100vw" className="home-hero-desktop-image" /></div> : null;
           })}
-          {validSlides.length > 1 ? (
-            <>
-              <button type="button" className="home-hero-slider-control home-hero-slider-control--previous" aria-label="Foto sebelumnya" onClick={() => setActiveIndex((current) => current === 0 ? validSlides.length - 1 : current - 1)}><ChevronLeft aria-hidden="true" /></button>
-              <button type="button" className="home-hero-slider-control home-hero-slider-control--next" aria-label="Foto berikutnya" onClick={() => setActiveIndex((current) => (current + 1) % validSlides.length)}><ChevronRight aria-hidden="true" /></button>
-            </>
-          ) : null}
-          {validSlides.length > 1 ? <div className="home-hero-dots" aria-label="Pilih foto dokumentasi">{validSlides.map((slide, index) => <button key={slide.id} type="button" className={index === activeIndex ? "is-active" : ""} aria-label={`Tampilkan foto ${index + 1}`} aria-pressed={index === activeIndex} onClick={() => setActiveIndex(index)} />)}</div> : null}
         </div>
+        {validSlides.length > 1 ? <><button type="button" className="home-hero-slider-control home-hero-slider-control--previous" aria-label="Foto sebelumnya" onClick={() => scrollGallery(-1)}><ChevronLeft aria-hidden="true" /></button><button type="button" className="home-hero-slider-control home-hero-slider-control--next" aria-label="Foto berikutnya" onClick={() => scrollGallery(1)}><ChevronRight aria-hidden="true" /></button></> : null}
         <span className="home-hero-photo-blend" aria-hidden="true" />
       </div>
       {mediaChildren}
