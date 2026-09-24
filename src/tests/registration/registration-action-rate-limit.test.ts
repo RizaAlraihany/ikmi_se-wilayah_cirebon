@@ -12,7 +12,7 @@ jest.mock('@/core/errors/safe-action-error', () => ({ safeActionError: jest.fn((
 
 const validRegistration = {
   fullName: 'Nadia Indriyani', email: 'nadia@example.test', campus: 'Universitas Cirebon', major: 'Teknik Informatika',
-  semester: '3', entryYear: 2025, district: 'Jatibarang' as const, village: 'Jatibarang Baru',
+  semester: '3', entryYear: 2025, district: 'Jatibarang', village: 'Jatibarang Baru',
   address: 'Jalan Perjuangan nomor 10, Cirebon', whatsapp: '081234567890',
   reasons: 'Saya ingin belajar dan berkontribusi bersama IKMI Cirebon.', consent: true,
 }

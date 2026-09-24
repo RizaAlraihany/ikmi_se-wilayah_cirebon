@@ -1,6 +1,5 @@
 import { registrationService } from '@/features/registration/services'
 import { registrationCreateSchema } from '@/features/registration/schemas'
-import { INDRAMAYU_DISTRICTS, INDRAMAYU_VILLAGES } from '@/features/registration/indramayu-regions'
 import { requirePermissionForUser } from '@/core/authorization/guards'
 import { prismaMock } from '../prisma-mock'
 
@@ -49,14 +48,10 @@ it('continues registration numbering beyond four digits', async () => {
 })
 
 it('bounds public PII input and rejects non-phone text', () => {
-  const data = { fullName: 'Development Applicant', email: 'dev@example.test', campus: 'Test Campus', major: 'Test Study', semester: '3', entryYear: 2026, district: 'Indramayu', village: 'Paoman', address: 'Development address only', whatsapp: '081234567890', reasons: 'Development registration validation', consent: true }
+  const data = { fullName: 'Development Applicant', email: 'dev@example.test', campus: 'Test Campus', major: 'Test Study', semester: '3', entryYear: 2026, district: 'Jatibarang', village: 'Jatibarang Baru', address: 'Development address only', whatsapp: '081234567890', reasons: 'Development registration validation', consent: true }
   expect(registrationCreateSchema.safeParse(data).success).toBe(true)
+  expect(registrationCreateSchema.safeParse({ ...data, village: 'Haurkolot' }).success).toBe(false)
+  expect(registrationCreateSchema.safeParse({ ...data, district: 'Bukan Kecamatan' }).success).toBe(false)
   expect(registrationCreateSchema.safeParse({ ...data, whatsapp: 'abcdefghijk' }).success).toBe(false)
   expect(registrationCreateSchema.safeParse({ ...data, reasons: 'x'.repeat(2001) }).success).toBe(false)
-  expect(registrationCreateSchema.safeParse({ ...data, village: 'Anjatan' }).success).toBe(false)
-})
-
-it('provides every Indramayu district with at least one village', () => {
-  expect(INDRAMAYU_DISTRICTS).toHaveLength(31)
-  expect(INDRAMAYU_DISTRICTS.every((district) => INDRAMAYU_VILLAGES[district as keyof typeof INDRAMAYU_VILLAGES].length > 0)).toBe(true)
 })

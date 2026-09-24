@@ -228,6 +228,7 @@ export default async function Home() {
     ? campaignPhasePresentation[featuredCampaign.phase]
     : null;
 
+  // Akses cepat floating badges
   const heroFloatingBadges: HeroFloatingBadge[] = [
     {
       id: "agenda",
@@ -235,7 +236,6 @@ export default async function Home() {
       description: "Jadwal & kegiatan terdekat",
       href: "/kegiatan",
       icon: "agenda",
-      actionLabel: "Lihat",
     },
     {
       id: "join",
@@ -243,7 +243,6 @@ export default async function Home() {
       description: "Pendaftaran anggota",
       href: homepageContent.hero.floatingMenu1Link || "/gabung",
       icon: "join",
-      actionLabel: "Daftar",
     },
     {
       id: "publication",
@@ -251,7 +250,6 @@ export default async function Home() {
       description: "Karya ilmiah & opini",
       href: homepageContent.hero.floatingMenu2Link || "/publikasi",
       icon: "publication",
-      actionLabel: "Baca",
     },
   ];
 

@@ -110,7 +110,7 @@ describe('Agenda security and storage invariants', () => {
 
   it('stores Asia/Jakarta time and clears stale fields when schedule type changes', async () => {
     prismaMock.department.findFirst.mockResolvedValueOnce({ id: 'unit-1', periodId: 'period-1' } as never)
-    prismaMock.period.findFirst.mockResolvedValueOnce({ id: 'period-1', status: 'ACTIVE' } as never)
+    prismaMock.period.findFirst.mockResolvedValueOnce({ id: 'period-1' } as never)
     prismaMock.agenda.create.mockResolvedValueOnce({ id: 'agenda-1', name: 'Rapat Kondisional' } as never)
     prismaMock.auditLog.create.mockResolvedValueOnce({ id: 'audit-1' } as never)
     prismaMock.$transaction.mockImplementation((async (callback: unknown) => {
@@ -144,7 +144,7 @@ describe('Agenda security and storage invariants', () => {
 
   it('stores datetime-local input as an Asia/Jakarta instant', async () => {
     prismaMock.department.findFirst.mockResolvedValueOnce({ id: 'unit-1', periodId: 'period-1' } as never)
-    prismaMock.period.findFirst.mockResolvedValueOnce({ id: 'period-1', status: 'ACTIVE' } as never)
+    prismaMock.period.findFirst.mockResolvedValueOnce({ id: 'period-1' } as never)
     prismaMock.agenda.create.mockResolvedValueOnce({ id: 'agenda-2' } as never)
     prismaMock.auditLog.create.mockResolvedValueOnce({ id: 'audit-2' } as never)
     prismaMock.$transaction.mockImplementation((async (callback: unknown) => {

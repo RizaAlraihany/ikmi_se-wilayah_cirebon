@@ -36,21 +36,24 @@ describe('HeroSlideshow', () => {
     expect(screen.getByAltText('Dokumentasi kedua')).toBeInTheDocument()
   })
 
-  it('changes the active photo from mobile and desktop controls', () => {
+  it('changes the active photo from mobile controls and desktop indicator dots', () => {
     render(<HeroSlideshow slides={slides} {...heroProps} />)
     const images = screen.getAllByRole('img')
 
     expect(images[0]).toHaveClass('is-active')
-    fireEvent.click(screen.getAllByRole('button', { name: 'Foto berikutnya' })[0])
+    fireEvent.click(screen.getByRole('button', { name: 'Foto berikutnya' }))
     expect(images[1]).toHaveClass('is-active')
-    fireEvent.click(screen.getAllByRole('button', { name: 'Foto sebelumnya' })[1])
+    fireEvent.click(screen.getByRole('button', { name: 'Foto sebelumnya' }))
     expect(images[0]).toHaveClass('is-active')
+    fireEvent.click(screen.getByRole('button', { name: 'Foto 2' }))
+    expect(images[1]).toHaveClass('is-active')
   })
 
   it('omits slider controls when only one photo exists', () => {
     render(<HeroSlideshow slides={slides.slice(0, 1)} {...heroProps} />)
     expect(screen.queryByRole('button', { name: 'Foto berikutnya' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Foto sebelumnya' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Foto 1' })).not.toBeInTheDocument()
   })
 
   it('keeps stacked mobile and legacy desktop hero layouts without heading truncation', () => {
@@ -87,9 +90,8 @@ describe('HeroSlideshow', () => {
     expect(screen.getByRole('link', { name: /Gabung IKMI/i })).toHaveAttribute('href', '/gabung')
     expect(screen.getByRole('link', { name: /Publikasi/i })).toHaveAttribute('href', '/publikasi')
 
-    // Infinite logo marquee band rendered with department logos
-    expect(screen.getAllByAltText(/Logo BPH/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByAltText(/Logo Kaderisasi/i).length).toBeGreaterThanOrEqual(1)
+    // Infinite logo marquee band rendered with department logos (logos only)
+    expect(screen.getAllByAltText(/Logo Departemen IKMI Cirebon/i).length).toBeGreaterThanOrEqual(1)
   })
 })
 

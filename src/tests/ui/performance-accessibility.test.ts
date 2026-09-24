@@ -75,7 +75,6 @@ describe('Phase 21 — Performance and accessibility', () => {
     expect(homepage).toContain('sizes=')
     expect(article).toContain('sizes=')
     expect(hero).toContain('sizes="(min-width: 1024px) 62vw, 100vw"')
-    expect(hero).toContain('fill')
     expect(hero).toContain('priority={index === 0}')
   })
 

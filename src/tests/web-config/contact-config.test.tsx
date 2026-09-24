@@ -75,19 +75,6 @@ const aboutContent = {
   profile: defaultWebConfig.about_page.profile,
   history: { ...defaultWebConfig.about_page.history, title: 'Sejarah X', description: 'Narasi sejarah X' },
   structureCta: defaultWebConfig.about_page.structureCta,
-  pengurus: {
-    sectionTitle: '05 — PROFIL PENGURUS',
-    subtitle: 'Struktur pengurus periode aktif diambil dari data master Struktur Pengurus.',
-    showPengurus: true,
-    closingTitle: 'Satu Tim, Satu Tujuan',
-    closingDescription: 'Setiap pengurus berkontribusi sesuai perannya. Bersama membangun organisasi yang kuat dan bermakna.',
-    ctaLabel: 'Lihat Seluruh Struktur',
-    ctaHref: '/struktur',
-  },
-  slider: {
-    sectionTitle: '06 — SLIDER KEPENGURUSAN',
-    items: [],
-  },
 }
 
 const pageHeroesContent = defaultWebConfig.page_heroes

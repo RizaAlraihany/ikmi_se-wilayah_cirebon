@@ -2,8 +2,8 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, CalendarDays, ChevronDown, ChevronUp, Newspaper, UserPlus } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Newspaper, UserPlus } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 export type PublicHeroSlide = {
   id: string
@@ -18,7 +18,6 @@ export type HeroFloatingBadge = {
   description?: string
   href: string
   icon?: 'agenda' | 'join' | 'publication'
-  actionLabel?: string
 }
 
 type HeroAction = { label: string; href: string }
@@ -33,24 +32,6 @@ export type HeroSlideshowProps = {
   secondaryCta: HeroAction
   floatingBadges?: HeroFloatingBadge[]
   departmentLogos?: string[]
-}
-
-const DEPARTMENT_NAMES: Record<string, string> = {
-  bph: 'BPH',
-  kaderisasi: 'Kaderisasi',
-  kajian: 'Kajian & Aksi',
-  psda: 'PSDA',
-  ekotif: 'Ekotif',
-  komdigi: 'Komdigi',
-  hpm: 'HPM',
-}
-
-function getDepartmentName(url: string, index: number): string {
-  const lower = url.toLowerCase()
-  for (const [key, name] of Object.entries(DEPARTMENT_NAMES)) {
-    if (lower.includes(key)) return name
-  }
-  return `Departemen ${index + 1}`
 }
 
 function renderBadgeIcon(icon?: 'agenda' | 'join' | 'publication') {
@@ -85,6 +66,15 @@ export function HeroSlideshow({
     setActiveIndex((current) => (current + direction + validSlides.length) % validSlides.length)
   }
 
+  // Auto-advance photos every 5 seconds on desktop and mobile
+  useEffect(() => {
+    if (!multi) return
+    const timer = setInterval(() => {
+      setActiveIndex((curr) => (curr + 1) % validSlides.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [multi, validSlides.length])
+
   // Duplicate logos 4x to ensure smooth infinite loop on all screen widths
   const marqueeList = useMemo(() => {
     if (!departmentLogos || departmentLogos.length === 0) return []
@@ -93,13 +83,6 @@ export function HeroSlideshow({
 
   return (
     <section id="hero-slider" className="home-hero" aria-labelledby="home-hero-title">
-      {/* Desktop only: floating button TOP — separate element */}
-      {multi ? (
-        <button type="button" className="home-hero-float-top" aria-label="Foto sebelumnya" onClick={() => move(-1)}>
-          <ChevronUp aria-hidden="true" />
-        </button>
-      ) : null}
-
       <div className="home-hero-content">
         <div className="home-hero-copy">
           <p className="home-hero-eyebrow">{eyebrow}</p>
@@ -129,7 +112,23 @@ export function HeroSlideshow({
             ) : null}
           </div>
 
-          {/* Floating Badges — Spaced apart, not grouped in one component */}
+          {/* Desktop indicator dots beside the media */}
+          {multi ? (
+            <div className="home-hero-dots" aria-label="Navigasi foto dokumentasi">
+              {validSlides.map((slide, index) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  className={`home-hero-dot${index === activeIndex ? ' is-active' : ''}`}
+                  aria-label={`Foto ${index + 1}`}
+                  aria-current={index === activeIndex ? 'true' : undefined}
+                  onClick={() => setActiveIndex(index)}
+                />
+              ))}
+            </div>
+          ) : null}
+
+          {/* Floating Badges — Liquid glass style, compact font, subtle arrow hint */}
           {floatingBadges && floatingBadges.length > 0 ? (
             <div className="home-hero-floating-badges" aria-label="Akses cepat">
               {floatingBadges.map((badge) => (
@@ -149,12 +148,9 @@ export function HeroSlideshow({
                       <span className="home-hero-badge-desc">{badge.description}</span>
                     ) : null}
                   </span>
-                  {badge.actionLabel ? (
-                    <span className="home-hero-badge-action">
-                      {badge.actionLabel}
-                      <ArrowRight aria-hidden="true" />
-                    </span>
-                  ) : null}
+                  <span className="home-hero-badge-arrow" aria-hidden="true">
+                    <ArrowUpRight className="home-hero-badge-arrow-svg" />
+                  </span>
                 </Link>
               ))}
             </div>
@@ -162,34 +158,23 @@ export function HeroSlideshow({
         </div>
       </div>
 
-      {/* Desktop only: floating button BOTTOM — separate element */}
-      {multi ? (
-        <button type="button" className="home-hero-float-bottom" aria-label="Foto berikutnya" onClick={() => move(1)}>
-          <ChevronDown aria-hidden="true" />
-        </button>
-      ) : null}
-
-      {/* Infinite scrolling structure/department logos marquee */}
+      {/* Infinite scrolling structure/department logos marquee (Logos ONLY, no text) */}
       {marqueeList.length > 0 ? (
         <div className="home-hero-marquee-band" aria-label="Struktur Departemen IKMI Cirebon">
           <div className="home-hero-marquee-track">
-            {marqueeList.map((logoUrl, idx) => {
-              const name = getDepartmentName(logoUrl, idx % (departmentLogos?.length || 1))
-              return (
-                <div key={`${logoUrl}-${idx}`} className="home-hero-marquee-item">
-                  <div className="home-hero-marquee-logo-wrap">
-                    <Image
-                      src={logoUrl}
-                      alt={`Logo ${name}`}
-                      width={32}
-                      height={32}
-                      className="home-hero-marquee-logo"
-                    />
-                  </div>
-                  <span className="home-hero-marquee-name">{name}</span>
+            {marqueeList.map((logoUrl, idx) => (
+              <div key={`${logoUrl}-${idx}`} className="home-hero-marquee-item">
+                <div className="home-hero-marquee-logo-wrap">
+                  <Image
+                    src={logoUrl}
+                    alt="Logo Departemen IKMI Cirebon"
+                    width={36}
+                    height={36}
+                    className="home-hero-marquee-logo"
+                  />
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         </div>
       ) : null}

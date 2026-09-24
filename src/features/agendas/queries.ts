@@ -34,19 +34,12 @@ const agendaListInclude = {
 export const agendaQueries = {
   async getAgendaWorkspace(requestedPeriodId?: string) {
     const scope = await agendaScope()
-    if (!scope) return { agendas: [], periods: [], units: [], activePeriodId: null, selectedPeriodId: null }
-    const [periods, units] = await Promise.all([
-      prisma.period.findMany({
-        where: { deletedAt: null },
-        select: { id: true, name: true, status: true },
-        orderBy: [{ status: 'asc' }, { name: 'desc' }],
-      }),
-      prisma.department.findMany({
-        where: { deletedAt: null, status: 'ACTIVE' },
-        select: { id: true, name: true },
-        orderBy: { name: 'asc' },
-      }),
-    ])
+    if (!scope) return { agendas: [], periods: [], activePeriodId: null, selectedPeriodId: null }
+    const periods = await prisma.period.findMany({
+      where: { deletedAt: null },
+      select: { id: true, name: true, status: true },
+      orderBy: [{ status: 'asc' }, { name: 'desc' }],
+    })
     const activePeriodId = periods.find((period) => period.status === 'ACTIVE')?.id ?? null
     const selectedPeriodId = periods.some((period) => period.id === requestedPeriodId) ? requestedPeriodId! : activePeriodId
     const agendas = await prisma.agenda.findMany({
@@ -54,7 +47,7 @@ export const agendaQueries = {
       include: agendaListInclude,
       orderBy: [{ startDatetime: 'asc' }, { name: 'asc' }],
     })
-    return { agendas, periods, units, activePeriodId, selectedPeriodId }
+    return { agendas, periods, activePeriodId, selectedPeriodId }
   },
 
   async getAgendas() {

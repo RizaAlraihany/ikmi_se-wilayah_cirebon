@@ -109,19 +109,6 @@ export const defaultWebConfig = {
       label: 'Lihat Seluruh Pengurus',
       href: '/struktur',
     },
-    pengurus: {
-      sectionTitle: '05 — PROFIL PENGURUS',
-      subtitle: 'Struktur pengurus periode aktif diambil dari data master Struktur Pengurus.',
-      showPengurus: true,
-      closingTitle: 'Satu Tim, Satu Tujuan',
-      closingDescription: 'Setiap pengurus berkontribusi sesuai perannya. Bersama membangun organisasi yang kuat dan bermakna.',
-      ctaLabel: 'Lihat Seluruh Struktur',
-      ctaHref: '/struktur',
-    },
-    slider: {
-      sectionTitle: '06 — SLIDER KEPENGURUSAN',
-      items: [],
-    },
     vision: 'Mewujudkan organisasi mahasiswa daerah yang inklusif, progresif, dan berdaya saing sebagai katalisator perubahan sosial di Indramayu melalui kolaborasi di tanah Cirebon.',
     missions: [
       'Membangun solidaritas dan kepedulian antar mahasiswa Indramayu di Cirebon.',

@@ -17,7 +17,6 @@ import { safeActionError } from '@/core/errors/safe-action-error'
 function revalidateCmsPaths(slug?: string) {
   revalidatePath('/admin')
   revalidatePath('/admin/cms/posts')
-  revalidatePath('/admin/cms/posts/[id]', 'page')
   revalidatePath('/publikasi')
   revalidatePath('/publikasi/[...segments]', 'page')
   revalidatePath('/')
