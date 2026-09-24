@@ -168,8 +168,8 @@ export function HeroSlideshow({
                   <Image
                     src={logoUrl}
                     alt="Logo Departemen IKMI Cirebon"
-                    width={36}
-                    height={36}
+                    width={60}
+                    height={60}
                     className="home-hero-marquee-logo"
                   />
                 </div>
