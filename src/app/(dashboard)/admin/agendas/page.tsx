@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CalendarDays, MapPin, Plus, Repeat2 } from 'lucide-react'
+import { CalendarDays, MapPin, Plus, Repeat2, Search, X } from 'lucide-react'
 import { agendaQueries } from '@/features/agendas/queries'
 import {
   agendaStatusLabel,
@@ -11,6 +11,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { ButtonLink } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 
 function formatSchedule(agenda: {
   scheduleType: string
@@ -38,10 +40,34 @@ function formatSchedule(agenda: {
   return 'Menunggu kondisi terpenuhi'
 }
 
-export default async function AgendaListPage({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
+const STATUS_OPTIONS = [
+  { value: '', label: 'Semua Status' },
+  { value: 'UPCOMING', label: 'Akan Datang' },
+  { value: 'ONGOING', label: 'Sedang Berlangsung' },
+  { value: 'COMPLETED', label: 'Selesai' },
+  { value: 'CANCELLED', label: 'Dibatalkan' },
+] as const
+
+export default async function AgendaListPage({ searchParams }: { searchParams: Promise<{ period?: string; q?: string; status?: string; unit?: string }> }) {
   const params = await searchParams
+  const q = params.q || ''
+  const status = params.status || ''
+  const unit = params.unit || ''
   const workspace = await agendaQueries.getAgendaWorkspace(params.period)
-  const agendas = workspace.agendas
+
+  let agendas = workspace.agendas
+  if (q) {
+    const query = q.toLowerCase()
+    agendas = agendas.filter((agenda) => agenda.name.toLowerCase().includes(query))
+  }
+  if (status) {
+    agendas = agendas.filter((agenda) => deriveAgendaStatus(agenda) === status)
+  }
+  if (unit) {
+    agendas = agendas.filter((agenda) => agenda.organizationalUnitId === unit)
+  }
+
+  const hasFilters = q || status || unit
 
   return (
     <div className="space-y-6">
@@ -59,19 +85,45 @@ export default async function AgendaListPage({ searchParams }: { searchParams: P
         </ButtonLink>
       </div>
 
-      <form action="/admin/agendas" className="flex items-center gap-3 border-y border-border bg-surface px-1 py-3 sm:px-4">
-        <label htmlFor="period" className="text-sm font-semibold text-primary">Periode</label>
-        <select id="period" name="period" defaultValue={workspace.selectedPeriodId ?? ''} className="h-11 min-w-0 rounded-md border border-border bg-surface px-3 text-sm font-semibold text-primary">
-          {workspace.periods.map((period) => <option key={period.id} value={period.id}>{period.name}{period.id === workspace.activePeriodId ? ' · Aktif' : ''}</option>)}
-        </select>
-        <button type="submit" className="ikmi-button ikmi-button--secondary min-h-11 rounded-md px-4 text-sm font-semibold">Tampilkan</button>
+      <form action="/admin/agendas" className="space-y-3 border-y border-border bg-surface px-1 py-3 sm:px-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+            <label htmlFor="period" className="shrink-0 text-sm font-semibold text-primary">Periode</label>
+            <select id="period" name="period" defaultValue={workspace.selectedPeriodId ?? ''} className="h-11 min-w-0 rounded-md border border-border bg-surface px-3 text-sm font-semibold text-primary">
+              {workspace.periods.map((period) => <option key={period.id} value={period.id}>{period.name}{period.id === workspace.activePeriodId ? ' · Aktif' : ''}</option>)}
+            </select>
+            <label htmlFor="search" className="shrink-0 text-sm font-semibold text-primary">Cari</label>
+            <div className="relative flex-1 min-w-0 max-w-xs">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden="true" />
+              <Input id="search" name="q" defaultValue={q} placeholder="Cari nama agenda..." className="pl-10" />
+            </div>
+            <label htmlFor="status" className="shrink-0 text-sm font-semibold text-primary">Status</label>
+            <Select id="status" name="status" defaultValue={status} className="h-11 min-w-[180px]">
+              {STATUS_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </Select>
+            <label htmlFor="unit" className="shrink-0 text-sm font-semibold text-primary">Unit</label>
+            <Select id="unit" name="unit" defaultValue={unit} className="h-11 min-w-[180px]">
+              <option value="">Semua Unit</option>
+              {workspace.units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </Select>
+            <button type="submit" className="ikmi-button ikmi-button--secondary min-h-11 rounded-md px-4 text-sm font-semibold">Terapkan</button>
+          </div>
+          {hasFilters && (
+            <div className="flex items-center gap-2">
+              <Link href="/admin/agendas" prefetch={false} className="flex items-center gap-1.5 text-sm font-semibold text-text-secondary hover:text-accent">
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                Hapus filter
+              </Link>
+            </div>
+          )}
+        </div>
       </form>
 
       {agendas.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
-          title="Belum ada Agenda"
-          description={workspace.selectedPeriodId === workspace.activePeriodId ? 'Buat Agenda pertama untuk periode aktif Anda.' : 'Tidak ada Agenda pada periode yang dipilih.'}
+          title={hasFilters ? 'Tidak ada Agenda cocok' : 'Belum ada Agenda'}
+          description={hasFilters ? 'Coba ubah filter pencarian.' : workspace.selectedPeriodId === workspace.activePeriodId ? 'Buat Agenda pertama untuk periode aktif Anda.' : 'Tidak ada Agenda pada periode yang dipilih.'}
         />
       ) : (
         <ul className="divide-y divide-border border-y border-border bg-surface">

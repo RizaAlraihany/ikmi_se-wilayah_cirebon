@@ -33,6 +33,7 @@
     ".next-dashboard-gap-fix/types/**/*.ts",
     ".next-page-heroes-validation/types/**/*.ts",
     ".next-prd-v5-dashboard-remediation/types/**/*.ts",
+    ".next-validation/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     ".next/types/**/*.ts",
     "jest.setup.ts",
@@ -43,7 +44,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "types/**/*.ts",
-    ".next-validation/types/**/*.ts"
+    ".next-detail-dashboard/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -67,6 +67,25 @@ export const aboutContentSchema = z.object({
     label: requiredText('Label CTA Struktur', 80),
     href: publicPath,
   }).strict(),
+  pengurus: z.object({
+    sectionTitle: z.string().max(160).default('05 — PROFIL PENGURUS'),
+    subtitle: z.string().max(900).default('Struktur pengurus periode aktif diambil dari data master Struktur Pengurus.'),
+    showPengurus: z.boolean().default(true),
+    closingTitle: z.string().max(160).default('Satu Tim, Satu Tujuan'),
+    closingDescription: z.string().max(900).default('Setiap pengurus berkontribusi sesuai perannya. Bersama membangun organisasi yang kuat dan bermakna.'),
+    ctaLabel: z.string().max(80).default('Lihat Seluruh Struktur'),
+    ctaHref: publicPath.default('/struktur'),
+  }).strict().optional(),
+  slider: z.object({
+    sectionTitle: z.string().max(160).default('06 — SLIDER KEPENGURUSAN'),
+    items: z.array(z.object({
+      imageUrl: safeImageUrl,
+      altText: z.string().max(180).default('Foto kepengurusan'),
+      caption: z.string().max(300).optional(),
+      visible: z.boolean().default(true),
+      order: z.number().int().min(0).default(0),
+    })).max(20, 'Maksimal 20 foto slider.').default([]),
+  }).strict().optional(),
 }).strict()
 
 export type AboutContentInput = z.infer<typeof aboutContentSchema>
@@ -160,6 +179,8 @@ export function normalizeAboutContent(value: unknown): AboutContentInput {
   const profile = objectValue(source.profile)
   const history = objectValue(source.history)
   const structureCta = objectValue(source.structureCta)
+  const pengurus = objectValue(source.pengurus)
+  const slider = objectValue(source.slider)
   return {
     hero: {
       title: textValue(hero.title, fallback.hero.title),
@@ -184,6 +205,28 @@ export function normalizeAboutContent(value: unknown): AboutContentInput {
       description: textValue(structureCta.description, fallback.structureCta.description),
       label: textValue(structureCta.label, fallback.structureCta.label),
       href: internalPathValue(structureCta.href, fallback.structureCta.href),
+    },
+    pengurus: {
+      sectionTitle: textValue(pengurus.sectionTitle, '05 — PROFIL PENGURUS'),
+      subtitle: textValue(pengurus.subtitle, 'Struktur pengurus periode aktif diambil dari data master Struktur Pengurus.'),
+      showPengurus: typeof pengurus.showPengurus === 'boolean' ? pengurus.showPengurus : true,
+      closingTitle: textValue(pengurus.closingTitle, 'Satu Tim, Satu Tujuan'),
+      closingDescription: textValue(pengurus.closingDescription, 'Setiap pengurus berkontribusi sesuai perannya. Bersama membangun organisasi yang kuat dan bermakna.'),
+      ctaLabel: textValue(pengurus.ctaLabel, 'Lihat Seluruh Struktur'),
+      ctaHref: internalPathValue(pengurus.ctaHref, '/struktur'),
+    },
+    slider: {
+      sectionTitle: textValue(slider.sectionTitle, '06 — SLIDER KEPENGURUSAN'),
+      items: Array.isArray(slider.items) ? slider.items.map((item: unknown, index: number) => {
+        const obj = objectValue(item)
+        return {
+          imageUrl: isSafeCampaignImageUrl(obj.imageUrl as string) ? (obj.imageUrl as string) : '',
+          altText: textValue(obj.altText, `Foto kepengurusan ${index + 1}`),
+          caption: typeof obj.caption === 'string' ? obj.caption : undefined,
+          visible: typeof obj.visible === 'boolean' ? obj.visible : true,
+          order: typeof obj.order === 'number' ? obj.order : index,
+        }
+      }) : [],
     },
   }
 }

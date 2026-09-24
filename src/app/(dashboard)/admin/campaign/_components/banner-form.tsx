@@ -111,12 +111,12 @@ export function BannerForm({ banner, programs, publications }: Props) {
             <Field label="Judul internal" htmlFor="internalTitle" required>
               <Input id="internalTitle" name="internalTitle" required minLength={3} maxLength={120} defaultValue={banner?.internalTitle} placeholder="Contoh: Pra-PRABUMI Agustus" />
             </Field>
-            <Field label="Fase campaign" htmlFor="phase" required>
+<Field label="Fase campaign" htmlFor="phase" required>
               <Select id="phase" name="phase" required defaultValue={banner?.phase || 'BEFORE'}>
                 {banner?.phase === 'GENERAL' ? <option value="GENERAL">Umum (arsip lama)</option> : null}
                 <option value="BEFORE">Coming Soon</option>
-                <option value="PRA">Banner utama</option>
-                <option value="AFTER">Berita acara</option>
+                <option value="PRA">Main</option>
+                <option value="AFTER">Berita Acara</option>
               </Select>
             </Field>
             <Field label="Headline" htmlFor="headline" required className="md:col-span-2">

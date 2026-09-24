@@ -384,7 +384,21 @@ export const indramayuRegions = {
 } as const
 
 export const indramayuDistricts = Object.keys(indramayuRegions)
+export const INDRAMAYU_REGIONS = indramayuRegions
+export const INDRAMAYU_VILLAGES = indramayuRegions
+export const INDRAMAYU_DISTRICTS = indramayuDistricts
+
+export function isIndramayuDistrict(district: string): district is keyof typeof indramayuRegions {
+  return Object.prototype.hasOwnProperty.call(indramayuRegions, district)
+}
+
+export function isIndramayuVillage(district: string, village: string): boolean {
+  if (!isIndramayuDistrict(district)) return false
+  const list = indramayuRegions[district] as readonly string[]
+  return list.includes(village)
+}
 
 export function villagesForDistrict(district: string) {
   return indramayuRegions[district as keyof typeof indramayuRegions] ?? []
 }
+

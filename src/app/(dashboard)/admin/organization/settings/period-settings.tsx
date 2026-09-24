@@ -32,7 +32,7 @@ export function PeriodSettings({ activePeriod, history, setup }: { activePeriod:
       return
     }
     setDialogOpen(false)
-    setMessage(`Periode ${result.data.name} sudah aktif. Ruang kerja periode baru dimulai dalam keadaan kosong.`)
+    setMessage(`Periode ${result.data?.name ?? 'baru'} sudah aktif. Ruang kerja periode baru dimulai dalam keadaan kosong.`)
     router.refresh()
   }
 
