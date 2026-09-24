@@ -58,5 +58,5 @@ it('bounds public PII input and rejects non-phone text', () => {
 
 it('provides every Indramayu district with at least one village', () => {
   expect(INDRAMAYU_DISTRICTS).toHaveLength(31)
-  expect(INDRAMAYU_DISTRICTS.every((district) => INDRAMAYU_VILLAGES[district].length > 0)).toBe(true)
+  expect(INDRAMAYU_DISTRICTS.every((district) => INDRAMAYU_VILLAGES[district as keyof typeof INDRAMAYU_VILLAGES].length > 0)).toBe(true)
 })

@@ -61,4 +61,35 @@ describe('HeroSlideshow', () => {
     expect(css).toContain('.home-hero-desktop-controls')
     expect(css).toContain('-webkit-line-clamp: initial !important')
   })
+
+  it('renders separated floating quick access badges and infinite marquee band', () => {
+    const floatingBadges = [
+      { id: 'agenda', label: 'Agenda Kegiatan', description: 'Jadwal terdekat', href: '/kegiatan', icon: 'agenda' as const },
+      { id: 'join', label: 'Gabung IKMI', description: 'Pendaftaran anggota', href: '/gabung', icon: 'join' as const },
+      { id: 'publication', label: 'Publikasi', description: 'Karya ilmiah', href: '/publikasi', icon: 'publication' as const },
+    ]
+    const departmentLogos = [
+      'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781210303/bph_n4damh.png',
+      'https://res.cloudinary.com/dsgldeuuy/image/upload/v1781210299/kaderisasi_sfv6xl.png',
+    ]
+
+    render(
+      <HeroSlideshow
+        slides={slides}
+        {...heroProps}
+        floatingBadges={floatingBadges}
+        departmentLogos={departmentLogos}
+      />
+    )
+
+    // Floating badges rendered as separate links
+    expect(screen.getByRole('link', { name: /Agenda Kegiatan/i })).toHaveAttribute('href', '/kegiatan')
+    expect(screen.getByRole('link', { name: /Gabung IKMI/i })).toHaveAttribute('href', '/gabung')
+    expect(screen.getByRole('link', { name: /Publikasi/i })).toHaveAttribute('href', '/publikasi')
+
+    // Infinite logo marquee band rendered with department logos
+    expect(screen.getAllByAltText(/Logo BPH/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByAltText(/Logo Kaderisasi/i).length).toBeGreaterThanOrEqual(1)
+  })
 })
+

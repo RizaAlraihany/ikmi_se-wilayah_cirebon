@@ -12985,18 +12985,26 @@ textarea:focus-visible {
   transition: transform 200ms var(--ease-out);
 }
 
-/* ── Photo media (mobile: inline slider below text) ── */
+/* ── Photo media wrapper & visual ── */
+#view-beranda .home-hero-media-wrapper {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 440px;
+  margin: 0.5rem auto 1rem;
+}
+
 #view-beranda .home-hero-media {
   position: relative;
   z-index: 2;
   width: 100%;
   aspect-ratio: 16 / 10;
   overflow: hidden;
-  border-radius: 1rem;
+  border-radius: 1.25rem;
   background: color-mix(in srgb, var(--primary) 80%, black);
   box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
+    0 12px 35px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 #view-beranda .home-hero-image {
@@ -13028,6 +13036,121 @@ textarea:focus-visible {
   content: "";
 }
 
+/* ── Floating Quick Access Badges (Separated around the photo) ── */
+#view-beranda .home-hero-floating-badges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+}
+
+#view-beranda .home-hero-badge {
+  position: absolute;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  text-decoration: none;
+  border-radius: 0.875rem;
+  padding: 0.5rem 0.85rem;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  box-shadow:
+    0 10px 25px -4px rgba(0, 0, 0, 0.22),
+    0 4px 6px -2px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition:
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#view-beranda .home-hero-badge-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+#view-beranda .home-hero-badge-icon--agenda {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+#view-beranda .home-hero-badge-icon--join {
+  background: linear-gradient(135deg, #0284c7, #3b82f6);
+}
+
+#view-beranda .home-hero-badge-icon--publication {
+  background: linear-gradient(135deg, #ec4899, #f43f5e);
+}
+
+#view-beranda .home-hero-badge-svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+#view-beranda .home-hero-badge-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+#view-beranda .home-hero-badge-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+#view-beranda .home-hero-badge-desc {
+  font-size: 0.6875rem;
+  color: #64748b;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+#view-beranda .home-hero-badge-action {
+  margin-left: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+#view-beranda .home-hero-badge-action svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* Mobile floating badge positions: separated around photo */
+#view-beranda .home-hero-badge--agenda {
+  top: -0.75rem;
+  left: 0.25rem;
+}
+
+#view-beranda .home-hero-badge--join {
+  top: 26%;
+  right: -0.5rem;
+}
+
+#view-beranda .home-hero-badge--publication {
+  bottom: -0.75rem;
+  left: 0.5rem;
+}
+
 /* ── Shared nav-button base (mobile arrows + desktop floats) ── */
 #view-beranda .home-hero-mobile-controls button,
 #view-beranda .home-hero-desktop-controls button,
@@ -13042,7 +13165,7 @@ textarea:focus-visible {
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 9999px;
   color: #fff;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.15);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
@@ -13063,7 +13186,7 @@ textarea:focus-visible {
   position: absolute;
   inset-inline: 0.5rem;
   top: 50%;
-  z-index: 30;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -13082,52 +13205,172 @@ textarea:focus-visible {
   display: none;
 }
 
+/* ── Infinite Marquee Band at Hero Bottom ── */
+#view-beranda .home-hero-marquee-band {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+  margin-top: 1.5rem;
+  padding-block: 0.85rem;
+  background: rgba(0, 16, 70, 0.45);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+#view-beranda .home-hero-marquee-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  will-change: transform;
+  animation: heroMarquee 30s linear infinite;
+}
+
+#view-beranda .home-hero-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes heroMarquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+#view-beranda .home-hero-marquee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-inline: 1.75rem;
+  flex-shrink: 0;
+}
+
+#view-beranda .home-hero-marquee-logo-wrap {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+#view-beranda .home-hero-marquee-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+
+#view-beranda .home-hero-marquee-name {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 /* ════════════════════════════════════════════════════════════
-   Desktop (≥ 1024px): split layout + separate floating ▲ / ▼
+   Desktop (≥ 1024px): 2-column split layout, separate badges,
+   and infinite logo marquee bar at bottom.
    ════════════════════════════════════════════════════════════ */
 @media (min-width: 1024px) {
   #view-beranda .home-hero {
-    min-height: clamp(32rem, 80vh, 42rem);
+    min-height: clamp(34rem, 80vh, 44rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
   #view-beranda .home-hero-content {
     min-height: inherit;
     flex-direction: row;
     align-items: center;
-    gap: 0;
-    padding-block: 0;
+    justify-content: space-between;
+    gap: 3rem;
+    padding-block: 3.5rem 2rem;
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
   }
 
   #view-beranda .home-hero-copy {
-    width: 48%;
-    flex: 0 0 auto;
-    padding-right: 3rem;
+    width: 46%;
+    flex: 0 0 46%;
+    max-width: 36rem;
+    padding-right: 1.5rem;
   }
 
-  /* Photo becomes full-bleed background on the right */
-  #view-beranda .home-hero-media {
-    position: absolute;
-    inset: 0 0 0 35%;
-    z-index: -1;
-    width: auto;
-    aspect-ratio: auto;
-    border-radius: 0;
-    box-shadow: none;
-    background: var(--primary);
+  /* Desktop media wrapper & photo */
+  #view-beranda .home-hero-media-wrapper {
+    width: 50%;
+    flex: 0 0 50%;
+    max-width: 560px;
+    margin: 0;
   }
+
+  #view-beranda .home-hero-media {
+    aspect-ratio: 16 / 11;
+    border-radius: 1.5rem;
+    box-shadow:
+      0 20px 50px rgba(0, 0, 0, 0.35),
+      0 0 0 1px rgba(255, 255, 255, 0.12);
+  }
+
+  /* Legacy layout token: inset: 0 0 0 35% */
 
   #view-beranda .home-hero-photo-blend {
     background: linear-gradient(
-      90deg,
-      var(--primary) 0%,
-      rgba(0, 23, 105, 0.92) 12%,
-      rgba(0, 23, 105, 0.5) 40%,
-      rgba(0, 23, 105, 0.12) 65%,
-      transparent 85%
+      to top,
+      rgba(0, 23, 105, 0.6) 0%,
+      rgba(0, 23, 105, 0.2) 35%,
+      transparent 70%
     );
   }
 
-  /* Hide mobile ←→ */
+  /* Desktop floating badges: spaced apart around the photo visual */
+  #view-beranda .home-hero-badge {
+    padding: 0.65rem 1rem;
+    border-radius: 1rem;
+  }
+
+  #view-beranda .home-hero-badge-icon {
+    width: 2.35rem;
+    height: 2.35rem;
+  }
+
+  #view-beranda .home-hero-badge-svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  #view-beranda .home-hero-badge-label {
+    font-size: 0.875rem;
+  }
+
+  #view-beranda .home-hero-badge-desc {
+    font-size: 0.75rem;
+  }
+
+  #view-beranda .home-hero-badge--agenda {
+    top: 8%;
+    left: -2.5rem;
+  }
+
+  #view-beranda .home-hero-badge--join {
+    top: 24%;
+    right: -2rem;
+  }
+
+  #view-beranda .home-hero-badge--publication {
+    bottom: 8%;
+    left: -1.5rem;
+  }
+
+  /* Hide mobile ←→ controls */
   #view-beranda .home-hero-mobile-controls {
     display: none;
   }
@@ -13151,7 +13394,11 @@ textarea:focus-visible {
   }
 
   #view-beranda .home-hero-float-bottom {
-    bottom: 1.25rem;
+    bottom: 4.75rem;
+  }
+
+  #view-beranda .home-hero-marquee-band {
+    margin-top: 0;
   }
 }
 
@@ -13171,6 +13418,11 @@ textarea:focus-visible {
     transform: translateY(-1px);
   }
 
+  #view-beranda .home-hero-badge:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.28);
+  }
+
   #view-beranda .home-hero-mobile-controls button:hover,
   #view-beranda .home-hero-float-top:hover,
   #view-beranda .home-hero-float-bottom:hover {
@@ -13183,9 +13435,12 @@ textarea:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   #view-beranda .home-hero-image,
   #view-beranda :is(.home-hero-primary, .home-hero-secondary),
+  #view-beranda .home-hero-badge,
   #view-beranda .home-hero-mobile-controls button,
   #view-beranda .home-hero-float-top,
-  #view-beranda .home-hero-float-bottom {
+  #view-beranda .home-hero-float-bottom,
+  #view-beranda .home-hero-marquee-track {
     transition: none;
+    animation: none;
   }
 }

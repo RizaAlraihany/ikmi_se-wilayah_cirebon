@@ -46,7 +46,7 @@ describe('Registration Service', () => {
       campus: 'CIREBON', major: 'Teknik', whatsapp: '0812',
       semester: '1',
       entryYear: 2026,
-      district: 'Kesambi',
+      district: 'Kesambi' as never,
       village: 'Karyamulya',
       address: 'Test',
       reasons: 'Test',

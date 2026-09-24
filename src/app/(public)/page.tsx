@@ -19,8 +19,10 @@ import { deriveAgendaStatus } from "@/features/agendas/domain";
 import { getActivePublicBanners } from "@/features/homepage-banner/queries";
 import { getPublicAgendaOccurrences } from "@/features/public/public-agenda";
 import { webConfigQueries } from "@/features/web-config/queries";
+import { defaultWebConfig } from "@/features/web-config/default-config";
 import {
   HeroSlideshow,
+  type HeroFloatingBadge,
   type PublicHeroSlide,
 } from "./_components/hero-slideshow";
 
@@ -28,22 +30,7 @@ export const dynamic = "force-dynamic";
 
 type UnknownRecord = Record<string, unknown>;
 
-const quickAccess = [
-  {
-    id: "join",
-    href: "/#gabung",
-    label: "Gabung IKMI",
-    description: "Pendaftaran anggota",
-    Icon: UserPlus,
-  },
-  {
-    id: "publication",
-    href: "/publikasi",
-    label: "Publikasi",
-    description: "Berita & gagasan",
-    Icon: Newspaper,
-  },
-] as const;
+
 
 
 const homeFaqs = [
@@ -241,6 +228,35 @@ export default async function Home() {
     ? campaignPhasePresentation[featuredCampaign.phase]
     : null;
 
+  const heroFloatingBadges: HeroFloatingBadge[] = [
+    {
+      id: "agenda",
+      label: "Agenda Kegiatan",
+      description: "Jadwal & kegiatan terdekat",
+      href: "/kegiatan",
+      icon: "agenda",
+      actionLabel: "Lihat",
+    },
+    {
+      id: "join",
+      label: homepageContent.hero.floatingMenu1Text || "Gabung IKMI",
+      description: "Pendaftaran anggota",
+      href: homepageContent.hero.floatingMenu1Link || "/gabung",
+      icon: "join",
+      actionLabel: "Daftar",
+    },
+    {
+      id: "publication",
+      label: homepageContent.hero.floatingMenu2Text || "Publikasi",
+      description: "Karya ilmiah & opini",
+      href: homepageContent.hero.floatingMenu2Link || "/publikasi",
+      icon: "publication",
+      actionLabel: "Baca",
+    },
+  ];
+
+  const departmentLogos = defaultWebConfig.landing_hero.departmentLogos;
+
   return (
     <main id="view-beranda" className="home-page">
       <HeroSlideshow
@@ -257,6 +273,8 @@ export default async function Home() {
           label: homepageContent.hero.secondaryCtaLabel,
           href: homepageContent.hero.secondaryCtaHref,
         }}
+        floatingBadges={heroFloatingBadges}
+        departmentLogos={departmentLogos}
       />
 
       {/* TENTANG */}
