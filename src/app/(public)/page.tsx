@@ -45,24 +45,6 @@ const quickAccess = [
   },
 ] as const;
 
-type QuickAccessItem = {
-  id: string;
-  href: string;
-  label: string;
-  description: string;
-  Icon: typeof UserPlus | typeof Newspaper;
-};
-
-function QuickAccessLink({ item, className }: { item: QuickAccessItem; className?: string }) {
-  const { href, label, description, Icon } = item;
-  return (
-    <Link href={href} className={className ? `quick-link ${className}` : "quick-link"}>
-      <span className="quick-icon" aria-hidden="true"><Icon /></span>
-      <span className="quick-copy"><strong>{label}</strong><small>{description}</small></span>
-      <ArrowRight className="quick-arrow" aria-hidden="true" />
-    </Link>
-  );
-}
 
 const homeFaqs = [
   {
@@ -216,18 +198,6 @@ export default async function Home() {
       alt: `Dokumentasi IKMI Cirebon ${index + 1}`,
     }));
 
-  const heroQuickAccess: QuickAccessItem[] = [
-    {
-      ...quickAccess[0],
-      label: homepageContent.hero.floatingMenu1Text,
-      href: homepageContent.hero.floatingMenu1Link,
-    },
-    {
-      ...quickAccess[1],
-      label: homepageContent.hero.floatingMenu2Text,
-      href: homepageContent.hero.floatingMenu2Link,
-    },
-  ];
 
   const aboutImage = homepageContent.profile.imageUrl;
   const aboutImageAlt = homepageContent.profile.imageAlt;
@@ -287,15 +257,7 @@ export default async function Home() {
           label: homepageContent.hero.secondaryCtaLabel,
           href: homepageContent.hero.secondaryCtaHref,
         }}
-        mediaChildren={(
-          <div className="hero-floating-menu" aria-label="Akses cepat">
-            {heroQuickAccess.map((item, index) => (
-              <QuickAccessLink key={item.id} item={item} className={index === 0 ? "hero-join-card" : "hero-publication-card"} />
-            ))}
-          </div>
-        )}
-      >
-      </HeroSlideshow>
+      />
 
       {/* TENTANG */}
       <section
